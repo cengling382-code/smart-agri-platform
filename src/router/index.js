@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 import { hasRoutePermission } from './menus'
 import { installRouterErrorHandler } from '@/utils/routerError'
 // 静态导入：降级页打进主包，自身永远不会加载失败
@@ -124,7 +125,8 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // base 跟随 Vite 的 BASE_URL：本地开发为 /，GitHub Pages 部署为 /smart-agri-platform/
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior: () => ({ top: 0 }),
 })
@@ -134,6 +136,14 @@ const PUBLIC_PATHS = new Set(['/login', '/register', '/forgot', '/403', '/m/logi
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  const app = useAppStore()
+
+  // 设备自动识别：手机访问自动落到移动端门户；用户一旦手动切换过视图，以其选择为准
+  const isMobileEnd = to.path.startsWith('/m/') || to.path.startsWith('/scan/') || to.path.startsWith('/trace/')
+  if (!app.manualViewMode && app.device === 'mobile' && !isMobileEnd) {
+    return { path: auth.isLoggedIn ? '/m/home' : '/m/login' }
+  }
+
   const isPublic = to.meta.public || PUBLIC_PATHS.has(to.path) || to.path.startsWith('/scan/') || to.path.startsWith('/trace/')
   if (!auth.isLoggedIn && !isPublic) {
     return { path: '/login', query: { redirect: to.fullPath } }

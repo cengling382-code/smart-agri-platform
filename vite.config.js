@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  // GitHub Pages 项目站部署在 /<repo>/ 子路径下，通过环境变量注入；本地开发保持 /
+  base: process.env.GITHUB_PAGES_BASE || '/',
   plugins: [vue()],
   resolve: {
     alias: {
