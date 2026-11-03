@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import * as data from '@/mock/data'
 import { loadDb, persistDb, exportDb, importDb, resetDb, dbStats } from '@/mock/db'
+import { handleMock } from '@/mock/index'
 
 const KEY = 'agri-db-v1'
 
@@ -61,5 +62,13 @@ describe('JSON 本地数据库', () => {
     expect(stats.collections).toBeGreaterThan(20)
     expect(stats.records).toBeGreaterThan(100)
     expect(stats.sizeKB).toBeGreaterThan(50)
+  })
+
+  it('看板接口兼容无 env 字段的手动新增地块', async () => {
+    data.plots.unshift({ id: 999002, code: 'PLOT-NO-ENV', name: '无环境字段地块', type: '大田', crop: '番茄', areaMu: 10, status: '种植中' })
+    const res = await handleMock({ url: '/stats/dashboard', method: 'get' })
+    expect(res.code).toBe(0)
+    expect(Array.isArray(res.data.env)).toBe(true)
+    expect(res.data.env[0].temp).toBe(0)
   })
 })

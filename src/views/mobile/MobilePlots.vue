@@ -7,7 +7,11 @@ const plots = ref([])
 const activeId = ref(null)
 const loading = ref(true)
 
-const activePlot = computed(() => plots.value.find((p) => p.id === activeId.value))
+const activePlot = computed(() => {
+  const p = plots.value.find((x) => x.id === activeId.value)
+  // 手动新增的地块可能缺少 env / sensors 等字段，这里补默认值，避免详情区渲染报错
+  return p ? { env: {}, sensors: 0, ...p } : null
+})
 
 onMounted(async () => {
   try {

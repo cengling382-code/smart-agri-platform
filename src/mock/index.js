@@ -103,7 +103,16 @@ const routes = [
         online, onlineRate: Math.round((online / devs.length) * 100),
         todayAlarms: db.alarms.filter((a) => a.status === 'pending').length,
         monthYield: 128400, yieldUnit: 'kg',
-        env: db.plots.slice(0, 4).map((p) => ({ name: p.name, type: p.type, temp: p.env.temp ?? p.env.waterT, hum: p.env.hum ?? p.env.oxygen * 10, co2: p.env.co2 ?? 0, light: p.env.light ?? 0, ph: p.env.ph ?? 7 })),
+        env: db.plots.slice(0, 4).map((p) => {
+          // 手动新增的地块可能没有 env 字段，统一兜底，避免面板接口抛错
+          const e = p.env || {}
+          return {
+            name: p.name, type: p.type,
+            temp: e.temp ?? e.waterT ?? 0,
+            hum: e.hum ?? (e.oxygen != null ? e.oxygen * 10 : 0),
+            co2: e.co2 ?? 0, light: e.light ?? 0, ph: e.ph ?? 7,
+          }
+        }),
         pendingAlarms: db.alarms.filter((a) => a.status === 'pending'),
         weekTrend: Array.from({ length: 7 }, (_, i) => {
           const r = rng(77 + i)
