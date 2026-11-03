@@ -6,6 +6,7 @@ import { PageHeader, ProTable, StatCard } from '@/components/ui'
 import { sysApi } from '@/api'
 
 const tableRef = ref(null)
+const formRef = ref(null)
 const editVisible = ref(false)
 const form = reactive({ id: null, name: '', admin: '', quota: '', status: '正常', expire: '' })
 const rules = {
@@ -30,6 +31,8 @@ function openEdit(row) {
   editVisible.value = true
 }
 async function handleSave() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (valid === false) return
   await sysApi.updateTenant(form.id, form)
   ElMessage.success('租户配置已保存')
   editVisible.value = false
@@ -78,11 +81,11 @@ function usagePct(row) {
     </ProTable>
 
     <el-dialog v-model="editVisible" title="租户/园区配额配置" width="500px" destroy-on-close>
-      <el-form :model="form" label-width="90px">
-        <el-form-item label="园区名称">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
+        <el-form-item label="园区名称" prop="name">
           <el-input v-model="form.name" disabled />
         </el-form-item>
-        <el-form-item label="管理员">
+        <el-form-item label="管理员" prop="admin">
           <el-input v-model="form.admin" />
         </el-form-item>
         <el-form-item label="存储配额">

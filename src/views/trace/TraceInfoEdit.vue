@@ -41,6 +41,10 @@ onMounted(async () => {
 })
 
 async function save(publish) {
+  if (publish && !String(form.story || '').trim()) {
+    ElMessage.warning('请先填写溯源故事，再保存并发布')
+    return
+  }
   saving.value = true
   try {
     await traceApi.update(batch.value.id, {
