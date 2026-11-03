@@ -1,0 +1,226 @@
+/* ============================================================
+   动效系统：路由过渡 · 关键帧 · 入场编排   v3
+   决策依据（ios-design）：
+   —— 位移幅度全部收敛（14→8px）：大幅位移 = 屏幕在"晃"，克制的
+      8px 足以传达"新内容来了"，且 GPU 合成成本更低
+   —— 进出场同轴同向（下进上出），符合空间一致性：页面像被"翻过去"
+   —— 时长 enter 280ms / leave 160ms：离场必须比入场快，
+      否则用户会觉得系统在等动画
+   —— 不做缩放整页（scale 会让文字栅格抖动）
+   ============================================================ */
+
+/* ---------- 路由切换过渡 ---------- */
+.route-enter-active {
+  transition: opacity 0.28s var(--ag-ease), transform 0.28s var(--ag-ease);
+}
+.route-leave-active {
+  transition: opacity 0.16s var(--ag-ease), transform 0.16s var(--ag-ease);
+  position: absolute;
+  width: 100%;
+}
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.route-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ---------- 通用淡入淡出 ---------- */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--ag-dur) var(--ag-ease);
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 侧向滑动（用于抽屉/侧栏内容） */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform var(--ag-dur-slow) var(--ag-ease), opacity var(--ag-dur-slow) var(--ag-ease);
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(16px);
+  opacity: 0;
+}
+
+/* ---------- 关键帧 ----------
+   约定：装饰性关键帧（agFloat / agLeaf / agCountGlow）不得以
+   infinite 循环出现在常驻界面上——那是"AI 生成感"的主要来源。
+   保留定义仅供一次性入场使用。 */
+@keyframes agFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes agFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes agSlideRight {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes agZoomIn {
+  from { opacity: 0; transform: scale(0.98); }   /* 0.92 → 0.98：弹出感靠透明度，不靠缩放 */
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes agPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@keyframes agFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes agShimmer {
+  from { background-position: -400px 0; }
+  to { background-position: 400px 0; }
+}
+@keyframes agSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes agRadar {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes agBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@keyframes agGrowLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+/* 原为 brightness(1.25) 的"发光"闪烁——属刻意堆砌的光影。
+   改为数值变化时的一次性淡入：有反馈，但不发光。 */
+@keyframes agCountGlow {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+@keyframes agLeaf {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+
+/* ---------- 入场编排工具类 ---------- */
+.anim-up { animation: agFadeUp 0.4s var(--ag-ease) both; }
+.anim-in { animation: agFadeIn 0.32s var(--ag-ease) both; }
+.anim-zoom { animation: agZoomIn 0.32s var(--ag-ease-spring) both; }
+.anim-left { animation: agSlideRight 0.36s var(--ag-ease) both; }
+.anim-delay-1 { animation-delay: 0.04s; }
+.anim-delay-2 { animation-delay: 0.08s; }
+.anim-delay-3 { animation-delay: 0.12s; }
+.anim-delay-4 { animation-delay: 0.16s; }
+.anim-delay-5 { animation-delay: 0.2s; }
+.anim-delay-6 { animation-delay: 0.24s; }
+
+/* 网格子项交错入场。
+   决策依据：原级联到 0.62s——最后一张卡要等半秒才出现，读作"卡顿"
+   而非"呼吸"。收敛为每项 40ms、封顶 0.4s：仍有节奏，但整体在
+   一次注视内完成（人对 >500ms 的等待开始有感）。 */
+.stagger > * {
+  animation: agFadeUp 0.36s var(--ag-ease) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.stagger > *:nth-child(6) { animation-delay: 0.22s; }
+.stagger > *:nth-child(7) { animation-delay: 0.26s; }
+.stagger > *:nth-child(8) { animation-delay: 0.3s; }
+.stagger > *:nth-child(9) { animation-delay: 0.34s; }
+.stagger > *:nth-child(n + 10) { animation-delay: 0.38s; }
+
+/* ---------- 悬停效果（仅精确指针设备） ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift {
+    transition: transform var(--ag-dur) var(--ag-ease), box-shadow var(--ag-dur) var(--ag-ease);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);          /* 原 -4px + lg 阴影：过重 */
+    box-shadow: var(--ag-shadow);
+  }
+}
+
+/* ---------- 呼吸点（在线状态指示） ---------- */
+.pulse-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: agRadar 1.8s var(--ag-ease) infinite;
+}
+.pulse-dot.is-on { background: var(--ag-green-500); }
+.pulse-dot.is-off { background: var(--ag-text-4); }
+.pulse-dot.is-off::after { animation: none; }
+.pulse-dot.is-fault { background: var(--ag-danger); }
+
+/* ---------- 骨架屏微光 ---------- */
+.skeleton {
+  background: linear-gradient(90deg, #eef2f7 25%, #F7F8F7 37%, #eef2f7 63%);
+  background-size: 400px 100%;
+  animation: agShimmer 1.4s linear infinite;
+  border-radius: var(--ag-radius-sm);
+}
+
+/* ---------- 旋转加载 ---------- */
+.spin { animation: agSpin 1s linear infinite; }
+
+/* ---------- 大屏专用 ---------- */
+.screen-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(159, 195, 221, 0.05) 50%, transparent 100%);
+  background-size: 100% 220px;
+  background-repeat: no-repeat;
+  animation: screenScanMove 7s linear infinite;
+}
+@keyframes screenScanMove {
+  0% { background-position: 0 -220px; }
+  100% { background-position: 0 calc(100% + 220px); }
+}
+.screen-panel {
+  background: var(--ag-screen-panel);
+  border: 1px solid var(--ag-screen-border);
+  border-radius: var(--ag-radius);
+  backdrop-filter: blur(6px);
+  position: relative;
+}
+.screen-panel::before,
+.screen-panel::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ag-screen-cyan);
+  opacity: 0.8;
+}
+.screen-panel::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: var(--ag-radius);
+}
+.screen-panel::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: var(--ag-radius);
+}

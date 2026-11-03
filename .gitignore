@@ -1,0 +1,82 @@
+# ============================================================
+# 智慧农业综合管理平台 · Git 忽略规则
+# 原则：凡是可再生成的产物、本地环境相关的配置、缓存与临时文件
+# 一律不入库，只提交源码与可复现构建所需的声明文件。
+# ============================================================
+
+# ---------- 依赖 ----------
+node_modules/
+.pnpm-store/
+
+# ---------- 环境变量与敏感信息 ----------
+# 本地环境变量一律不入库，仅保留示例文件供他人参考
+.env
+.env.local
+.env.*.local
+.env.dev
+.env.prod
+.env.development
+.env.production
+!.env.example
+
+# 证书 / 密钥
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ---------- 日志 ----------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------- 构建产物 ----------
+dist/
+dist-ssr/
+build/
+*.local
+
+# ---------- 缓存与临时文件 ----------
+.tmp/
+.cache/
+.vite/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+coverage/
+.vitest/
+
+# Vite / Vitest 自动生成的临时配置快照
+vite.config.js.timestamp-*.mjs
+vitest.config.js.timestamp-*.mjs
+
+# 截图与视觉回归的中间产物
+captures/
+
+# ---------- 编辑器与操作系统 ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sw?
+*.swp
+*~
+
+# ---------- 其他 ----------
+*.pid
+*.seed
+*.tgz
+*.orig

@@ -1,0 +1,10 @@
+/** UI 公共组件统一出口 */
+export { default as PageHeader } from './PageHeader.vue'
+export { default as ProTable } from './ProTable.vue'
+export { default as FormDialog } from './FormDialog.vue'
+export { default as StatusTag } from './StatusTag.vue'
+export { default as StatCard } from './StatCard.vue'
+export { default as CountUp } from './CountUp.vue'
+export { default as ChartCard } from './ChartCard.vue'
+export { default as ScreenChart } from './ScreenChart.vue'
+export { default as ErrorBoundary } from './ErrorBoundary.vue'
