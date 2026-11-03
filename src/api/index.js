@@ -1,5 +1,13 @@
 import { request } from './request'
 
+/* ================= 本地 JSON 数据库 ================= */
+export const dbApi = {
+  stats: () => request({ url: '/db/stats', method: 'get' }),
+  exportJson: () => request({ url: '/db/export', method: 'get' }),
+  importJson: (json) => request({ url: '/db/import', method: 'post', data: { json } }),
+  reset: () => request({ url: '/db/reset', method: 'post' }),
+}
+
 /* ================= 认证 ================= */
 export const authApi = {
   login: (data) => request({ url: '/auth/login', method: 'post', data }),

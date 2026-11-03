@@ -8,6 +8,7 @@ import { sysApi } from '@/api'
 const list = ref([])
 const loading = ref(true)
 const editVisible = ref(false)
+const testingId = ref(null)
 const form = reactive({ id: null, name: '', provider: '', url: '', key: '', qps: 0 })
 const rules = {
   provider: [{ required: true, message: '请输入服务提供方', trigger: 'blur' }],
@@ -44,10 +45,24 @@ async function handleSave() {
   list.value = (await sysApi.apiConfigs()).list
 }
 async function testConnect(row) {
-  ElMessage.info(`正在测试「${row.name}」连通性…`)
-  setTimeout(() => {
-    ElMessage.success(`「${row.name}」连接正常，延迟 128ms`)
-  }, 900)
+  if (testingId.value) return
+  testingId.value = row.id
+  const started = performance.now()
+  try {
+    if (!/^https?:\/\//.test(String(row.url || ''))) throw new Error('接口地址需以 http:// 或 https:// 开头')
+    // 模拟一次握手：真实耗时 + 结果写回配置，刷新后仍保留检测状态
+    await new Promise((r) => setTimeout(r, 450 + Math.random() * 450))
+    const latency = Math.round(performance.now() - started)
+    await sysApi.updateApiConfig(row.id, { status: '已连接', lastSync: `刚刚（${latency}ms）` })
+    list.value = (await sysApi.apiConfigs()).list
+    ElMessage.success(`「${row.name}」连接正常，延迟 ${latency}ms`)
+  } catch (e) {
+    await sysApi.updateApiConfig(row.id, { status: '异常', lastSync: '连接失败' }).catch(() => {})
+    list.value = (await sysApi.apiConfigs()).list
+    ElMessage.error(`「${row.name}」连接失败：${e.message}`)
+  } finally {
+    testingId.value = null
+  }
 }
 async function toggle(row) {
   const target = row.status === '未启用' ? '已连接' : '未启用'
@@ -80,7 +95,7 @@ async function toggle(row) {
           <div class="ac-row"><span class="ac-label">最近同步</span><span class="mono-num">{{ a.lastSync }}</span></div>
         </div>
         <div class="ac-foot">
-          <el-button size="small" type="primary" plain :icon="'Connection'" @click="testConnect(a)">测试连接</el-button>
+          <el-button size="small" type="primary" plain :icon="'Connection'" :loading="testingId === a.id" @click="testConnect(a)">测试连接</el-button>
           <el-button size="small" :icon="'Setting'" @click="openEdit(a)">配置</el-button>
           <el-button size="small" :type="a.status === '未启用' ? 'success' : 'warning'" plain @click="toggle(a)">
             {{ a.status === '未启用' ? '启用' : '停用' }}

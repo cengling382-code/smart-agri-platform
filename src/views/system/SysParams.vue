@@ -1,16 +1,96 @@
 <script setup>
 /** 页面 47 · 系统参数配置：平台基础参数、告警短信/推送配置、采集频率设置 */
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader } from '@/components/ui'
-import { sysApi } from '@/api'
+import { sysApi, dbApi } from '@/api'
 
 const params = ref([])
 const loading = ref(true)
 const savingId = ref(null)
 const draft = reactive({})
 
+/* ---------- 本地 JSON 数据库 ---------- */
+const dbStatsInfo = ref({ storage: '-', collections: 0, records: 0, sizeKB: 0, savedAt: null, available: true })
+const dbBusy = ref(false)
+const fileInput = ref(null)
+
+async function loadDbStats() {
+  try {
+    dbStatsInfo.value = await dbApi.stats()
+  } catch (e) {
+    console.warn('[SysParams][db]', e?.message || e)
+  }
+}
+
+function formatSavedAt(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('zh-CN', { hour12: false })
+}
+
+async function exportDbJson() {
+  dbBusy.value = true
+  try {
+    const { json } = await dbApi.exportJson()
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `smart-agri-db-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('已导出 JSON 数据文件')
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    dbBusy.value = false
+  }
+}
+
+function pickDbFile() {
+  fileInput.value?.click()
+}
+
+async function onDbFile(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const text = await file.text()
+  dbBusy.value = true
+  try {
+    dbStatsInfo.value = await dbApi.importJson(text)
+    ElMessage.success('数据已导入并写入 JSON 存档')
+    params.value = (await sysApi.params()).list
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    dbBusy.value = false
+    event.target.value = ''
+  }
+}
+
+async function resetDbData() {
+  try {
+    await ElMessageBox.confirm('将清空当前所有业务数据，恢复为初始种子数据，是否继续？', '恢复初始数据', {
+      type: 'warning',
+      confirmButtonText: '确认恢复',
+      cancelButtonText: '取消',
+    })
+  } catch { return }
+  dbBusy.value = true
+  try {
+    dbStatsInfo.value = await dbApi.reset()
+    params.value = (await sysApi.params()).list
+    ElMessage.success('已恢复初始数据')
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    dbBusy.value = false
+  }
+}
+
 onMounted(async () => {
+  loadDbStats()
   try {
     params.value = (await sysApi.params()).list
   } catch (e) {
@@ -83,6 +163,30 @@ function computedGroups() {
         </div>
       </div>
     </div>
+
+    <div class="ag-card anim-up db-card">
+      <div class="ag-card__head">
+        <div class="ag-card__title"><span class="dot"></span>本地数据存储（JSON）</div>
+        <div class="db-actions">
+          <el-button size="small" plain :loading="dbBusy" @click="exportDbJson">导出 JSON</el-button>
+          <el-button size="small" plain :loading="dbBusy" @click="pickDbFile">导入 JSON</el-button>
+          <el-button size="small" type="danger" plain :loading="dbBusy" @click="resetDbData">恢复初始数据</el-button>
+        </div>
+      </div>
+      <div class="ag-card__body db-body">
+        <div class="db-meta">
+          <div class="db-item"><span>存储介质</span><b>{{ dbStatsInfo.available ? dbStatsInfo.storage : '内存（配额不足）' }}</b></div>
+          <div class="db-item"><span>集合 / 记录</span><b>{{ dbStatsInfo.collections }} / {{ dbStatsInfo.records }}</b></div>
+          <div class="db-item"><span>占用空间</span><b>{{ dbStatsInfo.sizeKB }} KB</b></div>
+          <div class="db-item"><span>最后写入</span><b>{{ formatSavedAt(dbStatsInfo.savedAt) }}</b></div>
+        </div>
+        <p class="db-desc">
+          所有业务写操作（新增 / 编辑 / 删除 / 状态变更）完成后都会序列化为 JSON 文档并落盘，刷新页面数据依然保留。
+          浏览器沙箱无法直接写本地 .json 文件，可通过导出 / 导入完成备份与迁移。
+        </p>
+        <input ref="fileInput" type="file" accept=".json,application/json" class="db-file" @change="onDbFile" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -124,5 +228,46 @@ function computedGroups() {
   align-items: center;
   gap: 8px;
   flex: none;
+}
+.db-card {
+  max-width: 980px;
+  margin-top: 4px;
+}
+.db-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+.db-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.db-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--ag-border-light);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-bg-subtle, var(--ag-bg-hover));
+}
+.db-item span {
+  font-size: var(--ag-fs-micro);
+  color: var(--ag-text-3);
+}
+.db-item b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ag-text-1);
+}
+.db-desc {
+  margin: 14px 0 0;
+  font-size: var(--ag-fs-micro);
+  line-height: 1.7;
+  color: var(--ag-text-3);
+}
+.db-file {
+  display: none;
 }
 </style>

@@ -4,12 +4,14 @@
  * ============================================================ */
 import * as db from './data'
 import { rng } from './data'
+import { dbMeta, persistDb, exportDb, importDb, resetDb, dbStats } from './db'
 
 const LATENCY = () => 90 + Math.random() * 160
 const ok = (data, msg = 'success') => ({ code: 0, msg, data })
 const fail = (msg, code = 1) => ({ code, msg, data: null })
 
-let seq = { user: 100, role: 10, ...Object.fromEntries(['plots', 'devices', 'alarms', 'strategies', 'tasks', 'plans', 'orders', 'materials', 'stock', 'personnel', 'harvests', 'trace', 'residue', 'products', 'sales', 'customers', 'dict', 'params', 'logs', 'files', 'tenants', 'apis'].map((k) => [k, 10000])) }
+/** 自增 id 序列由 JSON 数据库托管，随存档一起持久化 */
+const seq = dbMeta.seq
 const nextId = (k) => ++seq[k]
 
 /** 路径段匹配：'/devices/:id' vs '/devices/12' */
@@ -403,6 +405,14 @@ const routes = [
       }
       return fail('菜单不存在')
     } },
+
+  /* ---------- 本地 JSON 数据库（存储管理） ---------- */
+  { m: 'get', p: '/db/stats', h: () => ok(dbStats()) },
+  { m: 'get', p: '/db/export', h: () => ok({ json: exportDb(), stats: dbStats() }) },
+  { m: 'post', p: '/db/import', h: ({ data }) => {
+      try { return ok(importDb(data.json), '数据已导入并落盘') } catch (e) { return fail(e.message) }
+    } },
+  { m: 'post', p: '/db/reset', h: () => { const s = resetDb(); return ok(s, '已恢复初始数据') } },
 ]
 
 /** 分发入口（axios adapter 调用） */
@@ -431,5 +441,7 @@ export async function handleMock(config) {
     err.response = { data: result, status: result.code === 404 ? 404 : 400 }
     throw err
   }
+  // 写操作成功后统一落盘：所有业务数据都进入 JSON 文档，刷新后仍可复现
+  if (method !== 'get') persistDb()
   return result
 }
