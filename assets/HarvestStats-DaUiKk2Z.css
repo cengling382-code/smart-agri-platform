@@ -1,0 +1,1 @@
+.kpi-grid[data-v-36f36525]{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:20px}.chart-grid[data-v-36f36525]{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media (max-width: 1200px){.kpi-grid[data-v-36f36525],.chart-grid[data-v-36f36525]{grid-template-columns:1fr}}
