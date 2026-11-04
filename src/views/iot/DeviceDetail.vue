@@ -27,13 +27,13 @@ const trendOptions = computed(() => {
   return {
     tooltip: { trigger: 'axis', valueFormatter: (v) => v + (meta.unit ? ' ' + meta.unit : '') },
     grid: { left: 10, right: 18, top: 34, bottom: 4, containLabel: true },
-    xAxis: { type: 'time', axisLine: { lineStyle: { color: '#E7E9E8' } }, axisLabel: { formatter: '{MM}-{dd} {HH}:{mm}' } },
-    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: '#F0F1F1' } } },
+    xAxis: { type: 'time', axisLine: { lineStyle: { color: '#dde0e6' } }, axisLabel: { formatter: '{MM}-{dd} {HH}:{mm}' } },
+    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: '#eef0f3' } } },
     dataZoom: [{ type: 'inside' }],
     series: [{
       name: meta.name, type: 'line', smooth: true, showSymbol: false, data: arr,
-      lineStyle: { width: 2.5, color: '#699C78' },
-      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(105,156,120,.25)' }, { offset: 1, color: 'rgba(105,156,120,.02)' }] } },
+      lineStyle: { width: 2.5, color: '#074ce0' },
+      areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(7,76,224,.15)' }, { offset: 1, color: 'rgba(7,76,224,.02)' }] } },
     }],
   }
 })
@@ -50,7 +50,9 @@ async function loadSeries() {
   chartLoading.value = true
   try {
     const key = device.value.params?.[0] || paramKey.value
-    series.value = await deviceApi.series(device.value.id, key, range.value)
+    const r = await deviceApi.series(device.value.id, key, range.value)
+    // 接口返回 { meta, series }，映射为页面使用的 { meta, arr }
+    series.value = { meta: r?.meta || { name: key }, arr: r?.series || [] }
   } finally {
     chartLoading.value = false
   }
@@ -95,7 +97,7 @@ onMounted(async () => {
             <el-descriptions-item label="信号强度">{{ device.signal }}%</el-descriptions-item>
             <el-descriptions-item label="电池电量">{{ device.type === 'sensor' ? device.battery + '%' : '—' }}</el-descriptions-item>
             <el-descriptions-item label="最近上报">{{ device.lastReport }}</el-descriptions-item>
-            <el-descriptions-item v-if="device.type === 'gateway'" label="下挂设备">{{ device.children }} 台</el-descriptions-item>
+            <el-descriptions-item v-if="device.type === 'gateway'" label="下挂设备">{{ device.childCount }} 台</el-descriptions-item>
           </el-descriptions>
 
           <!-- 实时值 -->

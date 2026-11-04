@@ -78,10 +78,10 @@ function toggleDetail() {
     <div v-else class="eb-fallback" role="alert" aria-live="assertive">
       <div class="eb-icon" aria-hidden="true">
         <svg viewBox="0 0 48 48" class="eb-leaf">
-          <rect x="2" y="2" width="44" height="44" rx="12" fill="rgba(232,149,82,.14)" />
-          <path d="M24 10l12 24H12z" fill="none" stroke="#E89552" stroke-width="2.6" stroke-linejoin="round" />
-          <circle cx="24" cy="28" r="1.8" fill="#E89552" />
-          <path d="M24 22v-4" stroke="#E89552" stroke-width="2.6" stroke-linecap="round" />
+          <rect x="2" y="2" width="44" height="44" rx="12" fill="rgba(201,128,62,.14)" />
+          <path d="M24 10l12 24H12z" fill="none" stroke="#c9803e" stroke-width="2.6" stroke-linejoin="round" />
+          <circle cx="24" cy="28" r="1.8" fill="#c9803e" />
+          <path d="M24 22v-4" stroke="#c9803e" stroke-width="2.6" stroke-linecap="round" />
         </svg>
       </div>
       <h2 class="eb-title">页面加载出现问题</h2>
@@ -173,7 +173,7 @@ function toggleDetail() {
   width: min(640px, 92%);
   text-align: left;
   background: var(--ag-bg-hover);
-  border: 1px solid var(--ag-border-light);
+  border: none;
   border-radius: 12px;
   padding: 14px 16px;
   animation: agFadeUp 0.3s var(--ag-ease) both;

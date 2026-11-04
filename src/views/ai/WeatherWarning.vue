@@ -10,7 +10,7 @@ const loading = ref(true)
 
 const WARN_LEVEL = {
   蓝色: { color: '#5E7F9A', icon: 'Cloudy' },
-  黄色: { color: '#E89552', icon: 'Sunny' },
+  黄色: { color: '#c9803e', icon: 'Sunny' },
   橙色: { color: '#ea580c', icon: 'Lightning' },
   红色: { color: '#E84A5F', icon: 'WarningFilled' },
 }
@@ -26,12 +26,12 @@ const pushRecords = [
 const forecastOptions = computed(() => ({
   color: CHART_COLORS,
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, textStyle: { color: '#6E7883' } },
+  legend: { top: 0, textStyle: { color: '#6b7380' } },
   grid: { left: 10, right: 16, top: 36, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: weather.value?.forecast?.map((f) => f.day) || [] },
-  yAxis: { type: 'value', name: '℃', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: '℃', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [
-    { name: '最高温', type: 'line', smooth: true, data: weather.value?.forecast?.map((f) => f.tMax) || [], lineStyle: { color: '#E89552', width: 2.5 }, itemStyle: { color: '#E89552' } },
+    { name: '最高温', type: 'line', smooth: true, data: weather.value?.forecast?.map((f) => f.tMax) || [], lineStyle: { color: '#c9803e', width: 2.5 }, itemStyle: { color: '#c9803e' } },
     { name: '最低温', type: 'line', smooth: true, data: weather.value?.forecast?.map((f) => f.tMin) || [], lineStyle: { color: '#4C6983', width: 2.5 }, itemStyle: { color: '#4C6983' } },
   ],
 }))
@@ -55,7 +55,7 @@ onMounted(async () => {
       <!-- 当前天气 -->
       <div class="ag-card anim-left current-card">
         <div class="cw-main">
-          <el-icon :size="46" color="#E89552"><Sunny /></el-icon>
+          <el-icon :size="46" color="#c9803e"><Sunny /></el-icon>
           <div>
             <div class="cw-temp mono-num">{{ weather?.temp }}℃</div>
             <div class="cw-cond">{{ weather?.city }} · {{ weather?.cond }}</div>
@@ -75,7 +75,7 @@ onMounted(async () => {
           <div class="forecast-row stagger">
             <div v-for="f in weather?.forecast" :key="f.day" class="f-card">
               <span class="f-day">{{ f.day }}</span>
-              <el-icon :size="22" :color="f.icon === 'rain' ? '#4C6983' : f.icon === 'sunny' ? '#E89552' : '#9AA4AE'">
+              <el-icon :size="22" :color="f.icon === 'rain' ? '#4C6983' : f.icon === 'sunny' ? '#c9803e' : '#9AA4AE'">
                 <component :is="ICONS[f.icon]" />
               </el-icon>
               <span class="f-cond">{{ f.cond }}</span>

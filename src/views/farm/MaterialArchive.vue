@@ -13,7 +13,7 @@ const submitting = ref(false)
 const CATEGORIES = ['种子', '化肥', '农药', '地膜']
 const SUPPLIERS = ['金穗农资有限公司', '绿丰种业', '丰收化肥厂', '生物农药科技', '兴农地膜制品', '川农供应链']
 
-const CAT_META = { 种子: { icon: 'Cherry', color: '#699C78' }, 化肥: { icon: 'Box', color: '#E89552' }, 农药: { icon: 'WarningFilled', color: '#E84A5F' }, 地膜: { icon: 'Crop', color: '#4C6983' } }
+const CAT_META = { 种子: { icon: 'Cherry', color: '#074ce0' }, 化肥: { icon: 'Box', color: '#c9803e' }, 农药: { icon: 'WarningFilled', color: '#E84A5F' }, 地膜: { icon: 'Crop', color: '#4C6983' } }
 
 const form = reactive({ id: null, code: '', name: '', category: '种子', spec: '', unit: '袋', supplier: SUPPLIERS[0], price: 0, stock: 0, safeStock: 10 })
 const rules = {

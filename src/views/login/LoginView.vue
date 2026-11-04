@@ -383,9 +383,9 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 .demo-btn {
-  border: 1px solid var(--ag-border);
+  border: none;
   background: var(--ag-bg-page);
-  border-radius: var(--ag-radius-sm); /* 决策依据：演示账号按钮属小控件，对齐控件档 6px */
+  border-radius: var(--ag-radius-sm); /* 演示账号按钮属小控件，对齐控件档 8px */
   padding: 7px 4px;
   cursor: pointer;
   display: flex;
@@ -395,9 +395,8 @@ onBeforeUnmount(() => {
   transition: all 0.2s var(--ag-ease);
 }
 .demo-btn:hover {
-  border-color: var(--ag-green-500);
   background: var(--ag-green-50);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 .demo-role {
   font-size: 11px;

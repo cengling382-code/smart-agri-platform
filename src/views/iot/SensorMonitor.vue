@@ -14,12 +14,12 @@ const autoRefresh = ref(true)
 let refreshTimer = null
 
 const PARAMS = [
-  { key: 'temp', label: '空气温度', unit: '℃', icon: 'Sunny', color: '#E89552' },
+  { key: 'temp', label: '空气温度', unit: '℃', icon: 'Sunny', color: '#c9803e' },
   { key: 'hum', label: '空气湿度', unit: '%RH', icon: 'Drizzling', color: '#4C6983' },
   { key: 'co2', label: 'CO₂浓度', unit: 'ppm', icon: 'Cloudy', color: '#B17179' },
-  { key: 'light', label: '光照强度', unit: 'klx', icon: 'Sunrise', color: '#E89552' },
+  { key: 'light', label: '光照强度', unit: 'klx', icon: 'Sunrise', color: '#c9803e' },
   { key: 'soilT', label: '土壤温度', unit: '℃', icon: 'Sunny', color: '#C77F3B' },
-  { key: 'soilH', label: '土壤湿度', unit: '%', icon: 'Pouring', color: '#699C78' },
+  { key: 'soilH', label: '土壤湿度', unit: '%', icon: 'Pouring', color: '#074ce0' },
   { key: 'ph', label: 'PH值', unit: '', icon: 'Odometer', color: '#14b8a6' },
 ]
 
@@ -41,10 +41,10 @@ const trendOptions = computed(() => {
   return {
     color: CHART_COLORS,
     tooltip: { trigger: 'axis' },
-    legend: { top: 0, textStyle: { color: '#6E7883' } },
+    legend: { top: 0, textStyle: { color: '#6b7380' } },
     grid: { left: 10, right: 16, top: 36, bottom: 4, containLabel: true },
     xAxis: { type: 'time', axisLabel: { formatter: '{MM}-{dd} {HH}:{mm}' } },
-    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: '#F0F1F1' } } },
+    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: '#eef0f3' } } },
     dataZoom: [{ type: 'inside' }],
     series: multiTrend.value.map((s, i) => ({
       name: `${s.meta.name}(${s.meta.unit || '-'})`,
@@ -65,7 +65,8 @@ async function loadSeries() {
     const plot = activePlot.value
     const keys = (plot?.type === '水产' ? ['oxygen'] : plot?.type === '畜禽' ? ['nh3'] : ['temp', 'hum', 'co2', 'light']).filter(Boolean)
     const res = await Promise.all(keys.map((k, i) => deviceApi.series(100 + i * 7 + (plot?.id || 1), k, 72)))
-    multiTrend.value = res
+    // 接口返回 { meta, series: [[t,v],...] }，统一映射为页面使用的 { param, meta, arr }
+    multiTrend.value = res.map((r, i) => ({ param: keys[i], meta: r?.meta || { name: keys[i] }, arr: r?.series || [] }))
   } catch (e) {
     console.warn('[SensorMonitor]', e?.message || e)
   } finally {
@@ -153,9 +154,9 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 .p-chip {
-  border: 1px solid var(--ag-border);
-  background: #fff;
-  border-radius: var(--ag-radius-sm); /* 决策依据：点位筛选 chip 属小控件，对齐控件档 6px */
+  border: none;
+  background: var(--ag-bg-hover);
+  border-radius: var(--ag-radius-sm); /* 点位筛选 chip 属小控件，对齐控件档 8px */
   padding: 8px 16px;
   cursor: pointer;
   display: flex;
@@ -165,12 +166,11 @@ onMounted(async () => {
   transition: all 0.22s var(--ag-ease);
 }
 .p-chip:hover {
-  border-color: var(--ag-green-400);
-  transform: translateY(-2px);
+  background: var(--ag-green-50);
+  transform: translateY(-1px);
 }
 .p-chip.active {
   background: var(--ag-green-600);
-  border-color: var(--ag-green-600);
 }
 .p-chip.active .p-type,
 .p-chip.active .p-name {

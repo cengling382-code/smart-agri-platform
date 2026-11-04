@@ -97,7 +97,7 @@ async function handleSubmit() {
   transition: background 0.3s;
 }
 .bars i.on.lv-1 { background: #E84A5F; }
-.bars i.on.lv-2 { background: #E89552; }
+.bars i.on.lv-2 { background: #c9803e; }
 .bars i.on.lv-3 { background: #4C6983; }
-.bars i.on.lv-4 { background: #699C78; }
+.bars i.on.lv-4 { background: #558162; }
 </style>

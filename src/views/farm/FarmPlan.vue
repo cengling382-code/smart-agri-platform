@@ -296,9 +296,9 @@ onMounted(async () => {
 .cal-plan:hover {
   transform: translateX(2px);
 }
-.cal-plan[data-type='施肥'] { border-left-color: #E89552; }
+.cal-plan[data-type='施肥'] { border-left-color: #c9803e; }
 .cal-plan[data-type='打药'] { border-left-color: #E84A5F; }
-.cal-plan[data-type='采收'] { border-left-color: #699C78; }
+.cal-plan[data-type='采收'] { border-left-color: #074ce0; }
 .cal-plan[data-type='灌溉'] { border-left-color: #4C6983; }
 .cp-type {
   font-weight: 700;

@@ -14,7 +14,8 @@
 import * as seed from './data'
 
 const STORAGE_KEY = 'agri-db-v1'
-const VERSION = 1
+// v3：设备「下挂设备数」字段由 children 改名 childCount（数字型 children 会触发 el-table 树表崩溃），升版重播种
+const VERSION = 3
 /** 只读常量字典，不参与持久化 */
 const STATIC_ARRAY = new Set(['CROPS'])
 /** 对象型单例集合 */

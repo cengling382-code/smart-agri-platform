@@ -2,13 +2,10 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import ErrorBoundary from '@/components/ui/ErrorBoundary.vue'
-import ViewSwitch from '@/components/ui/ViewSwitch.vue'
 
 const route = useRoute()
 const isFullScreen = computed(() => ['ScreenLayout', 'MobileLayout'].includes(String(route.meta.layout || '')))
 const isTracePage = computed(() => String(route.meta.layout || '') === 'TraceLayout')
-/** 大屏与消费者溯源页不挂视图切换，避免遮挡信息层 */
-const showViewSwitch = computed(() => !['ScreenLayout', 'TraceLayout'].includes(String(route.meta.layout || '')))
 </script>
 
 <template>
@@ -22,7 +19,6 @@ const showViewSwitch = computed(() => !['ScreenLayout', 'TraceLayout'].includes(
         </transition>
       </router-view>
     </ErrorBoundary>
-    <ViewSwitch v-if="showViewSwitch" />
   </div>
 </template>
 

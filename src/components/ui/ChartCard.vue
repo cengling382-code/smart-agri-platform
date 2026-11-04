@@ -6,6 +6,15 @@
  * 用法：<ChartCard :options="chartOptions" :height="320" />
  */
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { AGRI_SOFT_THEME } from '@/utils/chartTheme'
+
+/** 主题只注册一次；显式 options 仍优先于主题兜底 */
+let themeRegistered = false
+function ensureTheme(echarts) {
+  if (themeRegistered) return
+  echarts.registerTheme('agri-soft', AGRI_SOFT_THEME)
+  themeRegistered = true
+}
 
 const props = defineProps({
   options: { type: Object, required: true },
@@ -35,7 +44,8 @@ async function init() {
   if (!el.value || chart) return
   try {
     if (!echarts) echarts = (await import('echarts')).default ?? (await import('echarts'))
-    chart = echarts.init(el.value)
+    ensureTheme(echarts)
+    chart = echarts.init(el.value, 'agri-soft')
     failed.value = false
     render()
     ro = new ResizeObserver(() => {
@@ -66,7 +76,7 @@ watch(() => props.options, render, { deep: true })
 watch(() => props.loading, (v) => {
   if (!chart) return
   try {
-    v ? chart.showLoading({ text: '', color: '#699C78', maskColor: 'rgba(255,255,255,0.6)' }) : chart.hideLoading()
+    v ? chart.showLoading({ text: '', color: '#074ce0', maskColor: 'rgba(255,255,255,0.6)' }) : chart.hideLoading()
   } catch { /* 忽略 */ }
 })
 

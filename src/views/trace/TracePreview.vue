@@ -83,8 +83,8 @@ function pick(code) {
             </div>
           </div>
           <div class="pm-feats">
-            <div class="pm-feat"><el-icon color="#699C78"><Place /></el-icon>产地信息</div>
-            <div class="pm-feat"><el-icon color="#E89552"><Calendar /></el-icon>生长周期</div>
+            <div class="pm-feat"><el-icon color="#074ce0"><Place /></el-icon>产地信息</div>
+            <div class="pm-feat"><el-icon color="#c9803e"><Calendar /></el-icon>生长周期</div>
             <div class="pm-feat"><el-icon color="#4C6983"><Sunny /></el-icon>环境数据</div>
             <div class="pm-feat"><el-icon color="#B17179"><Document /></el-icon>检测报告</div>
           </div>
@@ -118,7 +118,7 @@ function pick(code) {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  border: 1px solid var(--ag-border-light);
+  background: var(--ag-bg-hover);
   background: #fff;
   border-radius: var(--ag-radius); /* 决策依据：批次选择行属卡片类，token 化为卡片档 10px（值不变） */
   padding: 10px 14px;

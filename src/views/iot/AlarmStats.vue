@@ -10,7 +10,7 @@ const loading = ref(true)
 
 const typeOptions = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: {c} 条 ({d}%)' },
-  legend: { bottom: 0, textStyle: { color: '#6E7883' }, itemWidth: 10, itemHeight: 10 },
+  legend: { bottom: 0, textStyle: { color: '#6b7380' }, itemWidth: 10, itemHeight: 10 },
   series: [{
     type: 'pie', radius: ['42%', '70%'], center: ['50%', '42%'],
     itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
@@ -22,8 +22,8 @@ const typeOptions = computed(() => ({
 const levelOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
-  xAxis: { type: 'category', data: stats.value?.byLevel?.map((l) => l.name) || [], axisLine: { lineStyle: { color: '#E7E9E8' } } },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  xAxis: { type: 'category', data: stats.value?.byLevel?.map((l) => l.name) || [], axisLine: { lineStyle: { color: '#dde0e6' } } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 42, data: stats.value?.byLevel?.map((l, i) => ({
       value: l.value,
@@ -36,11 +36,11 @@ const trendOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', boundaryGap: false, data: stats.value?.byDay?.map((d) => d.day) || [] },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     name: '告警数量', type: 'line', smooth: true, data: stats.value?.byDay?.map((d) => d.count) || [],
     lineStyle: { width: 2.5, color: CHART_COLORS[0] },
-    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(105,156,120,.22)' }, { offset: 1, color: 'rgba(105,156,120,.02)' }] } },
+    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(7,76,224,.15)' }, { offset: 1, color: 'rgba(7,76,224,.02)' }] } },
   }],
 }))
 
@@ -48,7 +48,7 @@ const channelOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 30, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: stats.value?.channels?.map((c) => c.name) || [] },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 36,
     data: stats.value?.channels?.map((c, i) => ({ value: c.count, itemStyle: { color: CHART_COLORS[i], borderRadius: [6, 6, 0, 0] } })) || [],

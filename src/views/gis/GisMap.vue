@@ -1,6 +1,6 @@
 <script setup>
 /** 页面 21 · GIS 园区地图总览：地块/大棚/传感器点位地图展示、点击弹窗查看实时数据 */
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { PageHeader, StatusTag } from '@/components/ui'
@@ -18,10 +18,10 @@ const layers = reactive({ plots: true, devices: true, weather: true, labels: tru
 const basemap = ref('satellite') // satellite | standard
 
 const TYPE_COLOR = {
-  设施大棚: '#699C78', 大田: '#D4B95E', 果园: '#E89552', 水产: '#4C6983', 畜禽: '#B17179',
+  设施大棚: '#074ce0', 大田: '#D4B95E', 果园: '#c9803e', 水产: '#4C6983', 畜禽: '#B17179',
 }
 const TYPE_FILL = {
-  设施大棚: 'rgba(105,156,120,.28)', 大田: 'rgba(234,179,8,.24)', 果园: 'rgba(232,149,82,.24)', 水产: 'rgba(76,105,131,.24)', 畜禽: 'rgba(177,113,121,.24)',
+  设施大棚: 'rgba(7,76,224,.18)', 大田: 'rgba(234,179,8,.24)', 果园: 'rgba(201,128,62,.24)', 水产: 'rgba(76,105,131,.24)', 畜禽: 'rgba(177,113,121,.24)',
 }
 
 const points = computed(() =>
@@ -61,6 +61,7 @@ onMounted(async () => {
   try {
     const [ps, ds] = await Promise.all([plotApi.all(), deviceApi.all()])
     plots.value = ps.map((p) => ({ ...p }))
+    devices.value = ds || []
   } catch (e) {
     console.warn('[GisMap]', e?.message || e)
   } finally {
@@ -91,7 +92,7 @@ onMounted(async () => {
             </pattern>
             <filter id="soft"><feDropShadow dx="0" dy="0.3" stdDeviation="0.5" flood-opacity="0.25" /></filter>
           </defs>
-          <rect width="100" height="100" :fill="basemap === 'satellite' ? '#22321f' : '#eef4ee'" />
+          <rect width="100" height="100" :fill="basemap === 'satellite' ? '#22321f' : '#eef0f3'" />
           <rect width="100" height="100" fill="url(#grid)" />
 
           <!-- 道路 -->
@@ -200,7 +201,7 @@ onMounted(async () => {
               <div class="cd-title text-dim">作物分布</div>
               <div v-for="(cnt, crop) in plots.reduce((m, p) => ({ ...m, [p.crop]: (m[p.crop] || 0) + 1 }), {})" :key="crop" class="cd-row">
                 <span>{{ crop }}</span>
-                <el-progress :percentage="Math.round((cnt / plots.length) * 100)" :stroke-width="7" :show-text="false" color="#699C78" style="flex: 1" />
+                <el-progress :percentage="Math.round((cnt / plots.length) * 100)" :stroke-width="7" :show-text="false" color="#074ce0" style="flex: 1" />
                 <span class="mono-num">{{ cnt }} 块</span>
               </div>
             </div>
@@ -210,9 +211,9 @@ onMounted(async () => {
         <div class="ag-card anim-up anim-delay-2">
           <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>气象图层</div></div>
           <div class="ag-card__body" v-if="layers.weather">
-            <div class="w-row"><el-icon color="#E89552"><Sunny /></el-icon><span>当前温度</span><b class="mono-num">19℃</b></div>
+            <div class="w-row"><el-icon color="#c9803e"><Sunny /></el-icon><span>当前温度</span><b class="mono-num">19℃</b></div>
             <div class="w-row"><el-icon color="#4C6983"><Drizzling /></el-icon><span>湿度</span><b class="mono-num">58%</b></div>
-            <div class="w-row"><el-icon color="#699C78"><WindPower /></el-icon><span>风速</span><b class="mono-num">3.2 m/s</b></div>
+            <div class="w-row"><el-icon color="#074ce0"><WindPower /></el-icon><span>风速</span><b class="mono-num">3.2 m/s</b></div>
             <div class="w-row"><el-icon color="#B17179"><Umbrella /></el-icon><span>降雨量</span><b class="mono-num">0 mm</b></div>
           </div>
           <el-empty v-else description="气象图层已关闭" :image-size="48" />
@@ -268,10 +269,10 @@ onMounted(async () => {
   cursor: pointer;
 }
 .dev-dot {
-  fill: #7DC383;
+  fill: #558162;
 }
 .dev-halo {
-  fill: rgba(125, 195, 131, 0.2);
+  fill: rgba(85, 129, 98, 0.2);
   animation: agRadar 2.4s ease-out infinite;
 }
 .dev-point.offline .dev-dot { fill: #9AA4AE; }
@@ -394,7 +395,7 @@ onMounted(async () => {
   display: inline-block;
 }
 .lg-dev {
-  background: #7DC383 !important;
+  background: #558162 !important;
   border-radius: 50% !important;
 }
 .pop-enter-active {

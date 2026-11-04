@@ -27,8 +27,10 @@ onMounted(async () => {
     plots.value = await plotApi.all()
     activeId.value = plots.value[0]?.id
     const res = await Promise.all([deviceApi.series(51, 'temp', 24), deviceApi.series(52, 'hum', 24)])
-    series.value = res
-    simpleTrend.value = res[0].arr.slice(-12)
+    // 接口返回 { meta, series }，映射为页面使用的 { meta, arr }
+    const norm = res.map((r, i) => ({ meta: r?.meta || {}, arr: r?.series || [] }))
+    series.value = norm
+    simpleTrend.value = norm[0].arr.slice(-12)
   } catch (e) {
     console.warn('[MobileEnv]', e?.message || e)
   } finally {

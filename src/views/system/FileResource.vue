@@ -10,9 +10,9 @@ const uploadVisible = ref(false)
 const summary = ref({ total: 0, img: 0, video: 0, doc: 0 })
 
 const TYPE_META = {
-  img: { label: '图片', icon: 'Picture', color: '#699C78' },
+  img: { label: '图片', icon: 'Picture', color: '#074ce0' },
   video: { label: '视频', icon: 'VideoCamera', color: '#4C6983' },
-  doc: { label: '文档', icon: 'Document', color: '#E89552' },
+  doc: { label: '文档', icon: 'Document', color: '#c9803e' },
 }
 
 const columns = [
@@ -51,11 +51,11 @@ onMounted(async () => {
 function preview(row) {
   ElMessageBox.alert(
     `<div style="text-align:center;padding:10px">
-      <div style="width:220px;height:140px;border-radius:12px;background:${row.type === 'img' ? 'linear-gradient(135deg,#DCEBE0,#699C78)' : row.type === 'video' ? 'linear-gradient(135deg,#D6E6F2,#4C6983)' : 'linear-gradient(135deg,#F3DFA6,#E89552)'};margin:0 auto 12px;display:grid;place-items:center;font-size:40px;color:#fff">
-        ${row.type === 'img' ? '🖼' : row.type === 'video' ? '🎬' : '📄'}
+      <div style="width:220px;height:140px;border-radius:12px;background:${row.type === 'img' ? 'linear-gradient(135deg,#5c85f5,#074ce0)' : row.type === 'video' ? 'linear-gradient(135deg,#D6E6F2,#4C6983)' : 'linear-gradient(135deg,#F3DFA6,#c9803e)'};margin:0 auto 12px;display:grid;place-items:center;font-size:20px;font-weight:600;color:#fff">
+        ${row.type === 'img' ? '图片' : row.type === 'video' ? '视频' : '文档'}
       </div>
       <b>${row.name}</b><br/>
-      <span style="color:#6E7883;font-size:12px">${row.size} · ${row.path}</span>
+      <span style="color:#6b7380;font-size:12px">${row.size} · ${row.path}</span>
     </div>`,
     '文件预览',
     { dangerouslyUseHTMLString: true, confirmButtonText: '关闭' }

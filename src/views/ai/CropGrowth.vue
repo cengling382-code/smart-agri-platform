@@ -20,9 +20,9 @@ const levelOptions = computed(() => {
       type: 'pie', radius: ['44%', '70%'], center: ['50%', '42%'],
       itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }, label: { show: false },
       data: [
-        { name: '优', value: levels['优'], itemStyle: { color: '#699C78' } },
+        { name: '优', value: levels['优'], itemStyle: { color: '#558162' } },
         { name: '良', value: levels['良'], itemStyle: { color: '#5E7F9A' } },
-        { name: '中', value: levels['中'], itemStyle: { color: '#E89552' } },
+        { name: '中', value: levels['中'], itemStyle: { color: '#c9803e' } },
       ],
     }],
   }
@@ -32,14 +32,14 @@ const scoreOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 40, containLabel: true },
   xAxis: { type: 'category', data: list.value.map((g) => g.plotName), axisLabel: { rotate: 24, fontSize: 10 } },
-  yAxis: { type: 'value', max: 100, name: '长势评分', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', max: 100, name: '长势评分', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 26,
     data: list.value.map((g, i) => ({
       value: g.score,
-      itemStyle: { color: g.score > 88 ? '#699C78' : g.score > 78 ? '#5E7F9A' : '#E89552', borderRadius: [6, 6, 0, 0] },
+      itemStyle: { color: g.score > 88 ? '#558162' : g.score > 78 ? '#5E7F9A' : '#c9803e', borderRadius: [6, 6, 0, 0] },
     })),
-    label: { show: true, position: 'top', color: '#6E7883', fontSize: 10 },
+    label: { show: true, position: 'top', color: '#6b7380', fontSize: 10 },
   }],
 }))
 
@@ -97,7 +97,7 @@ onMounted(async () => {
               <span class="text-dim">{{ g.crop }} · {{ g.stage }}</span>
             </div>
             <div class="g-mid">
-              <el-progress :percentage="g.score" :stroke-width="8" :show-text="false" :color="g.score > 88 ? '#699C78' : g.score > 78 ? '#5E7F9A' : '#E89552'" style="width: 110px" />
+              <el-progress :percentage="g.score" :stroke-width="8" :show-text="false" :color="g.score > 88 ? '#558162' : g.score > 78 ? '#5E7F9A' : '#c9803e'" style="width: 110px" />
               <span class="lv" :class="'lv-' + g.level">{{ g.level }}</span>
             </div>
             <div class="g-right">
@@ -168,7 +168,7 @@ onMounted(async () => {
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
-  border: 1px solid var(--ag-border-light);
+  background: var(--ag-bg-hover);
   border-radius: var(--ag-radius); /* 决策依据：长势列表行属卡片类，对齐卡片档 10px */
   cursor: pointer;
   transition: all 0.22s var(--ag-ease);

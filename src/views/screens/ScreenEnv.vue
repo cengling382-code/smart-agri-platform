@@ -58,7 +58,9 @@ const weather = [
 async function loadSeries() {
   try {
     const keys = ['temp', 'hum', 'co2']
-    series.value = await Promise.all(keys.map((k, i) => deviceApi.series(31 + i * 13, k, 72)))
+    const res = await Promise.all(keys.map((k, i) => deviceApi.series(31 + i * 13, k, 72)))
+    // 接口返回 { meta, series }，映射为大屏使用的 { meta, arr }
+    series.value = res.map((r, i) => ({ meta: r?.meta || { name: keys[i] }, arr: r?.series || [] }))
   } catch (e) {
     console.warn('[ScreenEnv]', e?.message || e)
   }

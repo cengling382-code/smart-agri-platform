@@ -8,6 +8,10 @@
    ============================================================ */
 @import './variables.css';
 @import './animations.css';
+/* dp 字体：Host Grotesk（标题/大数字）+ Instrument Sans（正文/控件），
+   走 jsdelivr/fontsource CDN，加载失败时无感回落到系统中文字体 */
+@import url('https://cdn.jsdelivr.net/npm/@fontsource-variable/host-grotesk@5/index.css');
+@import url('https://cdn.jsdelivr.net/npm/@fontsource-variable/instrument-sans@5/index.css');
 
 *,
 *::before,
@@ -29,7 +33,7 @@ body {
   /* 中文正文给 0.15px 微正字距：CJK 字面满格，零字距在 14px 下会显得黏连 */
   letter-spacing: 0.15px;
   color: var(--ag-text-1);
-  background: var(--ag-bg-page);
+  background: var(--ag-bg-ground);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -59,6 +63,42 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- 文字层级体系（严格四级 + 辅助说明） ----------
+   一级标题 = .page-title（26px display 700，见上）
+   二级标题 = 卡片/区块标题（17px 600，--ag-fs-h3）
+   正文     = 14px 400（--ag-fs-body）
+   辅助说明 = 12-13px text-3/text-4（--ag-fs-caption / micro）
+   原生 h 标签按同一阶梯收敛，防止个别页面自写标题时破格 */
+h1, h2, h3, h4 {
+  font-family: var(--ag-font-display);
+  color: var(--ag-text-1);
+  margin: 0;
+}
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; }
+h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.3; }
+h3 { font-size: var(--ag-fs-h3); font-weight: 600; letter-spacing: var(--ag-ls-h3); line-height: var(--ag-lh-h3); }
+h4 { font-size: 15px; font-weight: 600; letter-spacing: 0; line-height: 1.5; }
+
+/* ---------- 大数字统一显示字体（统计值、仪表读数） ---------- */
+.el-statistic__number,
+.el-progress__text {
+  font-family: var(--ag-font-num);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 空状态与描述文字 ---------- */
+.el-empty__description p {
+  color: var(--ag-text-4);
+  font-size: var(--ag-fs-caption);
+}
+
+/* ---------- 表头：辅助文字层级（12px 冷灰 + 微字距），行内容 14px 正文 ---------- */
+.el-table th.el-table__cell {
+  font-size: var(--ag-fs-micro);
+  letter-spacing: var(--ag-ls-micro);
+  color: var(--ag-text-3);
+}
+
 /* ---------- 通用页面容器（4pt 网格留白：32/32/48） ---------- */
 .page {
   padding: var(--ag-space-8) var(--ag-space-8) var(--ag-space-12);
@@ -74,23 +114,16 @@ img {
   flex-wrap: wrap;
 }
 .page-title {
-  font-size: var(--ag-fs-title);
-  font-weight: 600;                    /* 700 → 600：大字号配 Semibold 已足够，Bold 会显笨重 */
+  font-family: var(--ag-font-display);    /* dp：显示字体负责标题 */
+  font-size: 26px;                     /* 参照基准的页面主标题（Overview 级别） */
+  font-weight: 700;                    /* dp：显示字重加粗 + 紧字距 */
   color: var(--ag-text-1);
   margin: 0;
-  letter-spacing: var(--ag-ls-title);
-  line-height: var(--ag-lh-title);
+  letter-spacing: -0.5px;              /* 大字号负字距，与参考稿字形节奏一致 */
+  line-height: 1.2;
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
-}
-.page-title::before {
-  content: '';
-  width: 3px;
-  height: 18px;
-  border-radius: 1px;                  /* 近乎直角的细标：区分于胶囊药丸的"AI 通用形" */
-  background: var(--ag-green-600);
-  flex: none;
 }
 .page-desc {
   color: var(--ag-text-3);
@@ -105,14 +138,15 @@ img {
   flex-wrap: wrap;
 }
 
-/* ---------- 卡片：默认贴合，hover 只做 1px 的"离手"暗示 ----------
-   决策依据：-2px 位移 + 加深阴影是 AI 模板的标配动效，密集网格里
-   会出现整屏同时浮起的噪音。改为 1px + 单层阴影，够感知、不喧哗 */
+/* ---------- 卡片：dp panel 形制（发丝边 + 柔和下坠投影） ----------
+   决策依据：dp 规定卡片 = 白底 + panel 圆角 12px + 1px rule 细边 +
+   柔和下坠柔影，观感平整哑光；hover 只做投影加深 + 1px 上浮，
+   密集网格里不会产生整屏浮起的噪音 */
 .ag-card {
   background: var(--ag-bg-surface);
   border-radius: var(--ag-radius);
-  border: 1px solid var(--ag-border-light);
-  box-shadow: var(--ag-shadow-sm);
+  border: 1px solid var(--ag-border);
+  box-shadow: var(--ag-shadow);
   transition: box-shadow var(--ag-dur) var(--ag-ease), transform var(--ag-dur) var(--ag-ease);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -172,10 +206,10 @@ img {
 
 /* ---------- Element Plus 细节微调 ---------- */
 .el-table {
-  --el-table-header-bg-color: #f7f8f7;
+  --el-table-header-bg-color: #f6f7f9;
   --el-table-header-text-color: var(--ag-text-2);
   --el-table-row-hover-bg-color: var(--ag-green-50);
-  --el-table-border-color: var(--ag-border-light);
+  --el-table-border-color: #edeff2;    /* 分割线弱化到发丝级：留白承担区隔 */
 }
 .el-table .el-table__cell {
   padding: 13px 0;
@@ -187,8 +221,14 @@ img {
   font-weight: 500;
   transition: transform var(--ag-dur-fast) var(--ag-ease), box-shadow var(--ag-dur-fast) var(--ag-ease);
 }
+/* 默认按钮轻量化：发丝 rule 边（dp pale outlined secondary） */
+.el-button--default:not(.is-text):not(.is-link):not(.is-plain) {
+  --el-button-border-color: var(--ag-border);
+  --el-button-hover-border-color: var(--ag-green-300);
+  --el-button-bg-color: #ffffff;
+}
 .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
-  box-shadow: var(--ag-shadow-sm);
+  box-shadow: 0 1px 2px rgba(48, 56, 65, 0.08);
 }
 /* 按压反馈（ios-design：scale 0.97，发生在 pointer-down，即时） */
 .el-button:not(.is-text):not(.is-link):active {
@@ -201,13 +241,21 @@ img {
     transform: translateY(-1px);
   }
 }
+/* 输入控件：8px 大圆角 + 发丝边，聚焦用品牌绿细环 */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  border-radius: var(--ag-radius-sm);
+}
 .el-dialog {
-  border-radius: var(--ag-radius-lg);   /* 浮层用最大档半径，明确"抬升于页面之上" */
+  border-radius: var(--ag-radius);      /* dp：弹窗与卡片同为 panel 半径 12px */
+  border: none;
+  box-shadow: var(--ag-shadow-lg);
   overflow: hidden;
 }
 .el-dialog__header {
   margin-right: 0;
-  background: #fafbfb;
+  background: #ffffff;                  /* 参照基准：弹窗与卡片同为纯白平铺，无头部分色带 */
   padding: 20px 24px;
 }
 .el-dialog__title {
@@ -222,8 +270,27 @@ img {
 .el-form-item {
   margin-bottom: 22px;
 }
+/* 标签：一律胶囊形（参照基准的状态徽章形制） */
+.el-tag {
+  border-radius: var(--ag-radius-pill);
+}
+/* 分页轻量化：去底色块，只保留悬停态的浅灰圆角 */
 .el-pagination {
   --el-pagination-hover-color: var(--ag-green-600);
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-button-color: var(--ag-text-2);
+}
+.el-pagination .el-pager li,
+.el-pagination .btn-prev,
+.el-pagination .btn-next {
+  border-radius: var(--ag-radius-sm);
+  background: transparent;
+  font-weight: 500;
+}
+.el-pagination .el-pager li.is-active {
+  background: var(--ag-green-700);     /* dp：选中态用电光蓝 */
+  color: #fff;
+  font-weight: 600;
 }
 .el-tabs__item.is-active {
   font-weight: 600;
@@ -233,8 +300,9 @@ img {
   color: var(--ag-text-3);
 }
 .el-card {
-  border-radius: var(--ag-radius);      /* 与 .ag-card 同档：卡片一律 10px */
-  border-color: var(--ag-border-light);
+  border-radius: var(--ag-radius);      /* 与 .ag-card 同档：面板一律 12px */
+  border: 1px solid var(--ag-border);
+  box-shadow: var(--ag-shadow);
 }
 .el-loading-mask {
   backdrop-filter: blur(2px);
@@ -247,12 +315,12 @@ img {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d5d8d6;
-  border-radius: 4px;                   /* 细窄滚动条配小半径：更利落，不抢内容 */
+  background: #cdd2d9;
+  border-radius: var(--ag-radius-pill); /* 胶囊滚动条，与全站控件语汇一致 */
   transition: background 0.2s;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8bcb9;
+  background: #b3bac3;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -314,5 +382,105 @@ img {
     transition-duration: 0.12s !important;
     transition-property: opacity, background-color, border-color, color !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   手机端全局适配（≤768px）
+   原则：复用桌面组件与令牌，只在小屏做「形制」让步——
+   留白收敛、浮层不超屏、表格可横滑、文字不溢出。
+   ============================================================ */
+@media (max-width: 768px) {
+  /* 页面留白收敛：32px → 16px，底部给 Dock + 安全区让位 */
+  .page {
+    padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-12);
+  }
+  .page-title {
+    font-size: 22px;
+  }
+  .page-header {
+    gap: var(--ag-space-3);
+  }
+  /* 页头操作区允许换行堆叠 */
+  .page-actions {
+    width: 100%;
+  }
+
+  /* 浮层不超出屏幕（对话框/确认框默认宽度常为 420-680px） */
+  .el-dialog,
+  .el-message-box {
+    max-width: calc(100vw - 24px);
+  }
+  .el-message-box {
+    width: calc(100vw - 24px);
+  }
+  /* 表单标签上置：90-100px 的左标签在 375px 宽下挤占输入区 */
+  .el-form--inline .el-form-item,
+  .el-form-item {
+    display: block;
+  }
+  .el-form-item .el-form-item__label {
+    width: auto !important;
+    justify-content: flex-start;
+    padding-right: 0;
+  }
+
+  /* 表格：字号微降 + 容器允许横向滚动，杜绝列挤压错位；
+     手机上取消单元格截断（tooltip 在触屏上不可用），内容换行完整展示 */
+  .el-table {
+    font-size: 13px;
+  }
+  .el-table .cell {
+    word-break: break-all;
+    white-space: normal !important;
+  }
+  .el-table .cell.el-tooltip {
+    white-space: normal !important;
+  }
+
+  /* 分页器：允许换行不溢出 */
+  .el-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}
+
+/* ---------- 触控标准（coarse pointer）：主要点按目标 ≥44px ----------
+   仅在触控设备生效，桌面鼠标形态不受影响；
+   行内小按钮（表格操作列）保持紧凑，由行高保证可点性 */
+@media (pointer: coarse) {
+  .el-button {
+    min-height: 44px;
+  }
+  .el-button--small {
+    min-height: 32px;
+  }
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-textarea__inner {
+    min-height: 44px;
+  }
+  .el-textarea__inner {
+    min-height: 88px;
+  }
+  .el-pagination .el-pager li,
+  .el-pagination .btn-prev,
+  .el-pagination .btn-next {
+    min-width: 44px;
+    height: 44px;
+  }
+  .el-radio-button__inner {
+    min-height: 40px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  /* iOS 点击高亮：交给各组件自己的 :active 反馈 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* 表格横向滚动条常显：给「还有更多列」以视觉线索 */
+  .el-scrollbar__bar.is-horizontal {
+    opacity: 1;
+    height: 6px;
   }
 }

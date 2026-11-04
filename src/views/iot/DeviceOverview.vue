@@ -66,7 +66,7 @@ function plotName(row) {
   return plots.value.find((p) => p.id === row.plotId)?.name || '—'
 }
 function signalPct(v) {
-  return v >= 80 ? 'var(--ag-success)' : v >= 50 ? '#E89552' : 'var(--ag-danger)'
+  return v >= 80 ? 'var(--ag-success)' : v >= 50 ? '#c9803e' : 'var(--ag-danger)'
 }
 
 function openCreate() {
@@ -195,8 +195,8 @@ async function handleDelete(row) {
   place-items: center;
   flex: none;
 }
-.ic-gateway { background: #FFF1BC; color: #E89552; }
-.ic-sensor { background: #E2EFE5; color: #699C78; }
+.ic-gateway { background: rgba(201, 128, 62, 0.12); color: #c9803e; }
+.ic-sensor { background: rgba(7, 76, 224, 0.10); color: #074ce0; }
 .ic-actuator { background: #D6E6F2; color: #4C6983; }
 .ic-camera { background: #E3EEF6; color: #4C6983; }
 .t-name {

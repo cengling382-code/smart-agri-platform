@@ -12,7 +12,7 @@ const byDayOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', boundaryGap: false, data: stats.value?.byDay?.map((d) => d.day) || [] },
-  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     name: '扫码次数', type: 'line', smooth: true, areaStyle: {
       color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(76,105,131,.22)' }, { offset: 1, color: 'rgba(76,105,131,.02)' }] },
@@ -24,7 +24,7 @@ const byDayOptions = computed(() => ({
 
 const byBatchOptions = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: {c} 次 ({d}%)' },
-  legend: { bottom: 0, textStyle: { color: '#6E7883' }, itemWidth: 10, itemHeight: 10 },
+  legend: { bottom: 0, textStyle: { color: '#6b7380' }, itemWidth: 10, itemHeight: 10 },
   series: [{
     type: 'pie', radius: ['44%', '70%'], center: ['50%', '42%'], roseType: 'radius',
     itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }, label: { show: false },

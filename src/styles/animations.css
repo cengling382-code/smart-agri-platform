@@ -9,22 +9,20 @@
    —— 不做缩放整页（scale 会让文字栅格抖动）
    ============================================================ */
 
-/* ---------- 路由切换过渡 ---------- */
+/* ---------- 路由切换过渡（dp：无页面入场编排，只保留最短交叉淡入） ---------- */
 .route-enter-active {
-  transition: opacity 0.28s var(--ag-ease), transform 0.28s var(--ag-ease);
+  transition: opacity var(--ag-dur) var(--ag-ease);
 }
 .route-leave-active {
-  transition: opacity 0.16s var(--ag-ease), transform 0.16s var(--ag-ease);
+  transition: opacity var(--ag-dur-fast) var(--ag-ease);
   position: absolute;
   width: 100%;
 }
 .route-enter-from {
   opacity: 0;
-  transform: translateY(8px);
 }
 .route-leave-to {
   opacity: 0;
-  transform: translateY(-4px);
 }
 
 /* ---------- 通用淡入淡出 ---------- */
@@ -106,35 +104,38 @@
   50% { transform: rotate(1.5deg); }
 }
 
-/* ---------- 入场编排工具类 ---------- */
-.anim-up { animation: agFadeUp 0.4s var(--ag-ease) both; }
-.anim-in { animation: agFadeIn 0.32s var(--ag-ease) both; }
-.anim-zoom { animation: agZoomIn 0.32s var(--ag-ease-spring) both; }
-.anim-left { animation: agSlideRight 0.36s var(--ag-ease) both; }
-.anim-delay-1 { animation-delay: 0.04s; }
-.anim-delay-2 { animation-delay: 0.08s; }
-.anim-delay-3 { animation-delay: 0.12s; }
-.anim-delay-4 { animation-delay: 0.16s; }
-.anim-delay-5 { animation-delay: 0.2s; }
-.anim-delay-6 { animation-delay: 0.24s; }
-
-/* 网格子项交错入场。
-   决策依据：原级联到 0.62s——最后一张卡要等半秒才出现，读作"卡顿"
-   而非"呼吸"。收敛为每项 40ms、封顶 0.4s：仍有节奏，但整体在
-   一次注视内完成（人对 >500ms 的等待开始有感）。 */
-.stagger > * {
-  animation: agFadeUp 0.36s var(--ag-ease) both;
+/* ---------- 入场工具类（dp：无入场序列/无装饰动画） ----------
+   类名保留以免 20+ 视图的模板改动，行为统一降级为一次
+   160ms 纯透明度淡入；位移/缩放/交错编排全部移除 */
+.anim-up,
+.anim-in,
+.anim-zoom,
+.anim-left {
+  animation: agFadeIn var(--ag-dur) var(--ag-ease) both;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.02s; }
-.stagger > *:nth-child(2) { animation-delay: 0.06s; }
-.stagger > *:nth-child(3) { animation-delay: 0.1s; }
-.stagger > *:nth-child(4) { animation-delay: 0.14s; }
-.stagger > *:nth-child(5) { animation-delay: 0.18s; }
-.stagger > *:nth-child(6) { animation-delay: 0.22s; }
-.stagger > *:nth-child(7) { animation-delay: 0.26s; }
-.stagger > *:nth-child(8) { animation-delay: 0.3s; }
-.stagger > *:nth-child(9) { animation-delay: 0.34s; }
-.stagger > *:nth-child(n + 10) { animation-delay: 0.38s; }
+.anim-delay-1,
+.anim-delay-2,
+.anim-delay-3,
+.anim-delay-4,
+.anim-delay-5,
+.anim-delay-6 {
+  animation-delay: 0s;
+}
+
+/* 网格子项交错入场（dp：同样降级为纯透明度快速淡入，无级联编排）。 */
+.stagger > * {
+  animation: agFadeIn var(--ag-dur) var(--ag-ease) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0s; }
+.stagger > *:nth-child(2) { animation-delay: 0s; }
+.stagger > *:nth-child(3) { animation-delay: 0s; }
+.stagger > *:nth-child(4) { animation-delay: 0s; }
+.stagger > *:nth-child(5) { animation-delay: 0s; }
+.stagger > *:nth-child(6) { animation-delay: 0s; }
+.stagger > *:nth-child(7) { animation-delay: 0s; }
+.stagger > *:nth-child(8),
+.stagger > *:nth-child(9),
+.stagger > *:nth-child(n + 10) { animation-delay: 0s; }
 
 /* ---------- 悬停效果（仅精确指针设备） ---------- */
 @media (hover: hover) and (pointer: fine) {

@@ -18,9 +18,9 @@ const rules = {
 const TYPE_META = {
   weather: { label: '气象平台', icon: 'Cloudy', color: '#4C6983' },
   gov: { label: '监管平台', icon: 'Stamp', color: '#E84A5F' },
-  iot: { label: '物联网平台', icon: 'Cpu', color: '#699C78' },
+  iot: { label: '物联网平台', icon: 'Cpu', color: '#074ce0' },
   video: { label: '视频平台', icon: 'VideoCamera', color: '#B17179' },
-  erp: { label: 'ERP/电商', icon: 'ShoppingCart', color: '#E89552' },
+  erp: { label: 'ERP/电商', icon: 'ShoppingCart', color: '#c9803e' },
 }
 const STATUS_TAG = { 已连接: 'success', 异常: 'danger', 未启用: 'info' }
 

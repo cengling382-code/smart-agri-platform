@@ -11,11 +11,11 @@ const isEdit = ref(false)
 const submitting = ref(false)
 
 const IMG_META = {
-  tomato: { bg: 'linear-gradient(135deg,#F3B0AC,#E84A5F)', label: '🍅' },
-  cucumber: { bg: 'linear-gradient(135deg,#C8E0CE,#699C78)', label: '🥒' },
-  lettuce: { bg: 'linear-gradient(135deg,#DCEBE0,#7DC383)', label: '🥬' },
-  rice: { bg: 'linear-gradient(135deg,#F3DFA6,#E89552)', label: '🌾' },
-  orange: { bg: 'linear-gradient(135deg,#F5C9A0,#ea580c)', label: '🍊' },
+  tomato: { bg: 'rgba(7, 76, 224, 0.05)', label: '番' },
+  cucumber: { bg: 'rgba(7, 76, 224, 0.08)', label: '黄' },
+  lettuce: { bg: 'rgba(7, 76, 224, 0.11)', label: '生' },
+  rice: { bg: 'rgba(7, 76, 224, 0.14)', label: '稻' },
+  orange: { bg: 'rgba(7, 76, 224, 0.17)', label: '橙' },
 }
 
 const form = reactive({ id: null, name: '', crop: '番茄', spec: '', price: 0, stock: 100, status: '上架', img: 'tomato', traceCode: '' })
@@ -84,7 +84,7 @@ async function toggleStatus(row) {
 
     <ProTable ref="tableRef" :columns="columns" :fetch="tradeApi.productPage" :filters="filters" action-width="200">
       <template #col-img="{ row }">
-        <span class="p-img" :style="{ background: IMG_META[row.img]?.bg }">{{ IMG_META[row.img]?.label || '🌱' }}</span>
+        <span class="p-img" :style="{ background: IMG_META[row.img]?.bg }">{{ (row.name || '产')[0] }}</span>
       </template>
       <template #col-price="{ row }">
         <span class="price mono-num">¥{{ row.price }}</span>
@@ -142,10 +142,14 @@ async function toggleStatus(row) {
 .p-img {
   width: 46px;
   height: 46px;
-  border-radius: var(--ag-radius); /* 决策依据：46px 商品图块非控件，按卡片档归 10px（值不变） */
+  border-radius: 8px; /* 首字符头像 chip：8px 圆角 */
   display: inline-grid;
   place-items: center;
-  font-size: 22px;
+  background: var(--ag-bg-page);
+  color: var(--ag-text-2);
+  font-family: var(--ag-font-display);
+  font-size: 20px;
+  font-weight: 600;
   transition: transform 0.25s var(--ag-ease-spring);
 }
 /* 决策依据：hover 缩放旋转属装饰性动效，按简约高级规范移除（原 .p-img:hover 仅此一条声明） */
@@ -162,9 +166,12 @@ async function toggleStatus(row) {
 .ip-item {
   width: 46px;
   height: 46px;
-  border-radius: var(--ag-radius); /* 决策依据：与 .p-img 同规格图块，保持一致归卡片档 10px（值不变） */
+  border-radius: 8px; /* 与 .p-img 同规格首字 chip */
   border: 2px solid transparent;
-  font-size: 22px;
+  color: var(--ag-text-2);
+  font-family: var(--ag-font-display);
+  font-size: 20px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }

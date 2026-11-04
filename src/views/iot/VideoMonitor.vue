@@ -151,7 +151,7 @@ onMounted(async () => {
           <div class="ag-card__body">
             <transition-group name="list" tag="div" class="shot-list">
               <div v-for="s in shots" :key="s.id" class="shot-item">
-                <el-icon color="#699C78"><Camera /></el-icon>
+                <el-icon color="#074ce0"><Camera /></el-icon>
                 <div class="shot-meta">
                   <div class="shot-name">{{ s.name }}</div>
                   <div class="text-dim">{{ s.time }}</div>

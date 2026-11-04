@@ -55,10 +55,10 @@ defineProps({
   place-items: center;
   flex: none;
 }
-[data-tone='green'] .icon-box { background: rgba(105, 156, 120, 0.14); color: var(--ag-green-700); }
+[data-tone='green'] .icon-box { background: rgba(7, 76, 224, 0.10); color: var(--ag-green-700); }
 [data-tone='blue'] .icon-box { background: rgba(76, 105, 131, 0.14); color: var(--ag-blue-600); }
 [data-tone='cyan'] .icon-box { background: rgba(110, 147, 176, 0.16); color: var(--ag-cyan-600); }
-[data-tone='amber'] .icon-box { background: rgba(232, 149, 82, 0.16); color: var(--ag-warning); }
+[data-tone='amber'] .icon-box { background: rgba(201, 128, 62, 0.14); color: var(--ag-warning); }
 [data-tone='red'] .icon-box { background: rgba(232, 74, 95, 0.12); color: var(--ag-danger); }
 
 .label {
@@ -72,11 +72,12 @@ defineProps({
   gap: var(--ag-space-1);
 }
 .value {
-  font-size: 28px;                    /* 大数字：负字距收拢，避免数字间发散 */
-  letter-spacing: -0.5px;
+  font-size: 32px;                    /* 大号核心数值：参照基准的指标层级 */
+  letter-spacing: -0.8px;
+  font-family: var(--ag-font-num);
   font-variant-numeric: tabular-nums;
   color: var(--ag-text-1);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 .unit,
 .suffix {
@@ -84,15 +85,23 @@ defineProps({
   letter-spacing: var(--ag-ls-caption);
   color: var(--ag-text-3);
 }
+/* 环比标注：低透明度同色胶囊徽章（参照基准的涨跌徽章形制） */
 .trend {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 3px;
   font-size: var(--ag-fs-micro);
   letter-spacing: var(--ag-ls-micro);
-  margin-top: 2px;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: var(--ag-radius-pill);
 }
-.trend.up { color: var(--ag-success); }
-.trend.down { color: var(--ag-danger); }
-.trend-label { color: var(--ag-text-4); }
+.trend.up { color: var(--ag-success); background: rgba(85, 129, 98, 0.12); }
+.trend.down { color: var(--ag-danger); background: rgba(232, 74, 95, 0.10); }
+.trend-label {
+  color: var(--ag-text-4);
+  font-weight: 400;
+  margin-left: 2px;
+}
 </style>

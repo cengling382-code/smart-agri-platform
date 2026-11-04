@@ -150,7 +150,7 @@ const routes = [
       return ok({ meta, series: arr.map(([t, v]) => [t, v]) })
     } },
   { m: 'get', p: '/devices/:id/logs', h: () => ok({ list: db.controlLogs.slice(0, 12), total: 12 }) },
-  { m: 'post', p: '/devices', h: ({ data: b }) => { const item = { id: nextId('devices'), status: 'online', battery: 100, lastReport: Date.now(), children: 0, ...b }; db.devices.unshift(item); return ok(item, '设备注册成功') } },
+  { m: 'post', p: '/devices', h: ({ data: b }) => { const item = { id: nextId('devices'), status: 'online', battery: 100, lastReport: Date.now(), childCount: 0, ...b }; db.devices.unshift(item); return ok(item, '设备注册成功') } },
   { m: 'put', p: '/devices/:id', h: ({ params, data: b }) => { const t = db.devices.find((x) => x.id === +params.id); Object.assign(t, b); return ok(t, '保存成功') } },
   { m: 'delete', p: '/devices/:id', h: ({ params }) => { const i = db.devices.findIndex((x) => x.id === +params.id); if (i > -1) db.devices.splice(i, 1); return ok(null, '删除成功') } },
   { m: 'post', p: '/devices/:id/control', h: ({ params, data: b }) => {

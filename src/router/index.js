@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
 import { hasRoutePermission } from './menus'
 import { installRouterErrorHandler } from '@/utils/routerError'
 // 静态导入：降级页打进主包，自身永远不会加载失败
@@ -59,7 +58,7 @@ const routes = [
       { path: 'farm/materials', name: 'MaterialArchive', component: () => import('@/views/farm/MaterialArchive.vue'), meta: { title: '农资档案', icon: 'Box', roles: ['admin', 'manager', 'tech'] } },
       { path: 'farm/stock', name: 'StockRecord', component: () => import('@/views/farm/StockRecord.vue'), meta: { title: '出入库单', icon: 'Sort', roles: ['admin', 'manager', 'tech'] } },
       { path: 'farm/inventory', name: 'MaterialInventory', component: () => import('@/views/farm/MaterialInventory.vue'), meta: { title: '库存列表', icon: 'Coin', roles: ['admin', 'manager', 'tech'] } },
-      { path: 'farm/personnel', name: 'Personnel', component: () => import('@/views/farm/Personnel.vue'), meta: { title: '人员管理', icon: 'UserFilled', roles: ['admin', 'manager'] } },
+      { path: 'farm/personnel', name: 'Personnel', component: () => import('@/views/farm/Personnel.vue'), meta: { title: '人员管理', icon: 'User', roles: ['admin', 'manager'] } },
       { path: 'farm/harvest', name: 'HarvestManage', component: () => import('@/views/farm/HarvestManage.vue'), meta: { title: '采收管理', icon: 'Apple', roles: ['admin', 'manager', 'tech', 'farmer'] } },
       { path: 'farm/harvest-stats', name: 'HarvestStats', component: () => import('@/views/farm/HarvestStats.vue'), meta: { title: '产量统计', icon: 'TrophyBase', roles: ['admin', 'manager', 'tech'] } },
       // AI 分析
@@ -80,7 +79,7 @@ const routes = [
       { path: 'trade/stats', name: 'SalesStats', component: () => import('@/views/trade/SalesStats.vue'), meta: { title: '销售统计', icon: 'PieChart', roles: ['admin', 'manager'] } },
       { path: 'trade/customers', name: 'CustomerArchive', component: () => import('@/views/trade/CustomerArchive.vue'), meta: { title: '客户档案', icon: 'Avatar', roles: ['admin', 'manager'] } },
       // 系统设置
-      { path: 'system/users', name: 'UserList', component: () => import('@/views/system/UserList.vue'), meta: { title: '用户管理', icon: 'UserFilled', roles: ['admin'] } },
+      { path: 'system/users', name: 'UserList', component: () => import('@/views/system/UserList.vue'), meta: { title: '用户管理', icon: 'User', roles: ['admin'] } },
       { path: 'system/roles', name: 'RoleManage', component: () => import('@/views/system/RoleManage.vue'), meta: { title: '角色管理', icon: 'Stamp', roles: ['admin'] } },
       { path: 'system/role-perm', name: 'RolePerm', component: () => import('@/views/system/RolePerm.vue'), meta: { title: '角色权限配置', icon: 'Lock', roles: ['admin'] } },
       { path: 'system/menus', name: 'MenuManage', component: () => import('@/views/system/MenuManage.vue'), meta: { title: '菜单权限', icon: 'Menu', roles: ['admin'] } },
@@ -136,14 +135,9 @@ const PUBLIC_PATHS = new Set(['/login', '/register', '/forgot', '/403', '/m/logi
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  const app = useAppStore()
 
-  // 设备自动识别：手机访问自动落到移动端门户；用户一旦手动切换过视图，以其选择为准
-  const isMobileEnd = to.path.startsWith('/m/') || to.path.startsWith('/scan/') || to.path.startsWith('/trace/')
-  if (!app.manualViewMode && app.device === 'mobile' && !isMobileEnd) {
-    return { path: auth.isLoggedIn ? '/m/home' : '/m/login' }
-  }
-
+  // 手机端不再强制重定向到 /m 演示门户：管理端 UI 已完成响应式适配，
+  // 手机直接使用与桌面完全一致的管理功能；/m/* 演示门户保留，可从「更多」进入。
   const isPublic = to.meta.public || PUBLIC_PATHS.has(to.path) || to.path.startsWith('/scan/') || to.path.startsWith('/trace/')
   if (!auth.isLoggedIn && !isPublic) {
     return { path: '/login', query: { redirect: to.fullPath } }

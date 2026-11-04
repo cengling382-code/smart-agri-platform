@@ -10,7 +10,7 @@ describe('JSON 本地数据库', () => {
     const raw = localStorage.getItem(KEY)
     expect(raw).toBeTruthy()
     const doc = JSON.parse(raw)
-    expect(doc.__version).toBe(1)
+    expect(doc.__version).toBe(3)
     expect(Array.isArray(doc.plots)).toBe(true)
     expect(doc.plots.length).toBe(data.plots.length)
     expect(doc.__seq).toBeTruthy()

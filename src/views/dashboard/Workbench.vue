@@ -1,18 +1,31 @@
 <script setup>
-/** 页面 53 · 工作台首页（数据总览）：核心指标 + 环境实时 + 趋势曲线 + 告警轮播 */
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+/**
+ * 页面 53 · 工作台首页（数据总览）v2 —— 沉浸式工作台
+ * 视觉彻底重构：告别「PageHeader + StatCard 网格」的通用后台样式，
+ * 改为「墨色 Hero（问候 + 快捷入口）→ 白色 KPI 分栏条 → 便当格数据区」的
+ * 三段式沉浸布局。数据源（statsApi.dashboard）与全部跳转逻辑保持不变。
+ */
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { PageHeader, StatCard, ChartCard } from '@/components/ui'
+import { useAuthStore } from '@/stores/auth'
+import { ChartCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { statsApi } from '@/api'
 
 const router = useRouter()
+const auth = useAuthStore()
 const loading = ref(true)
 const data = ref(null)
 const range = ref('week') // day | week | month
 const alarmIdx = ref(0)
 let carouselTimer = null
 
+/* ---------- 问候语：按时段变化 ---------- */
+const hour = new Date().getHours()
+const greeting = hour < 6 ? '夜深了' : hour < 11 ? '早上好' : hour < 13 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
+const dateText = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
+
+/* ---------- 趋势曲线 ---------- */
 const trendOptions = computed(() => {
   if (!data.value) return {}
   const rows = data.value.weekTrend
@@ -73,13 +86,26 @@ const statusText = { pending: '未处理', confirmed: '已确认', resolved: '�
 const levelTag = { 1: 'info', 2: 'warning', 3: 'danger' }
 const levelText = { 1: '一般', 2: '重要', 3: '紧急' }
 
+/* ---------- KPI 分栏条：与旧 StatCard 同数据，不同形制 ---------- */
+const kpis = computed(() => {
+  if (!data.value) return []
+  return [
+    { label: '园区总数', value: data.value.parks, unit: '个', trend: 8, icon: 'OfficeBuilding' },
+    { label: '设备总数', value: data.value.devices, unit: '台', trend: 5, icon: 'Cpu' },
+    { label: '设备在线率', value: data.value.onlineRate, unit: '%', trend: 2, icon: 'Connection' },
+    { label: '今日未处理告警', value: data.value.todayAlarms, unit: '条', trend: -12, icon: 'Bell', goodWhenDown: true },
+    { label: '本月产量', value: data.value.monthYield, unit: 'kg', trend: 16, icon: 'Cherry' },
+  ]
+})
+
+/* ---------- 快捷入口（Hero 内玻璃胶囊） ---------- */
 const QUICK = [
-  { title: '设备控制', icon: 'SwitchButton', path: '/iot/control', color: '#699C78' },
-  { title: '数据监测', icon: 'TrendCharts', path: '/iot/sensors', color: '#4C6983' },
-  { title: '视频监控', icon: 'VideoCamera', path: '/iot/video', color: '#06b6d4' },
-  { title: '农事工单', icon: 'Tickets', path: '/farm/orders', color: '#E89552' },
-  { title: '溯源批次', icon: 'Postcard', path: '/trace/batches', color: '#B17179' },
-  { title: '总览大屏', icon: 'Monitor', path: '/screens/overview', color: '#38556A' },
+  { title: '设备控制', icon: 'SwitchButton', path: '/iot/control' },
+  { title: '数据监测', icon: 'TrendCharts', path: '/iot/sensors' },
+  { title: '视频监控', icon: 'VideoCamera', path: '/iot/video' },
+  { title: '农事工单', icon: 'Tickets', path: '/farm/orders' },
+  { title: '溯源批次', icon: 'Postcard', path: '/trace/batches' },
+  { title: '总览大屏', icon: 'Monitor', path: '/screens/overview' },
 ]
 
 onMounted(async () => {
@@ -98,39 +124,57 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
 </script>
 
 <template>
-  <div class="page" v-loading="loading">
-    <PageHeader title="工作台" desc="园区运营全局视图 · 核心指标、环境实时数据与趋势一览">
-      <template #actions>
-        <el-radio-group v-model="range" size="small">
-          <el-radio-button value="day">今日</el-radio-button>
-          <el-radio-button value="week">本周</el-radio-button>
-          <el-radio-button value="month">本月</el-radio-button>
-        </el-radio-group>
-      </template>
-    </PageHeader>
+  <div class="page wb" v-loading="loading">
+    <!-- ========== ① 墨色 Hero：问候 + 快捷入口 ========== -->
+    <section class="hero" aria-label="工作台概览">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-main">
+        <p class="hero-hello">{{ greeting }}，{{ auth.displayName }}</p>
+        <h1 class="hero-title">园区运营总览</h1>
+        <p class="hero-sub">
+          <span>{{ dateText }}</span>
+          <i class="hero-sep" aria-hidden="true"></i>
+          <span>武汉 19℃ 多云</span>
+          <template v-if="data">
+            <i class="hero-sep" aria-hidden="true"></i>
+            <span class="hero-alarm" role="link" tabindex="0" @click="router.push('/iot/alarms')" @keyup.enter="router.push('/iot/alarms')">
+              <span class="hero-alarm-dot" aria-hidden="true"></span>
+              待处理告警 <b class="mono-num">{{ data.todayAlarms }}</b> 条
+            </span>
+          </template>
+        </p>
+        <!-- 快捷入口：玻璃胶囊 -->
+        <div class="hero-quick" role="navigation" aria-label="快捷入口">
+          <button v-for="q in QUICK" :key="q.path" class="hq-chip" @click="router.push(q.path)">
+            <el-icon :size="15"><component :is="q.icon" /></el-icon>
+            <span>{{ q.title }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
-    <!-- 核心指标卡片 -->
-    <div class="stat-grid stagger" v-if="data">
-      <StatCard label="园区总数" :value="data.parks" unit="个" icon="OfficeBuilding" tone="green" :trend="8" />
-      <StatCard label="设备总数" :value="data.devices" unit="台" icon="Cpu" tone="blue" :trend="5" />
-      <StatCard label="设备在线率" :value="data.onlineRate" unit="%" icon="Connection" tone="cyan" :trend="2" :decimals="0" />
-      <StatCard label="今日未处理告警" :value="data.todayAlarms" unit="条" icon="Bell" tone="red" :trend="-12" />
-      <StatCard label="本月产量" :value="data.monthYield" unit="kg" icon="Cherry" tone="amber" :trend="16" />
-    </div>
-
-    <!-- 快捷入口 -->
-    <div class="quick-row stagger" v-if="data">
-      <button v-for="q in QUICK" :key="q.path" class="quick-item" @click="router.push(q.path)">
-        <span class="q-icon" :style="{ background: q.color + '18', color: q.color }">
-          <el-icon :size="20"><component :is="q.icon" /></el-icon>
+    <!-- ========== ② KPI 分栏条：白色面板压住 Hero 下缘 ========== -->
+    <section v-if="data" class="kpi-strip" aria-label="核心指标">
+      <div v-for="(k, i) in kpis" :key="k.label" class="kpi-cell" :class="{ 'kpi-divide': i > 0 }">
+        <div class="kpi-top">
+          <el-icon :size="15" class="kpi-icon"><component :is="k.icon" /></el-icon>
+          <span class="kpi-label">{{ k.label }}</span>
+        </div>
+        <div class="kpi-value">
+          <span class="kpi-num mono-num">{{ k.value }}</span>
+          <span class="kpi-unit">{{ k.unit }}</span>
+        </div>
+        <span class="kpi-trend" :class="k.trend >= 0 !== !!k.goodWhenDown ? 'up' : 'down'">
+          {{ k.trend >= 0 ? '▲' : '▼' }} {{ Math.abs(k.trend) }}%
+          <em>较上周</em>
         </span>
-        <span class="q-label">{{ q.title }}</span>
-      </button>
-    </div>
+      </div>
+    </section>
 
-    <div class="grid-2-1" v-if="data">
+    <!-- ========== ③ 便当格数据区 ========== -->
+    <div class="bento-a" v-if="data">
       <!-- 环境趋势 -->
-      <div class="ag-card anim-up">
+      <article class="ag-card bento-card">
         <div class="ag-card__head">
           <div class="ag-card__title"><span class="dot"></span>环境趋势曲线（温湿度 / 光照）</div>
           <el-radio-group v-model="range" size="small">
@@ -142,10 +186,10 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
         <div class="ag-card__body">
           <ChartCard :options="trendOptions" :height="290" />
         </div>
-      </div>
+      </article>
 
-      <!-- 告警轮播 -->
-      <div class="ag-card anim-up anim-delay-1">
+      <!-- 告警处置 -->
+      <article class="ag-card bento-card">
         <div class="ag-card__head">
           <div class="ag-card__title"><span class="dot"></span>待处理告警</div>
           <el-button link type="primary" @click="router.push('/iot/alarms')">全部告警 →</el-button>
@@ -166,7 +210,7 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
                 <el-button size="small" type="primary" @click="router.push('/iot/alarms')">立即处置</el-button>
               </div>
             </div>
-            <el-empty v-else description="暂无待处理告警 🎉" :image-size="80" />
+            <el-empty v-else description="暂无待处理告警" :image-size="80" />
           </transition>
           <el-divider />
           <div class="env-mini">
@@ -176,26 +220,26 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
             </div>
           </div>
         </div>
-      </div>
+      </article>
     </div>
 
-    <div class="grid-3" v-if="data">
+    <div class="bento-b" v-if="data">
       <!-- 设备状态 -->
-      <div class="ag-card anim-up">
+      <article class="ag-card bento-card">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>设备状态分布</div></div>
         <div class="ag-card__body">
           <ChartCard :options="deviceOptions" :height="250" />
         </div>
-      </div>
+      </article>
       <!-- 工单 -->
-      <div class="ag-card anim-up anim-delay-1">
+      <article class="ag-card bento-card">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>农事工单状态</div></div>
         <div class="ag-card__body">
           <ChartCard :options="orderOptions" :height="250" />
         </div>
-      </div>
+      </article>
       <!-- 环境实时 -->
-      <div class="ag-card anim-up anim-delay-2">
+      <article class="ag-card bento-card">
         <div class="ag-card__head">
           <div class="ag-card__title"><span class="dot"></span>环境实时数据</div>
           <el-button link type="primary" @click="router.push('/iot/sensors')">详情 →</el-button>
@@ -211,67 +255,209 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
             <span><i class="lg lg-t"></i>温度</span><span><i class="lg lg-h"></i>湿度</span>
           </div>
         </div>
-      </div>
+      </article>
     </div>
   </div>
 </template>
 
 <style scoped>
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
-  margin-bottom: 20px;
+/* ========== ① 墨色 Hero ========== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -44px; /* KPI 条上叠 44px，形成「白条压墨」的层次 */
+  padding: 40px 36px 76px;
+  border-radius: var(--ag-radius);
+  background: linear-gradient(135deg, var(--ag-navy-800) 0%, var(--ag-navy-900) 58%, #101a33 100%);
+  color: #fff;
 }
-.quick-row {
+/* 右上角电光蓝光晕：唯一的彩色强调，呼应 accent */
+.hero-glow {
+  position: absolute;
+  top: -140px;
+  right: -80px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(7, 76, 224, 0.45), transparent 70%);
+  pointer-events: none;
+}
+.hero-hello {
+  margin: 0 0 6px;
+  font-size: var(--ag-fs-caption);
+  letter-spacing: var(--ag-ls-caption);
+  color: rgba(232, 238, 244, 0.62);
+}
+.hero-title {
+  margin: 0;
+  font-family: var(--ag-font-display);
+  font-size: var(--ag-fs-display);
+  font-weight: 700;
+  letter-spacing: var(--ag-ls-display);
+  line-height: var(--ag-lh-display);
+  color: #fff; /* 显式声明：全局 h1 的墨色会压过 .hero 的继承白色 */
+}
+.hero-sub {
   display: flex;
-  gap: 14px;
-  margin-bottom: 20px;
+  align-items: center;
   flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 0;
+  font-size: var(--ag-fs-caption);
+  color: rgba(232, 238, 244, 0.72);
 }
-.quick-item {
-  flex: 1;
-  min-width: 110px;
-  border: 1px solid var(--ag-border-light);
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：快捷入口小卡属卡片类，对齐卡片档 10px */
-  padding: 13px 10px;
+.hero-sep {
+  width: 1px;
+  height: 12px;
+  background: rgba(232, 238, 244, 0.24);
+}
+.hero-alarm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--ag-radius-pill);
+  background: rgba(232, 74, 95, 0.16);
+  color: #ffb9c1;
+  cursor: pointer;
+  transition: background var(--ag-dur) var(--ag-ease);
+}
+.hero-alarm:hover {
+  background: rgba(232, 74, 95, 0.28);
+}
+.hero-alarm b {
+  font-weight: 700;
+}
+.hero-alarm-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ag-danger-light);
+  animation: alarm-blink 1.6s ease-in-out infinite;
+}
+@keyframes alarm-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+/* 快捷入口：玻璃胶囊横排 */
+.hero-quick {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+.hq-chip {
+  display: inline-flex;
   align-items: center;
   gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--ag-radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: var(--ag-fs-micro);
   cursor: pointer;
-  transition: all 0.25s var(--ag-ease);
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--ag-dur) var(--ag-ease), border-color var(--ag-dur) var(--ag-ease),
+    transform 0.1s ease-out;
 }
-.quick-item:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--ag-shadow);
-  border-color: var(--ag-green-300);
+.hq-chip:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
 }
-.q-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--ag-radius); /* 决策依据：42px 图标块非控件，按卡片档归 10px */
-  display: grid;
-  place-items: center;
-  transition: transform 0.3s var(--ag-ease-spring);
-}
-/* 决策依据：hover 缩放旋转属装饰性动效，按简约高级规范移除（原 .quick-item:hover .q-icon 仅此一条声明） */
-.q-label {
-  font-size: 12px;
-  color: var(--ag-text-2);
+.hq-chip:active {
+  transform: scale(0.95);
 }
 
-.grid-2-1 {
+/* ========== ② KPI 分栏条 ========== */
+.kpi-strip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin-bottom: var(--ag-space-5);
+  padding: 18px 8px;
+  border-radius: var(--ag-radius);
+  background: var(--ag-bg-surface);
+  border: 1px solid var(--ag-border);
+  box-shadow: var(--ag-shadow);
+}
+.kpi-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 20px;
+  min-width: 0;
+}
+.kpi-divide {
+  border-left: 1px solid var(--ag-border-light);
+}
+.kpi-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-icon {
+  color: var(--ag-green-600);
+}
+.kpi-label {
+  font-size: var(--ag-fs-micro);
+  letter-spacing: var(--ag-ls-micro);
+  color: var(--ag-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.kpi-num {
+  font-family: var(--ag-font-num);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  color: var(--ag-text-1);
+}
+.kpi-unit {
+  font-size: var(--ag-fs-micro);
+  color: var(--ag-text-4);
+}
+.kpi-trend {
+  font-size: var(--ag-fs-micro);
+  font-family: var(--ag-font-num);
+}
+.kpi-trend em {
+  font-style: normal;
+  color: var(--ag-text-4);
+  margin-left: 4px;
+}
+.kpi-trend.up {
+  color: var(--ag-success);
+}
+.kpi-trend.down {
+  color: var(--ag-danger);
+}
+
+/* ========== ③ 便当格 ========== */
+.bento-a {
   display: grid;
   grid-template-columns: 1.8fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: var(--ag-space-5);
+  margin-bottom: var(--ag-space-5);
 }
-.grid-3 {
+.bento-b {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  gap: var(--ag-space-5);
+}
+.bento-card {
+  min-width: 0;
 }
 
 .alarm-carousel {
@@ -339,12 +525,12 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
   color: var(--ag-text-2);
 }
 .env-t {
-  color: #E89552;
+  color: var(--ag-warning);
   width: 58px;
   text-align: right;
 }
 .env-h {
-  color: #4C6983;
+  color: var(--ag-blue-600);
   width: 58px;
   text-align: right;
 }
@@ -365,11 +551,58 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
   border-radius: 2px;
   display: inline-block;
 }
-.lg-t { background: #E89552; }
-.lg-h { background: #4C6983; }
+.lg-t { background: var(--ag-warning); }
+.lg-h { background: var(--ag-blue-600); }
 
+/* ---------- 响应式：三档断点 ---------- */
 @media (max-width: 1280px) {
-  .stat-grid { grid-template-columns: repeat(3, 1fr); }
-  .grid-2-1, .grid-3 { grid-template-columns: 1fr; }
+  .kpi-strip {
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 16px;
+  }
+  /* 换行后第二行首个不应继承左边线 */
+  .kpi-cell:nth-child(4) {
+    border-left: none;
+  }
+  .bento-a, .bento-b {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .hero {
+    padding: 28px 20px 68px;
+    margin-bottom: -40px;
+  }
+  .hero-title {
+    font-size: 28px;
+  }
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 14px 4px;
+  }
+  .kpi-cell {
+    padding: 2px 14px;
+  }
+  .kpi-cell:nth-child(odd) {
+    border-left: none;
+  }
+  .kpi-num {
+    font-size: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-alarm-dot {
+    animation: none;
+  }
+}
+/* 触控设备：快捷入口胶囊放大到 44px 触控标准 */
+@media (pointer: coarse) {
+  .hq-chip {
+    min-height: 44px;
+    padding: 10px 18px;
+  }
+  .hero-alarm {
+    min-height: 32px;
+  }
 }
 </style>

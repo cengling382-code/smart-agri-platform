@@ -40,7 +40,7 @@ export const tenants = [
   { id: 1, name: '示范园总部（智慧农业示范园）', admin: '园区管理员', plots: 12, devices: 86, users: 24, quota: '100GB', used: '62.5GB', status: '正常', expire: '2027-11-30', createdAt: '2024-09-01 08:00' },
   { id: 2, name: '江北分园', admin: '王大富', plots: 8, devices: 41, users: 12, quota: '50GB', used: '18.2GB', status: '正常', expire: '2027-06-30', createdAt: '2025-03-15 10:00' },
   { id: 3, name: '南湖水产养殖基地', admin: '刘志强', plots: 5, devices: 23, users: 8, quota: '30GB', used: '9.8GB', status: '正常', expire: '2026-12-31', createdAt: '2025-08-20 14:30' },
-  { id: 4, name: '西山畜禽牧场', admin: '陈美凤', plots: 4, devices: 18, users: 6, quota: '20GB', used: '15.6GB', status: '配额预警', expire: '2026-03-31', createdAt: '2025-05-10 09:20' },
+  { id: 4, name: '西山畜禽牧场', admin: '陈美凤', plots: 4, devices: 18, users: 6, quota: '20GB', used: '15.6GB', status: '配额预警', expire: '2027-03-31', createdAt: '2025-05-10 09:20' },
 ]
 
 /* ---------- 地块 ---------- */
@@ -81,33 +81,41 @@ function genDevices() {
   // 网关 4 台
   const gwNames = ['农业物联网智能网关-A', '农业物联网智能网关-B', '水产监测网关', '畜禽养殖网关']
   gwNames.forEach((name, i) => {
-    list.push({ id: id++, code: `GW-2026-0${i + 1}`, name, type: 'gateway', model: 'AGW-2000 Pro', plotId: i < 2 ? 1 : i === 2 ? 7 : 8, status: i === 3 ? 'offline' : 'online', ip: `192.168.1.${10 + i}`, fw: 'v2.3.1', lastReport: NOW - rint(1, 30) * 60000, children: 0, signal: i === 3 ? 0 : rint(72, 98) })
+    list.push({ id: id++, code: `GW-2026-0${i + 1}`, name, type: 'gateway', model: 'AGW-2000 Pro', plotId: i < 2 ? 1 : i === 2 ? 7 : 8, status: i === 3 ? 'offline' : 'online', ip: `192.168.1.${10 + i}`, fw: 'v2.3.1', lastReport: NOW - rint(1, 30) * 60000, childCount: 0, signal: i === 3 ? 0 : rint(72, 98) })
   })
-  // 传感器
+  // 传感器（按地块类型选型：水产塘配溶氧/氨氮，畜禽舍配氨气/温湿度，避免大棚装溶氧仪这类错位）
+  const SENSOR_POOLS = { default: [0, 1, 2, 3, 4, 5], 水产: [6, 7, 0], 畜禽: [7, 0, 1] }
   const sensorPlots = plots.filter((p) => p.sensors > 0)
   sensorPlots.forEach((p) => {
+    const pool = SENSOR_POOLS[p.type] || SENSOR_POOLS.default
     const count = Math.min(p.sensors, 4)
     for (let i = 0; i < count; i++) {
-      const t = SENSOR_TYPES[(p.id + i) % SENSOR_TYPES.length]
+      const t = SENSOR_TYPES[pool[i % pool.length]]
       const gw = list.find((d) => d.type === 'gateway' && d.plotId === p.id) || list[0]
-      list.push({ id: id++, code: `SN-${String(1000 + id)}`, name: `${t[0]}#${p.code.slice(-2)}${i + 1}`, type: 'sensor', subtype: t[0], params: t[1], model: pick(['RS485-Pro', 'LoRa-433M', 'NB-IoT']), plotId: p.id, gatewayCode: gw.code, status: rand() > 0.9 ? (rand() > 0.5 ? 'offline' : 'fault') : 'online', battery: rint(28, 100), lastReport: NOW - rint(1, 20) * 60000, children: 0, signal: rint(40, 100) })
+      list.push({ id: id++, code: `SN-${String(1000 + id)}`, name: `${t[0]}#${p.code}-${i + 1}`, type: 'sensor', subtype: t[0], params: t[1], model: pick(['RS485-Pro', 'LoRa-433M', 'NB-IoT']), plotId: p.id, gatewayCode: gw.code, status: rand() > 0.9 ? (rand() > 0.5 ? 'offline' : 'fault') : 'online', battery: rint(28, 100), lastReport: NOW - rint(1, 20) * 60000, childCount: 0, signal: rint(40, 100) })
     }
   })
-  // 执行器
+  // 执行器（水产塘只配水泵/电磁阀/增氧机；同名设备按序号去重）
+  const AQUA_ACTUATORS = ['水泵', '电磁阀', '增氧机']
+  const actNameCount = {}
   for (let i = 0; i < 14; i++) {
     const p = pick(plots.filter((x) => x.type === '设施大棚' || x.type === '水产'))
-    const name = ACTUATORS[i % ACTUATORS.length]
+    const kind = pick(p.type === '水产' ? AQUA_ACTUATORS : ACTUATORS.filter((n) => n !== '增氧机'))
+    let fullName = `${p.name}-${kind}`
+    actNameCount[fullName] = (actNameCount[fullName] || 0) + 1
+    if (actNameCount[fullName] > 1) fullName += `-${actNameCount[fullName]}`
     const gw = list.find((d) => d.type === 'gateway' && d.plotId === p.id) || list[0]
-    list.push({ id: id++, code: `ACT-${String(2000 + id)}`, name: `${p.name}-${name}`, type: 'actuator', subtype: name, model: 'EX-2200', plotId: p.id, gatewayCode: gw.code, status: rand() > 0.88 ? (rand() > 0.5 ? 'offline' : 'fault') : 'online', running: rand() > 0.7, lastReport: NOW - rint(1, 15) * 60000, children: 0, signal: rint(45, 100) })
+    list.push({ id: id++, code: `ACT-${String(2000 + id)}`, name: fullName, type: 'actuator', subtype: kind, model: 'EX-2200', plotId: p.id, gatewayCode: gw.code, status: rand() > 0.88 ? (rand() > 0.5 ? 'offline' : 'fault') : 'online', running: rand() > 0.7, lastReport: NOW - rint(1, 15) * 60000, childCount: 0, signal: rint(45, 100) })
   }
-  // 摄像头
+  // 摄像头（按名称落位到匹配的地块，避免"鱼塘枪机"装进大棚）
+  const CAMERA_PLOTS = [7, 1, 3, 6, 4, 8, 1, 3]
   CAMERAS.forEach((name, i) => {
-    const p = plots[i % plots.length]
-    list.push({ id: id++, code: `CAM-${String(300 + i)}`, name, type: 'camera', subtype: name.includes('球机') ? '球机' : '枪机', model: 'HK-4K-i8', plotId: p.id, gatewayCode: 'GW-2026-01', status: i === 5 ? 'fault' : 'online', battery: 100, lastReport: NOW - rint(1, 10) * 60000, children: 0, channel: i + 1, signal: rint(60, 100) })
+    const p = plots[CAMERA_PLOTS[i] - 1]
+    list.push({ id: id++, code: `CAM-${String(300 + i)}`, name, type: 'camera', subtype: name.includes('球机') ? '球机' : '枪机', model: 'HK-4K-i8', plotId: p.id, gatewayCode: 'GW-2026-01', status: i === 5 ? 'fault' : 'online', battery: 100, lastReport: NOW - rint(1, 10) * 60000, childCount: 0, channel: i + 1, signal: rint(60, 100) })
   })
   // 网关下挂设备数
   list.filter((d) => d.type === 'gateway').forEach((gw) => {
-    gw.children = list.filter((d) => d.gatewayCode === gw.code).length
+    gw.childCount = list.filter((d) => d.gatewayCode === gw.code).length
   })
   return list
 }
@@ -143,22 +151,23 @@ export function genSeries(seed, paramKey, points, stepMs = 3600000) {
 export const paramMeta = PARAM_META
 
 /* ---------- 告警 ---------- */
+// 每条模板绑定真实存在的来源设备编码，避免"氨气传感器故障"却上报成摄像头编码
 const ALARM_TPL = [
-  ['环境超限', '1号智能大棚空气温度超过阈值上限 32℃', 'P-A01'],
-  ['设备故障', '牧场1号舍氨气传感器通信异常，连续3次上报失败', 'P-E01'],
-  ['环境超限', '南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机', 'P-D01'],
-  ['离线掉线', '畜禽养殖网关离线超过 30 分钟', 'P-E01'],
-  ['库存不足', '复合化肥(N-P-K 15-15-15)库存低于安全线', null],
-  ['传感器异常', '2号智能大棚土壤湿度数据漂移，疑似传感器故障', 'P-A02'],
-  ['灾害预警', '气象部门发布霜冻蓝色预警，预计夜间最低温 1℃', null],
+  ['环境超限', '1号智能大棚空气温度超过阈值上限 32℃', 'P-A01', 'SN-1006'],
+  ['设备故障', '牧场1号舍氨气传感器通信异常，连续3次上报失败', 'P-E01', 'SN-1034'],
+  ['环境超限', '南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机', 'P-D01', 'SN-1030'],
+  ['离线掉线', '畜禽养殖网关离线超过 30 分钟', 'P-E01', 'GW-2026-04'],
+  ['库存不足', '有机肥（腐熟羊粪）库存低于安全线', null, '数据中台'],
+  ['传感器异常', '2号智能大棚土壤湿度数据漂移，疑似传感器故障', 'P-A02', 'SN-1013'],
+  ['灾害预警', '气象部门发布霜冻蓝色预警，预计夜间最低温 1℃', null, '数据中台'],
 ]
 export const alarms = Array.from({ length: 26 }, (_, i) => {
-  const [type, content, plotCode] = ALARM_TPL[i % ALARM_TPL.length]
+  const [type, content, plotCode, source] = ALARM_TPL[i % ALARM_TPL.length]
   const status = i < 5 ? 'pending' : i < 10 ? 'confirmed' : i < 22 ? 'resolved' : 'archived'
   return {
     id: 1000 + i, code: `AL-2026${String(1000 + i)}`, type,
     level: i % 7 === 0 ? 3 : i % 3 === 0 ? 2 : 1,
-    content, plotCode, source: type === '设备故障' || type === '离线掉线' ? pick(devices.filter((d) => d.type !== 'gateway')).code : '数据中台',
+    content, plotCode, source,
     time: fmt(NOW - i * rint(40, 300) * 60000),
     status, handler: status === 'pending' ? null : pick(PERSON_NAMES),
     channels: [pick(['站内消息', '短信', '微信公众号']), '站内消息'],
@@ -197,30 +206,34 @@ export const controlLogs = Array.from({ length: 30 }, (_, i) => {
 
 /* ---------- 农事计划 / 工单 / 台账 ---------- */
 const FARM_TYPES = ['播种', '移栽', '施肥', '打药', '除草', '灌溉', '采收']
+// 种植类农事只在陆地地块安排（鱼塘/畜禽舍不播种除草）；小麦刚于 2026-10-25 播种，不排采收/移栽
+const LAND_PLOTS = plots.filter((p) => ['设施大棚', '大田', '果园'].includes(p.type) && p.crop !== '小麦')
 export const farmPlans = Array.from({ length: 14 }, (_, i) => {
-  const plot = pick(plots)
+  const plot = pick(LAND_PLOTS)
   return {
     id: i + 1, code: `FP-2026-${String(100 + i)}`, type: pick(FARM_TYPES), plotId: plot.id, plotName: plot.name,
     crop: plot.crop, content: pick(['全棚统一作业，预计2人1天完成', '分两个批次进行', '上午完成东半区，下午完成西半区']),
     planDate: fmt(NOW + (i - 6) * 86400000).slice(0, 10), endDate: fmt(NOW + (i - 6) * 86400000 + 86400000).slice(0, 10),
-    status: i < 3 ? '待审批' : i < 7 ? '已审批' : i < 11 ? '进行中' : '已完成',
-    creator: '农技人员-罗永刚', approver: i >= 3 ? '园区管理员' : '', createdAt: fmt(NOW - (i + 2) * 86400000),
+    // 状态与日期对齐：越早的计划越靠后生命周期（已完成→进行中→已审批→待审批）
+    status: i < 5 ? '已完成' : i < 7 ? '进行中' : i < 11 ? '已审批' : '待审批',
+    creator: '农技人员-罗永刚', approver: i < 11 ? '园区管理员' : '', createdAt: fmt(NOW - (i + 2) * 86400000),
   }
 })
 export const workOrders = Array.from({ length: 16 }, (_, i) => {
-  const plan = farmPlans[i % farmPlans.length]
+  // 只取计划日期已到期的计划（索引 0~5，日期为 1~6 天前），避免"已完成"工单早于计划日期
+  const plan = farmPlans[i % 6]
   const status = ['待接单', '进行中', '待验收', '已完成', '已驳回'][i % 5]
   return {
     id: i + 1, code: `WO-2026-${String(200 + i)}`, type: plan.type, planCode: plan.code, plotId: plan.plotId, plotName: plan.plotName,
     assignee: pick(PERSON_NAMES), phone: `138${rint(10000000, 99999999)}`,
     planDate: plan.planDate, status,
-    checkin: status === '已完成' || status === '待验收' ? { time: fmt(NOW - 86400000), location: `${plan.plotName}入口`, photos: 2, hours: rfloat(2, 8, 1), remark: '作业现场已完成，附件为现场照片' } : null,
+    checkin: status === '已完成' || status === '待验收' ? { time: fmt(NOW - rint(2, 10) * 3600000), location: `${plan.plotName}入口`, photos: 2, hours: rfloat(2, 8, 1), remark: '作业现场已完成，附件为现场照片' } : null,
     materials: i % 3 === 0 ? [{ name: '复合化肥', qty: '25kg' }] : [],
     createdAt: fmt(NOW - (i + 1) * 43200000),
   }
 })
 export const ledgerRecords = Array.from({ length: 24 }, (_, i) => {
-  const plot = pick(plots)
+  const plot = pick(LAND_PLOTS)
   const t = FARM_TYPES[i % FARM_TYPES.length]
   return {
     id: i + 1, code: `LG-2026-${String(300 + i)}`, time: fmt(NOW - i * 86400000 * 3), type: t, plotName: plot.name, crop: plot.crop,
@@ -250,6 +263,15 @@ export const stockRecords = Array.from({ length: 20 }, (_, i) => {
     supplier: isIn ? m.supplier : '—', relatedOrder: isIn ? `PO-2026-${500 + i}` : pick(workOrders).code, remark: isIn ? '验收入库' : '工单领用出库',
   }
 })
+// 期末库存对账：库存 = 期初(非负) + 入库 - 出库，故不得小于累计净入库
+const stockNet = {}
+stockRecords.forEach((r) => {
+  stockNet[r.materialId] = (stockNet[r.materialId] || 0) + (r.type === 'in' ? r.qty : -r.qty)
+})
+materials.forEach((m) => {
+  const net = stockNet[m.id] || 0
+  if (net > m.stock) m.stock = net
+})
 
 /* ---------- 人员 ---------- */
 export const personnel = PERSON_NAMES.slice(0, 12).map((name, i) => ({
@@ -260,7 +282,8 @@ export const personnel = PERSON_NAMES.slice(0, 12).map((name, i) => ({
 
 /* ---------- 采收 / 溯源 / 农残 ---------- */
 export const harvests = Array.from({ length: 12 }, (_, i) => {
-  const plot = pick(plots.filter((p) => p.crop && p.type !== '畜禽'))
+  // 排除育苗期棚与刚播种的小麦（2026-10-25），保证采收日期晚于地块种植日期
+  const plot = pick(plots.filter((p) => ['设施大棚', '大田', '果园', '水产'].includes(p.type) && p.status !== '育苗期' && p.crop !== '小麦'))
   return {
     id: i + 1, batchCode: `HC-2026-${String(700 + i)}`, plotId: plot.id, plotName: plot.name, crop: plot.crop,
     date: fmt(NOW - i * 86400000 * 4).slice(0, 10), qty: rint(200, 3600), grade: pick(['特级', '一级', '一级', '二级']),
@@ -270,13 +293,18 @@ export const harvests = Array.from({ length: 12 }, (_, i) => {
 export const traceBatches = harvests.slice(0, 8).map((h, i) => ({
   id: i + 1, code: `TR-${h.batchCode.slice(3)}`, crop: h.crop, plotName: h.plotName, qty: `${h.qty}kg`,
   harvestCode: h.batchCode, status: i < 2 ? '待完善' : i < 6 ? '已发布' : i === 6 ? '已召回' : '已下架',
-  created: fmt(NOW - i * 86400000 * 5), scans: rint(12, 860), org: '示范园总部（智慧农业示范园）',
+  // 溯源批次在采收次日建立（不得早于采收日期；首条当日生效）
+  created: i === 0 ? fmt(NOW) : fmt(NOW - i * 86400000 * 4 + 86400000 + rint(1, 20) * 3600000),
+  scans: rint(12, 860), org: '示范园总部（智慧农业示范园）',
   records: { farm: rint(6, 18), env: rint(300, 900), tests: i < 2 ? 0 : rint(1, 2) },
 }))
 export const residueReports = traceBatches.filter((b) => b.status !== '待完善').map((b, i) => ({
   id: i + 1, code: `JC-2026-${String(800 + i)}`, batchCode: b.code, crop: b.crop,
-  item: pick(['敌敌畏', '氯氰菊酯', '毒死蜱', '多菌灵']), result: i % 7 === 3 ? '不合格' : '合格',
-  org: pick(['市农产品质量安全检测中心', '第三方检测机构（华测）']), date: fmt(NOW - i * 86400000 * 6).slice(0, 10), file: '检测报告.pdf',
+  item: pick(['敌敌畏', '氯氰菊酯', '毒死蜱', '多菌灵']),
+  // 检测日期 = 对应批次采收日 + 2 天；不合格结论只落在"已召回"的批次（traceBatches[6]）上
+  result: i === 4 ? '不合格' : '合格',
+  org: pick(['市农产品质量安全检测中心', '第三方检测机构（华测）']),
+  date: fmt(NOW - (i + 2) * 86400000 * 4 + 86400000 * 2).slice(0, 10), file: '检测报告.pdf',
 }))
 
 /* ---------- 产销对接 ---------- */
@@ -352,9 +380,9 @@ export const apiConfigs = [
 export const roles = [
   { id: 1, code: 'admin', name: '系统管理员', desc: '平台最高权限，管理账号与系统配置', users: 1, status: '启用', dataScope: '全部数据', builtIn: true },
   { id: 2, code: 'manager', name: '园区管理员', desc: '园区运营监控、告警处置、审批与报表', users: 2, status: '启用', dataScope: '本园区数据', builtIn: true },
-  { id: 3, code: 'tech', name: '农技人员', desc: '农事计划制定、工单派发、设备远程控制', users: 4, status: '启用', dataScope: '本园区数据', builtIn: true },
-  { id: 4, code: 'farmer', name: '农户/工人', desc: '接收工单、打卡上报、查看告警', users: 12, status: '启用', dataScope: '本人数据', builtIn: true },
-  { id: 5, code: 'regulator', name: '监管人员', desc: '溯源信息与农残检测报告监督查看', users: 2, status: '启用', dataScope: '溯源相关数据', builtIn: true },
+  { id: 3, code: 'tech', name: '农技人员', desc: '农事计划制定、工单派发、设备远程控制', users: 2, status: '启用', dataScope: '本园区数据', builtIn: true },
+  { id: 4, code: 'farmer', name: '农户/工人', desc: '接收工单、打卡上报、查看告警', users: 2, status: '启用', dataScope: '本人数据', builtIn: true },
+  { id: 5, code: 'regulator', name: '监管人员', desc: '溯源信息与农残检测报告监督查看', users: 1, status: '启用', dataScope: '溯源相关数据', builtIn: true },
 ]
 export const accountUsers = [
   { id: 1, username: 'admin', password: '123456', name: '系统管理员', role: 'admin', roleName: '系统管理员', phone: '13800000001', email: 'admin@agri.com', dept: '信息中心', avatar: '', status: '启用', createdAt: '2024-09-01 08:00', lastLogin: fmt(NOW - 3600000) },
@@ -389,21 +417,47 @@ export const weather = {
   })),
   warnings: [{ level: '蓝色', type: '霜冻', content: '预计明天夜间最低气温将降至 1℃，请注意防范霜冻对露天作物的影响。', publish: '武汉市气象台' }],
 }
+// 预报与实况/预警自洽：今日最高温不低于当前气温；明日最低温与霜冻预警的 1℃ 一致
+weather.forecast[0].tMax = Math.max(weather.forecast[0].tMax, weather.temp + 1)
+weather.forecast[1].tMin = 1
 
 /* ---------- 长势 / 病虫害 AI ---------- */
-export const growthAnalysis = plots.filter((p) => ['设施大棚', '大田', '果园'].includes(p.type)).map((p, i) => ({
-  id: i + 1, plotName: p.name, crop: p.crop, stage: pick(['苗期', '开花期', '结果期', '成熟期', '分蘖期']),
-  score: rint(72, 96), level: rint(72, 96) > 88 ? '优' : rint(72, 96) > 78 ? '良' : '中',
-  maturity: rint(5, 30), yieldEst: rint(1500, 5200), yieldUnit: 'kg/亩',
-  ndvi: rfloat(0.42, 0.86, 2), compare: rfloat(-8, 12, 1), updatedAt: fmt(NOW - rint(1, 72) * 3600000),
-}))
+// 生育期与亩产按作物区分（水稻亩产 5000kg+ 明显超纲）
+const STAGE_BY_CROP = {
+  水稻: ['苗期', '分蘖期', '拔节期', '抽穗期', '成熟期'],
+  小麦: ['苗期', '分蘖期', '拔节期', '灌浆期', '成熟期'],
+  柑橘: ['幼果期', '果实膨大期', '转色期', '成熟期'],
+  生菜: ['出苗期', '成苗期', '莲座期', '结球期'],
+}
+const YIELD_RANGE = {
+  番茄: [3000, 5500], 黄瓜: [3500, 6000], 生菜: [1200, 2400], 草莓: [1500, 2600],
+  水稻: [520, 750], 小麦: [380, 620], 柑橘: [2200, 3600], 辣椒: [2000, 3500], 西兰花: [800, 1500],
+}
+export const growthAnalysis = plots.filter((p) => ['设施大棚', '大田', '果园'].includes(p.type)).map((p, i) => {
+  const score = rint(72, 96)
+  const range = YIELD_RANGE[p.crop] || [1000, 3000]
+  return {
+    id: i + 1, plotName: p.name, crop: p.crop,
+    stage: pick(STAGE_BY_CROP[p.crop] || ['苗期', '开花期', '结果期', '成熟期']),
+    score, level: score > 88 ? '优' : score > 78 ? '良' : '中',
+    maturity: rint(5, 30), yieldEst: rint(range[0], range[1]), yieldUnit: 'kg/亩',
+    ndvi: rfloat(0.42, 0.86, 2), compare: rfloat(-8, 12, 1), updatedAt: fmt(NOW - rint(1, 72) * 3600000),
+  }
+})
+// 病虫害只在陆地种植地块发生，且病害种类与寄主作物对应（"黄瓜霜霉病"不会长在柑橘/鱼塘上）
+const PEST_POOL = {
+  番茄: ['番茄晚疫病', '灰霉病', '白粉虱', '蚜虫'],
+  黄瓜: ['黄瓜霜霉病', '白粉虱', '蚜虫'],
+  生菜: ['蚜虫', '菜青虫', '叶斑病'],
+  柑橘: ['红蜘蛛', '蚜虫', '叶斑病'],
+}
 export const pestRecords = Array.from({ length: 12 }, (_, i) => {
-  const plot = pick(plots)
-  const pest = pick(PESTS)
+  const plot = pick(plots.filter((p) => ['设施大棚', '果园'].includes(p.type)))
+  const pest = pick(PEST_POOL[plot.crop] || PESTS)
   const conf = rint(72, 98)
   return {
     id: i + 1, time: fmt(NOW - i * 86400000 * 2), plotName: plot.name, crop: plot.crop, pest,
-    level: conf > 90 ? '轻度' : '中度', conf, source: pick(['AI摄像头识别', '人工上报', '无人机巡检']),
+    level: rand() > 0.45 ? '轻度' : '中度', conf, source: pick(['AI摄像头识别', '人工上报', '无人机巡检']),
     image: 1, suggestion: pick(['建议喷施吡虫啉 800 倍液，连续 2 次', '加强通风降湿，喷施多菌灵防治', '释放天敌丽蚜小蜂，物理黄板诱杀', '清园处理，剪除病枝并带出棚外销毁']),
     status: i % 3 === 0 ? '待处理' : '已处理',
   }

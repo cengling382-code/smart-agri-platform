@@ -29,7 +29,7 @@ const pestOptions = computed(() => {
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     grid: { left: 10, right: 20, top: 20, bottom: 4, containLabel: true },
-    xAxis: { type: 'value', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+    xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef0f3' } } },
     yAxis: { type: 'category', data: entries.map((e) => e[0]) },
     series: [{
       type: 'bar', barWidth: 16,
@@ -222,7 +222,7 @@ function markHandled(row) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid var(--ag-border-light);
+  background: var(--ag-bg-hover);
   background: #fff;
   border-radius: var(--ag-radius); /* 决策依据：病害条目行属卡片类，token 化为卡片档 10px（值不变） */
   padding: 9px 14px;

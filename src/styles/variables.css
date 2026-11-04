@@ -13,17 +13,20 @@
      5. 字号层级连同字距、行高成套定义（--ag-fs-* / --ag-ls-* / --ag-lh-*）
    ============================================================ */
 :root {
-  /* ---------- 品牌色板 · 生态绿（鼠尾草） ---------- */
-  --ag-green-50: #f3f8f4;
-  --ag-green-100: #e2efe5;
-  --ag-green-200: #c8e0ce;
-  --ag-green-300: #a5cdb1;
-  --ag-green-400: #8fbf9a;
-  --ag-green-500: #7dc383;   /* 点缀绿（来自色板） */
-  --ag-green-600: #699c78;   /* 主品牌色（来自色板） */
-  --ag-green-700: #558162;   /* 交互主色（AA 对比度校准） */
-  --ag-green-800: #476b52;
-  --ag-green-900: #3a5743;
+  /* ---------- 主行动色 · 电光蓝（dp accent） ----------
+     决策依据：新设计系统将蓝色严格限定在"有意义的强调"——主按钮、
+     选中态、小图标；成功/警告/危险等语义色独立保留，不参与装饰。
+     变量名沿用 green-* 以免 69 个视图的引用断裂 */
+  --ag-green-50: #eef3fe;
+  --ag-green-100: #dbe5fd;
+  --ag-green-200: #bcd0fa;
+  --ag-green-300: #93b0f7;
+  --ag-green-400: #5c85f5;
+  --ag-green-500: #2e63f2;
+  --ag-green-600: #074ce0;   /* accent：主行动色 */
+  --ag-green-700: #063cb4;   /* 交互主色（白字 AA 对比度校准） */
+  --ag-green-800: #053188;
+  --ag-green-900: #04266b;
 
   /* ---------- 品牌色板 · 雾蓝灰 ---------- */
   --ag-blue-50: #f0f5f9;
@@ -35,11 +38,11 @@
   --ag-cyan-500: #8fb3cc;
   --ag-cyan-600: #6e93b0;
 
-  /* ---------- 结构藏青（侧栏 / 大屏 / 标题） ---------- */
-  --ag-navy-700: #38556a;
-  --ag-navy-800: #303841;    /* 墨蓝（来自色板，正文标题色） */
-  --ag-navy-900: #273952;    /* 藏青（来自色板） */
-  --ag-navy-950: #1c2a3c;
+  /* ---------- 结构墨色（dp field：深色面板 / 选中 / 标题） ---------- */
+  --ag-navy-700: #23272f;
+  --ag-navy-800: #16191f;    /* ink：正文标题色 */
+  --ag-navy-900: #10131a;
+  --ag-navy-950: #0b0d12;
 
   /* ---------- 暖色点缀（来自色板 4/5） ---------- */
   --ag-cream: #fff1bc;       /* 奶油黄 */
@@ -58,16 +61,17 @@
   --ag-danger-light: #f0808d;
   --ag-info: #4c6983;
 
-  /* ---------- 中性色（暖灰系） ---------- */
-  --ag-text-1: #303841;
-  --ag-text-2: #4a545e;
-  --ag-text-3: #6e7883;
-  --ag-text-4: #9aa4ae;
-  --ag-border: #e7e9e8;
-  --ag-border-light: #f0f1f1;
-  --ag-bg-page: #f5f5f5;     /* 浅灰底（来自色板） */
-  --ag-bg-surface: #ffffff;
-  --ag-bg-hover: #fafafa;
+  /* ---------- 中性色（dp 冷灰系：ink → ink-secondary 三级灰度） ---------- */
+  --ag-text-1: #16191f;
+  --ag-text-2: #454c58;
+  --ag-text-3: #6b7380;
+  --ag-text-4: #9aa2ae;
+  --ag-border: #dde0e6;      /* dp rule：发丝边框 */
+  --ag-border-light: #e9ebef;
+  --ag-bg-ground: #fcfcfd;   /* dp ground：页面近白底 */
+  --ag-bg-page: #f3f4f6;     /* dp ground-muted：侧栏 / 共享浅灰字段 */
+  --ag-bg-surface: #ffffff;  /* dp panel：白色卡片 */
+  --ag-bg-hover: #f6f7f9;
 
   /* ---------- 大屏深色系（藏青） ---------- */
   --ag-screen-bg-1: #16222f;
@@ -98,39 +102,37 @@
   --ag-space-10: 40px;
   --ag-space-12: 48px;
 
-  /* ---------- 圆角（3 档收敛） ----------
-     决策依据：原 8/12/16 三档跨度太小、视觉上等于"到处都是圆角"，
-     是典型 AI 模板的千篇一律圆角。收敛为 6/10/14 并拉开用途区分：
-     控件=6（利落）、卡片=10（亲和但不软塌）、浮层=14（明确的层级抬升） */
-  --ag-radius-sm: 6px;
-  --ag-radius: 10px;
-  --ag-radius-lg: 14px;
+  /* ---------- 圆角（dp：面板统一 12px，控件 8px，标签一律胶囊） ----------
+     决策依据：dp 只给单一 panel 半径 12px——卡片与弹窗同档，
+     控件略收（8px）形成"外松内紧"的两级形制 */
+  --ag-radius-sm: 8px;
+  --ag-radius: 12px;
+  --ag-radius-lg: 12px;
+  --ag-radius-pill: 999px;
 
-  /* ---------- 阴影（2 档 + 1 档浮层） ----------
-     决策依据：原 4 档阴影含彩色投影（green glow），叠加在彩色渐变
-     图标上就是"刻意堆砌的光影"。阴影只承担一件事——表达层级，
-     因此一律用中性冷灰、单层或双层以内、透明度 ≤12% */
-  --ag-shadow-sm: 0 1px 2px rgba(48, 56, 65, 0.05);
-  --ag-shadow: 0 1px 2px rgba(48, 56, 65, 0.04), 0 4px 12px rgba(48, 56, 65, 0.05);
-  --ag-shadow-lg: 0 12px 32px rgba(48, 56, 65, 0.10);
+  /* ---------- 阴影（发丝边定形 + 柔和下坠投影） ----------
+     决策依据：dp 卡片 = panel 圆角 + 1px rule 边 + 柔和下坠柔影，
+     观感平整哑光，不靠描边深浅对比 */
+  --ag-shadow-sm: 0 1px 2px rgba(22, 25, 31, 0.04);
+  --ag-shadow: 0 1px 2px rgba(22, 25, 31, 0.04), 0 8px 24px rgba(22, 25, 31, 0.05);
+  --ag-shadow-lg: 0 16px 40px rgba(22, 25, 31, 0.10);
   /* 保留同名变量以免 69 个视图的引用断裂，但值已去色化 */
-  --ag-shadow-green: 0 1px 2px rgba(48, 56, 65, 0.06);
+  --ag-shadow-green: 0 1px 2px rgba(22, 25, 31, 0.05);
 
-  /* ---------- 动效（ios-design：临界阻尼、可打断、≤300ms） ----------
-     决策依据：原 spring 含 1.3 过冲，任何淡入都会"弹一下"，
-     违反 Apple 的默认阻尼 1.0（无过冲）——过冲只留给带惯性的手势。
-     这里用控制点 y≤1 的强 ease-out 模拟"快到位、轻收住"的手感 */
-  --ag-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --ag-ease-spring: cubic-bezier(0.22, 0.9, 0.3, 1);
+  /* ---------- 动效（dp：160ms · ease-out，无入场序列、无持续动画） ---------- */
+  --ag-ease: ease-out;
+  --ag-ease-spring: ease-out;
   --ag-dur-fast: 0.12s;
-  --ag-dur: 0.22s;
-  --ag-dur-slow: 0.36s;
+  --ag-dur: 0.16s;
+  --ag-dur-slow: 0.24s;
 
-  /* ---------- 字体层级（size + weight + leading + tracking 成套定义） ----------
-     决策依据：ios-design 指出层级要靠"字号/字重/行高/字距"四件套一起给，
-     单独调字号会显得单薄。大字号负字距收拢视觉，小字号微正字距保证可读 */
-  --ag-font: 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
-  --ag-font-num: 'DIN Alternate', 'Bahnschrift', 'Segoe UI', Arial, sans-serif;
+  /* ---------- 字体层级（dp：Host Grotesk 标题/大数字，Instrument Sans 正文/控件） ----------
+     决策依据：显示字体（Host Grotesk）加粗紧字距负责标题与大数字，
+     读者字体（Instrument Sans）宽松行距负责正文与控件；
+     CJK 字符回落到系统中文字体，仅拉丁字形与大数字获得新字形 */
+  --ag-font: 'Instrument Sans Variable', 'Instrument Sans', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  --ag-font-display: 'Host Grotesk Variable', 'Host Grotesk', 'Instrument Sans Variable', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
+  --ag-font-num: 'Host Grotesk Variable', 'Host Grotesk', 'Instrument Sans Variable', 'Segoe UI', Arial, sans-serif;
 
   --ag-fs-display: 40px;   --ag-ls-display: -1px;    --ag-lh-display: 1.1;
   --ag-fs-title: 24px;     --ag-ls-title: -0.4px;    --ag-lh-title: 1.3;
@@ -140,19 +142,19 @@
   --ag-fs-micro: 12px;     --ag-ls-micro: 0.2px;     --ag-lh-micro: 1.5;
 
   /* ---------- Element Plus 主题映射 ---------- */
-  --el-color-primary: var(--ag-green-700);
-  --el-color-primary-light-3: #7ea089;
-  --el-color-primary-light-5: #a9c2b2;
-  --el-color-primary-light-7: #d0dcd4;
-  --el-color-primary-light-8: #e2eae4;
-  --el-color-primary-light-9: #f0f4f1;
-  --el-color-primary-dark-2: #476b52;
+  --el-color-primary: var(--ag-green-600);
+  --el-color-primary-light-3: #5c85f5;
+  --el-color-primary-light-5: #93b0f7;
+  --el-color-primary-light-7: #bcd0fa;
+  --el-color-primary-light-8: #dbe5fd;
+  --el-color-primary-light-9: #eef3fe;
+  --el-color-primary-dark-2: #063cb4;
   --el-color-success: #558162;
   --el-color-warning: #c9803e;
   --el-color-danger: #e84a5f;
   --el-color-error: #e84a5f;
   --el-color-info: #6e7883;
-  --el-border-radius-base: 6px;   /* 与 --ag-radius-sm 对齐：控件一律 6px */
+  --el-border-radius-base: 8px;   /* 与 --ag-radius-sm 对齐：控件一律 8px 大圆角 */
   --el-text-color-primary: var(--ag-text-1);
   --el-text-color-regular: var(--ag-text-2);
   --el-text-color-secondary: var(--ag-text-3);

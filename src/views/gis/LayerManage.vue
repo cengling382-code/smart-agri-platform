@@ -30,7 +30,7 @@ const layerGroups = reactive([
   },
 ])
 
-const TYPE_COLOR = { 设施大棚: '#699C78', 大田: '#D4B95E', 果园: '#E89552', 水产: '#4C6983', 畜禽: '#B17179' }
+const TYPE_COLOR = { 设施大棚: '#074ce0', 大田: '#D4B95E', 果园: '#c9803e', 水产: '#4C6983', 畜禽: '#B17179' }
 
 async function load() {
   try {
@@ -118,14 +118,14 @@ function polygon(shape) {
         </div>
         <div class="pv-body">
           <svg class="pv-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="图层叠加预览">
-            <rect width="100" height="100" :fill="basemap === 'satellite' ? '#22321f' : '#eef4ee'" :opacity="opacity / 100" />
+            <rect width="100" height="100" :fill="basemap === 'satellite' ? '#22321f' : '#eef0f3'" :opacity="opacity / 100" />
             <!-- 地块图层 -->
             <g v-if="layerGroups[0].enabled">
               <polygon v-for="p in plots" :key="p.id" :points="polygon(p.shape)" :fill="layerGroups[0].items[1].on ? (TYPE_COLOR[p.type] + '44') : 'rgba(148,163,184,.25)'" :stroke="TYPE_COLOR[p.type]" stroke-width="0.3" />
             </g>
             <!-- 设备图层 -->
             <g v-if="layerGroups[1].enabled">
-              <circle v-for="d in devices.slice(0, 40)" :key="d.id" :cx="40 + (d.id % 9) * 2.4" :cy="20 + ((d.id * 7) % 60)" r="0.8" :fill="d.type === 'camera' ? '#4C6983' : d.type === 'actuator' ? '#4C6983' : '#7DC383'" />
+              <circle v-for="d in devices.slice(0, 40)" :key="d.id" :cx="40 + (d.id % 9) * 2.4" :cy="20 + ((d.id * 7) % 60)" r="0.8" :fill="d.type === 'camera' ? '#4C6983' : d.type === 'actuator' ? '#4C6983' : '#074ce0'" />
             </g>
             <!-- 气象图层 -->
             <g v-if="layerGroups[2].enabled && layerGroups[2].items[2].on">

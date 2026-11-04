@@ -248,7 +248,7 @@ function computedGroups() {
   flex-direction: column;
   gap: 3px;
   padding: 10px 12px;
-  border: 1px solid var(--ag-border-light);
+  background: var(--ag-bg-hover);
   border-radius: var(--ag-radius-sm);
   background: var(--ag-bg-subtle, var(--ag-bg-hover));
 }

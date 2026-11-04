@@ -13,7 +13,7 @@ const plotOptions = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: stats.value?.byPlot?.map((p) => p.name) || [], axisLabel: { interval: 0, rotate: 24 } },
-  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 26,
     data: stats.value?.byPlot?.map((p, i) => ({ value: p.value, itemStyle: { color: CHART_COLORS[i % CHART_COLORS.length], borderRadius: [6, 6, 0, 0] } })) || [],
@@ -24,11 +24,11 @@ const monthOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', boundaryGap: false, data: stats.value?.byMonth?.map((m) => m.month) || [] },
-  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     name: '产量', type: 'line', smooth: true, data: stats.value?.byMonth?.map((m) => m.value) || [],
     lineStyle: { width: 2.5, color: CHART_COLORS[0] },
-    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(105,156,120,.25)' }, { offset: 1, color: 'rgba(105,156,120,.02)' }] } },
+    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(7,76,224,.1)' }, { offset: 1, color: 'rgba(7,76,224,.02)' }] } },
   }],
 }))
 
@@ -36,20 +36,20 @@ const yearOptions = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: stats.value?.yearTrend?.map((y) => y.year) || [] },
-  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 46,
-    data: stats.value?.yearTrend?.map((y) => ({ value: y.value, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#7DC383' }, { offset: 1, color: '#38556A' }] }, borderRadius: [6, 6, 0, 0] } })) || [],
+    data: stats.value?.yearTrend?.map((y) => ({ value: y.value, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#5c85f5' }, { offset: 1, color: '#38556A' }] }, borderRadius: [6, 6, 0, 0] } })) || [],
   }],
 }))
 
 const gradeOptions = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: {c}kg ({d}%)' },
-  legend: { bottom: 0, textStyle: { color: '#6E7883' } },
+  legend: { bottom: 0, textStyle: { color: '#6b7380' } },
   series: [{
     type: 'pie', radius: ['44%', '70%'], center: ['50%', '44%'],
     itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }, label: { show: false },
-    data: stats.value?.byGrade?.map((g, i) => ({ name: g.name, value: g.value, itemStyle: { color: ['#7DC383', '#5E7F9A', '#9AA4AE'][i] } })) || [],
+    data: stats.value?.byGrade?.map((g, i) => ({ name: g.name, value: g.value, itemStyle: { color: ['#558162', '#5E7F9A', '#9AA4AE'][i] } })) || [],
   }],
 }))
 

@@ -179,14 +179,14 @@ function showDetail(row) {
             </div>
           </div>
           <svg class="draw-svg" viewBox="0 0 100 100" @click="addPoint" role="img" aria-label="地块边界绘制区域，绘制模式下点击添加顶点">
-            <rect width="100" height="100" fill="#eef4ee" rx="2" />
+            <rect width="100" height="100" fill="#eef0f3" rx="2" />
             <path d="M 0 50 L 100 48" stroke="rgba(255,255,255,.4)" stroke-width="0.6" stroke-dasharray="1.4 1" />
             <path d="M 50 0 L 52 100" stroke="rgba(255,255,255,.4)" stroke-width="0.6" stroke-dasharray="1.4 1" />
             <polygon
               :points="drawPoints.map((p) => p.join(',')).join(' ')"
-              fill="rgba(105,156,120,.25)" stroke="#699C78" stroke-width="0.5"
+              fill="rgba(7,76,224,.18)" stroke="#074ce0" stroke-width="0.5"
             />
-            <circle v-for="(pt, i) in drawPoints" :key="i" :cx="pt[0]" :cy="pt[1]" r="0.9" fill="#699C78" />
+            <circle v-for="(pt, i) in drawPoints" :key="i" :cx="pt[0]" :cy="pt[1]" r="0.9" fill="#074ce0" />
             <text x="3" y="96" font-size="2.4" fill="#9AA4AE">{{ drawing ? '绘制中：点击地图添加顶点' : `已绘制 ${drawPoints.length} 个顶点` }}</text>
           </svg>
           <div class="geo-row">

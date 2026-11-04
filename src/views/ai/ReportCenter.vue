@@ -32,7 +32,7 @@ async function preview(row) {
   await ElMessageBox.alert(
     `<div style="font-size:13px;line-height:2;color:#4A545E">
       <b>${row.name}</b><br/>
-      <span style="color:#6E7883">类型：${row.type}（${row.cycle}）<br/>
+      <span style="color:#6b7380">类型：${row.type}（${row.cycle}）<br/>
       生成时间：${row.time} · 大小：${row.size}</span><br/>
       <div style="margin-top:8px;padding:12px;background:#F5F5F5;border-radius:8px">
         报表预览：<br/>

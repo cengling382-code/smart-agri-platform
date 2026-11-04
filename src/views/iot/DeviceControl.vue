@@ -55,7 +55,7 @@ async function toggleDevice(dev) {
   const action = dev.running ? '关闭' : '开启'
   const online = dev.status === 'online'
   const { value } = await ElMessageBox.confirm(
-    `确定要${action}「${dev.name}」吗？${online ? '' : '⚠️ 该设备当前离线，指令可能无法送达。'}`,
+    `确定要${action}「${dev.name}」吗？${online ? '' : '该设备当前离线，指令可能无法送达。'}`,
     `${action}设备 · 安全确认`,
     { type: 'warning', confirmButtonText: `确认${action}`, cancelButtonText: '取消' }
   ).catch(() => ({ value: false }))
@@ -111,7 +111,7 @@ onMounted(load)
           <b>{{ g.type }}</b>
           <span class="text-dim">{{ g.running }}/{{ g.total }} 运行中</span>
         </div>
-        <el-progress :percentage="Math.round((g.running / g.total) * 100)" :stroke-width="8" :show-text="false" color="#699C78" style="width: 110px" />
+        <el-progress :percentage="Math.round((g.running / g.total) * 100)" :stroke-width="8" :show-text="false" color="#074ce0" style="width: 110px" />
         <div class="g-ops">
           <el-button size="small" type="primary" plain @click="openBatch(g.type)">批量控制</el-button>
         </div>
@@ -229,7 +229,7 @@ onMounted(load)
 }
 .d-icon.run {
   /* 决策依据：图标块装饰性渐变底属"发光方块"，按简约高级规范改为同色系低透明度实色 + 语义色图标（同 StatCard 已清理样式） */
-  background: rgba(105, 156, 120, 0.14);
+  background: rgba(85, 129, 98, 0.12);
   color: var(--ag-green-700);
   /* 决策依据：agCountGlow 已改为一次性淡入，保留 infinite 会令图标不停闪烁，故移除该动画 */
 }

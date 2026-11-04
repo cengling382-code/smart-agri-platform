@@ -10,7 +10,7 @@ const loading = ref(true)
 
 const productOptions = computed(() => ({
   tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
-  legend: { bottom: 0, textStyle: { color: '#6E7883' }, itemWidth: 10, itemHeight: 10 },
+  legend: { bottom: 0, textStyle: { color: '#6b7380' }, itemWidth: 10, itemHeight: 10 },
   series: [{
     type: 'pie', radius: ['42%', '70%'], center: ['50%', '42%'],
     itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 }, label: { show: false },
@@ -21,10 +21,10 @@ const productOptions = computed(() => ({
 const monthOptions = computed(() => ({
   color: CHART_COLORS,
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, textStyle: { color: '#6E7883' } },
+  legend: { top: 0, textStyle: { color: '#6b7380' } },
   grid: { left: 10, right: 16, top: 40, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: stats.value?.byMonth?.map((m) => m.month) || [] },
-  yAxis: [{ type: 'value', name: '元', splitLine: { lineStyle: { color: '#F0F1F1' } } }, { type: 'value', name: '单', splitLine: { show: false } }],
+  yAxis: [{ type: 'value', name: '元', splitLine: { lineStyle: { color: '#eef0f3' } } }, { type: 'value', name: '单', splitLine: { show: false } }],
   series: [
     { name: '销售额', type: 'bar', barWidth: 22, data: stats.value?.byMonth?.map((m) => m.amount) || [], itemStyle: { borderRadius: [5, 5, 0, 0] } },
     { name: '订单量', type: 'line', yAxisIndex: 1, smooth: true, data: stats.value?.byMonth?.map((m) => m.orders) || [], lineStyle: { width: 2.5 } },
@@ -75,7 +75,7 @@ onMounted(async () => {
         <div v-for="(r, i) in rank" :key="r.name" class="rank-row">
           <span class="rk-no" :class="'top' + (i + 1)">{{ i + 1 }}</span>
           <b class="rk-name">{{ r.name }}</b>
-          <el-progress :percentage="Math.round((r.value / rank[0].value) * 100)" :stroke-width="10" :show-text="false" color="#699C78" style="flex: 1" />
+          <el-progress :percentage="Math.round((r.value / rank[0].value) * 100)" :stroke-width="10" :show-text="false" color="#074ce0" style="flex: 1" />
           <span class="mono-num rk-val">¥{{ r.value }}</span>
         </div>
       </div>
@@ -119,7 +119,7 @@ onMounted(async () => {
 }
 .rk-no.top1 { background: #FFB37B; color: #fff; }
 .rk-no.top2 { background: #9AA4AE; color: #fff; }
-.rk-no.top3 { background: #E89552; color: #fff; }
+.rk-no.top3 { background: #c9803e; color: #fff; }
 .rk-name {
   width: 190px;
   font-size: 13px;

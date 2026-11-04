@@ -68,7 +68,7 @@ function usagePct(row) {
       </template>
       <template #col-used="{ row }">
         <div class="usage">
-          <el-progress :percentage="usagePct(row)" :stroke-width="7" :show-text="false" :color="usagePct(row) > 80 ? '#E84A5F' : usagePct(row) > 60 ? '#E89552' : '#699C78'" />
+          <el-progress :percentage="usagePct(row)" :stroke-width="7" :show-text="false" :color="usagePct(row) > 80 ? '#E84A5F' : usagePct(row) > 60 ? '#c9803e' : '#558162'" />
           <span class="text-dim mono-num">{{ row.used }} / {{ row.quota }}</span>
         </div>
       </template>

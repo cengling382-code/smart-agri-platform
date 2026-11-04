@@ -21,16 +21,16 @@ const waterFert = {
 const waterFertOptions = computed(() => ({
   color: CHART_COLORS,
   tooltip: { trigger: 'axis' },
-  legend: { top: 0, textStyle: { color: '#6E7883' } },
+  legend: { top: 0, textStyle: { color: '#6b7380' } },
   grid: { left: 10, right: 16, top: 40, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: waterFert.months },
   yAxis: [
-    { type: 'value', name: '水(m³)', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+    { type: 'value', name: '水(m³)', splitLine: { lineStyle: { color: '#eef0f3' } } },
     { type: 'value', name: '肥(kg)', splitLine: { show: false } },
   ],
   series: [
     { name: '灌溉用水', type: 'bar', barWidth: 20, data: waterFert.water, itemStyle: { color: '#5E7F9A', borderRadius: [5, 5, 0, 0] } },
-    { name: '施肥量', type: 'line', yAxisIndex: 1, smooth: true, data: waterFert.fert, lineStyle: { width: 2.5, color: '#699C78' } },
+    { name: '施肥量', type: 'line', yAxisIndex: 1, smooth: true, data: waterFert.fert, lineStyle: { width: 2.5, color: '#074ce0' } },
   ],
 }))
 
@@ -39,7 +39,7 @@ const envCompare = computed(() => {
   const env = dash.value.env
   return {
     tooltip: { trigger: 'axis' },
-    legend: { top: 0, textStyle: { color: '#6E7883' } },
+    legend: { top: 0, textStyle: { color: '#6b7380' } },
     radar: {
       indicator: [
         { name: '温度(℃)', max: 35 }, { name: '湿度(%)', max: 100 }, { name: 'CO₂(ppm)', max: 700 },
@@ -61,7 +61,7 @@ const yieldOptions = computed(() => ({
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: harvest.value?.byPlot?.map((p) => p.name) || [], axisLabel: { rotate: 20 } },
-  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: 'kg', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     type: 'bar', barWidth: 24,
     data: harvest.value?.byPlot?.map((p, i) => ({ value: p.value, itemStyle: { color: CHART_COLORS[i % CHART_COLORS.length], borderRadius: [6, 6, 0, 0] } })) || [],
@@ -72,7 +72,7 @@ const salesOptions = computed(() => ({
   tooltip: { trigger: 'axis' },
   grid: { left: 10, right: 16, top: 34, bottom: 4, containLabel: true },
   xAxis: { type: 'category', data: sales.value?.byMonth?.map((m) => m.month) || [] },
-  yAxis: { type: 'value', name: '元', splitLine: { lineStyle: { color: '#F0F1F1' } } },
+  yAxis: { type: 'value', name: '元', splitLine: { lineStyle: { color: '#eef0f3' } } },
   series: [{
     name: '销售额', type: 'line', smooth: true,
     data: sales.value?.byMonth?.map((m) => m.amount) || [],

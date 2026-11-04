@@ -24,7 +24,7 @@ const columns = [
   { prop: 'name', label: '网关名称', minWidth: 190 },
   { prop: 'model', label: '型号', width: 120 },
   { prop: 'status', label: '连接状态', width: 100, align: 'center' },
-  { prop: 'children', label: '下挂设备', width: 100, align: 'center' },
+  { prop: 'childCount', label: '下挂设备', width: 100, align: 'center' },
   { prop: 'signal', label: '信号', width: 90, align: 'center' },
   { prop: 'ip', label: 'IP 地址', width: 130 },
   { prop: 'fw', label: '固件版本', width: 90 },
@@ -96,11 +96,11 @@ async function reboot(row) {
           <span class="pulse-dot" :class="row.status"></span>{{ row.status === 'online' ? '已连接' : '离线' }}
         </span>
       </template>
-      <template #col-children="{ row }">
-        <el-link type="primary" :underline="false" @click="showChildren(row)">{{ row.children }} 台</el-link>
+      <template #col-childCount="{ row }">
+        <el-link type="primary" :underline="false" @click="showChildren(row)">{{ row.childCount }} 台</el-link>
       </template>
       <template #col-signal="{ row }">
-        <el-progress :percentage="row.signal" :stroke-width="6" :show-text="false" :color="row.signal >= 80 ? '#699C78' : row.signal >= 50 ? '#E89552' : '#E84A5F'" style="width: 56px" />
+        <el-progress :percentage="row.signal" :stroke-width="6" :show-text="false" :color="row.signal >= 80 ? '#558162' : row.signal >= 50 ? '#c9803e' : '#E84A5F'" style="width: 56px" />
       </template>
       <template #col-action="{ row }">
         <el-button link type="primary" @click="openEdit(row)">编辑</el-button>

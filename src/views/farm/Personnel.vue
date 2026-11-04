@@ -77,7 +77,7 @@ async function viewHours(row) {
   ElMessageBox.alert(
     `<div style="font-size:13px;line-height:2">
       <b>${row.name}</b>（${row.role} · ${row.area}）<br/>
-      累计工时：<b style="color:#699C78">${row.workHours} 小时</b><br/>
+      累计工时：<b style="color:#074ce0">${row.workHours} 小时</b><br/>
       完成任务：<b>${row.tasks} 项</b><br/>
       入职日期：${row.joinDate}<br/>
       技能：${row.skills.join('、')}
@@ -173,7 +173,7 @@ async function viewHours(row) {
   height: 26px;
   border-radius: var(--ag-radius); /* 决策依据：26px 头像小块非控件，按卡片档归 10px */
   /* 决策依据：头像装饰性渐变底属"发光方块"，按简约高级规范改为同色系低透明度实色 + 语义色文字 */
-  background: rgba(105, 156, 120, 0.14);
+  background: rgba(7, 76, 224, 0.1);
   color: var(--ag-green-700);
   font-size: 12px;
   display: grid;

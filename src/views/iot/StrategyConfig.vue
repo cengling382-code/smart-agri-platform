@@ -147,7 +147,7 @@ onMounted(async () => {
     <ProTable ref="tableRef" :columns="columns" :fetch="fetchPage" :filters="filters" action-width="260">
       <template #col-name="{ row }">
         <span class="st-name">
-          <el-icon :size="14" :color="'#699C78'"><component :is="TRIGGER_META[row.trigger]?.icon || 'Connection'" /></el-icon>
+          <el-icon :size="14" :color="'#074ce0'"><component :is="TRIGGER_META[row.trigger]?.icon || 'Connection'" /></el-icon>
           {{ row.name }}
         </span>
       </template>

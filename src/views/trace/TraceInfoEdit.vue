@@ -136,7 +136,7 @@ async function save(publish) {
           </div>
           <div class="ag-card bind-card">
             <div class="bc-head">
-              <el-icon color="#699C78" :size="20"><Document /></el-icon>
+              <el-icon color="#074ce0" :size="20"><Document /></el-icon>
               <b>检测报告</b>
               <el-tag size="small" :type="form.bindReport.length ? 'success' : 'info'">{{ form.bindReport.length }} 份</el-tag>
             </div>

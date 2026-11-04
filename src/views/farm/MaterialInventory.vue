@@ -93,7 +93,7 @@ function exportPesticide() {
           :percentage="row.ratio"
           :stroke-width="8"
           :show-text="false"
-          :color="row.low ? '#E84A5F' : row.ratio < 50 ? '#E89552' : '#699C78'"
+          :color="row.low ? '#E84A5F' : row.ratio < 50 ? '#c9803e' : '#558162'"
         />
       </template>
     </ProTable>

@@ -236,7 +236,7 @@ onMounted(async () => {
 .perm-tree {
   max-height: 430px;
   overflow: auto;
-  border: 1px solid var(--ag-border-light);
+  background: var(--ag-bg-hover);
   border-radius: var(--ag-radius); /* 决策依据：权限树面板属面板类，token 化为卡片档 10px（值不变） */
   padding: 12px;
 }
