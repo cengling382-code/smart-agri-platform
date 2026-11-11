@@ -4,35 +4,74 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { PageHeader, ChartCard, StatCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
-import { deviceApi, farmApi, tradeApi, statsApi } from '@/api'
+import { farmApi, tradeApi, statsApi } from '@/api'
 
 const router = useRouter()
 const loading = ref(true)
+const loadError = ref(false)
 const dash = ref(null)
 const harvest = ref(null)
 const sales = ref(null)
+const ledgerRows = ref([])
 
-/* 水肥消耗（演示数据） */
-const waterFert = {
-  months: ['6月', '7月', '8月', '9月', '10月', '11月'],
-  water: [420, 480, 560, 430, 380, 260],
-  fert: [86, 102, 128, 95, 80, 42],
-}
+/** 水肥月度聚合：来自农事台账真实灌溉/施肥记录（按月份分组） */
+const waterFert = computed(() => {
+  const map = new Map()
+  ledgerRows.value.forEach((r) => {
+    if (r.type !== '灌溉' && r.type !== '施肥') return
+    const key = String(r.time || '').slice(0, 7)
+    if (!key) return
+    const item = map.get(key) || { key, month: `${Number(key.slice(5))}月`, water: 0, fert: 0 }
+    if (r.type === '灌溉') item.water += 1
+    else {
+      const kg = parseFloat((String(r.material || '').match(/([\d.]+)\s*kg/i) || [])[1])
+      if (kg) item.fert += kg
+    }
+    map.set(key, item)
+  })
+  const rows = [...map.values()].sort((a, b) => a.key.localeCompare(b.key)).slice(-6)
+  return {
+    months: rows.map((r) => r.month),
+    water: rows.map((r) => r.water),
+    fert: rows.map((r) => r.fert),
+  }
+})
+
 const waterFertOptions = computed(() => ({
   color: CHART_COLORS,
   tooltip: { trigger: 'axis' },
   legend: { top: 0, textStyle: { color: '#6b7380' } },
   grid: { left: 10, right: 16, top: 40, bottom: 4, containLabel: true },
-  xAxis: { type: 'category', data: waterFert.months },
+  xAxis: { type: 'category', data: waterFert.value.months },
   yAxis: [
-    { type: 'value', name: '水(m³)', splitLine: { lineStyle: { color: '#eef0f3' } } },
+    { type: 'value', name: '灌溉(次)', splitLine: { lineStyle: { color: '#eef0f3' } } },
     { type: 'value', name: '肥(kg)', splitLine: { show: false } },
   ],
   series: [
-    { name: '灌溉用水', type: 'bar', barWidth: 20, data: waterFert.water, itemStyle: { color: '#5E7F9A', borderRadius: [5, 5, 0, 0] } },
-    { name: '施肥量', type: 'line', yAxisIndex: 1, smooth: true, data: waterFert.fert, lineStyle: { width: 2.5, color: '#074ce0' } },
+    { name: '灌溉作业', type: 'bar', barWidth: 20, data: waterFert.value.water, itemStyle: { color: '#5E7F9A', borderRadius: [5, 5, 0, 0] } },
+    { name: '施肥量', type: 'line', yAxisIndex: 1, smooth: true, data: waterFert.value.fert, lineStyle: { width: 2.5, color: '#074ce0' } },
   ],
 }))
+
+const last = (arr) => (arr && arr.length ? arr[arr.length - 1] : 0)
+/** 环比：最后一期相对上期变化百分比 */
+function momTrend(values) {
+  if (!values || values.length < 2) return 0
+  const prev = values[values.length - 2]
+  const cur = values[values.length - 1]
+  if (!prev) return cur ? 100 : 0
+  return Math.round(((cur - prev) / prev) * 100)
+}
+
+const waterLatest = computed(() => last(waterFert.value.water))
+const fertLatest = computed(() => last(waterFert.value.fert))
+const fertMonth = computed(() => waterFert.value.months.at(-1) || '—')
+const waterTrend = computed(() => momTrend(waterFert.value.water))
+const fertTrend = computed(() => momTrend(waterFert.value.fert))
+const salesLatest = computed(() => sales.value?.byMonth?.at(-1)?.amount || 0)
+const salesMonth = computed(() => sales.value?.byMonth?.at(-1)?.month || '—')
+const salesTrend = computed(() => momTrend((sales.value?.byMonth || []).map((m) => m.amount)))
+const yieldTrend = computed(() => momTrend((harvest.value?.byMonth || []).map((m) => m.value)))
 
 const envCompare = computed(() => {
   if (!dash.value) return {}
@@ -81,18 +120,33 @@ const salesOptions = computed(() => ({
   }],
 }))
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true
+  loadError.value = false
   try {
-    const [d, h, s] = await Promise.all([statsApi.dashboard(), farmApi.harvestStats(), tradeApi.stats()])
+    const [d, h, s, l] = await Promise.all([
+      statsApi.dashboard(),
+      farmApi.harvestStats(),
+      tradeApi.stats(),
+      farmApi.ledger({ page: 1, size: 10000 }),
+    ])
     dash.value = d
     harvest.value = h
     sales.value = s
+    ledgerRows.value = l.list || []
   } catch (e) {
     console.warn('[AiOverview]', e?.message || e)
+    dash.value = null
+    harvest.value = null
+    sales.value = null
+    ledgerRows.value = []
+    loadError.value = true
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadData)
 </script>
 
 <template>
@@ -103,14 +157,20 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <div class="kpi-grid stagger" v-if="dash && harvest && sales">
-      <StatCard label="本月产量" :value="dash.monthYield" unit="kg" icon="Cherry" tone="green" :trend="16" />
-      <StatCard label="灌溉用水(月)" :value="260" unit="m³" icon="Pouring" tone="blue" :trend="-8" />
-      <StatCard label="施肥量(月)" :value="42" unit="kg" icon="Box" tone="amber" :trend="-5" />
-      <StatCard label="销售额(月)" :value="sales.byMonth?.[5]?.amount || 0" unit="元" icon="ShoppingCart" tone="cyan" :trend="21" />
+    <div class="empty-state" v-if="loadError">
+      <el-empty description="数据加载失败，请稍后重试">
+        <el-button type="primary" icon="Refresh" @click="loadData">重新加载</el-button>
+      </el-empty>
     </div>
 
-    <div class="grid-2">
+    <div class="kpi-grid stagger" v-if="!loadError && dash && harvest && sales">
+      <StatCard label="本月产量" :value="dash.monthYield" unit="kg" icon="Cherry" tone="green" :trend="yieldTrend" trend-label="较上月" />
+      <StatCard label="灌溉作业(月)" :value="waterLatest" unit="次" icon="Pouring" tone="blue" :trend="waterTrend" trend-label="较上月" />
+      <StatCard :label="`施肥量（${fertMonth}）`" :value="fertLatest" unit="kg" icon="Box" tone="amber" :trend="fertTrend" trend-label="较上月" />
+      <StatCard :label="`销售额（${salesMonth}）`" :value="salesLatest" unit="元" icon="ShoppingCart" tone="cyan" :trend="salesTrend" trend-label="较上月" />
+    </div>
+
+    <div class="grid-2" v-if="!loadError && dash && harvest && sales">
       <div class="ag-card anim-up">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>多地块环境对比（雷达图）</div></div>
         <div class="ag-card__body"><ChartCard :options="envCompare" :height="320" /></div>

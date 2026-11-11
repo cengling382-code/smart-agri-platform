@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "collection": "tenants",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:37:49.314Z",
+    "count": 4
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "示范园总部（智慧农业示范园）",
+      "admin": "园区管理员",
+      "plots": 12,
+      "devices": 86,
+      "users": 24,
+      "quota": "50GB",
+      "used": "62.5GB",
+      "status": "正常",
+      "expire": "2027-11-30",
+      "createdAt": "2024-09-01 08:00"
+    },
+    {
+      "id": 2,
+      "name": "江北分园",
+      "admin": "王大富",
+      "plots": 8,
+      "devices": 41,
+      "users": 12,
+      "quota": "50GB",
+      "used": "18.2GB",
+      "status": "正常",
+      "expire": "2027-06-30",
+      "createdAt": "2025-03-15 10:00"
+    },
+    {
+      "id": 3,
+      "name": "南湖水产养殖基地",
+      "admin": "刘志强",
+      "plots": 5,
+      "devices": 23,
+      "users": 8,
+      "quota": "30GB",
+      "used": "9.8GB",
+      "status": "正常",
+      "expire": "2026-12-31",
+      "createdAt": "2025-08-20 14:30"
+    },
+    {
+      "id": 4,
+      "name": "西山畜禽牧场",
+      "admin": "陈美凤",
+      "plots": 4,
+      "devices": 18,
+      "users": 6,
+      "quota": "20GB",
+      "used": "15.6GB",
+      "status": "配额预警",
+      "expire": "2027-03-31",
+      "createdAt": "2025-05-10 09:20"
+    }
+  ]
+}

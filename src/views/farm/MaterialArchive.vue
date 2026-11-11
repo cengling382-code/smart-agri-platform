@@ -1,19 +1,39 @@
 <script setup>
 /** 页面 27 · 农资档案：种子/化肥/农药档案维护、供应商管理 */
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { farmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
+
+/* 供应商速览数据来自农资 JSON 库，新增/删除后重新拉取，不再写死数量 */
+const allMaterials = ref([])
+async function loadSupplierStats() {
+  try {
+    const res = await farmApi.materialPage({ page: 1, size: 10000 })
+    allMaterials.value = res.list
+  } catch (e) {
+    console.warn('[MaterialArchive]', e?.message || e)
+  }
+}
+const supplierCount = computed(() => {
+  const map = {}
+  allMaterials.value.forEach((m) => { map[m.supplier] = (map[m.supplier] || 0) + 1 })
+  return map
+})
+onMounted(loadSupplierStats)
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 
-const CATEGORIES = ['种子', '化肥', '农药', '地膜']
-const SUPPLIERS = ['金穗农资有限公司', '绿丰种业', '丰收化肥厂', '生物农药科技', '兴农地膜制品', '川农供应链']
+const CATEGORIES = cfg.materialCategories
+const SUPPLIERS = cfg.suppliers
 
-const CAT_META = { 种子: { icon: 'Cherry', color: '#074ce0' }, 化肥: { icon: 'Box', color: '#c9803e' }, 农药: { icon: 'WarningFilled', color: '#E84A5F' }, 地膜: { icon: 'Crop', color: '#4C6983' } }
+const CAT_META = cfg.materialCatMeta
 
 const form = reactive({ id: null, code: '', name: '', category: '种子', spec: '', unit: '袋', supplier: SUPPLIERS[0], price: 0, stock: 0, safeStock: 10 })
 const rules = {
@@ -52,11 +72,17 @@ function openEdit(row) {
 async function handleSubmit() {
   submitting.value = true
   try {
-    if (isEdit.value) await farmApi.updateMaterial(form.id, form)
-    else await farmApi.createMaterial(form)
+    // 仅提交业务字段，避免表单 id 覆盖服务端自增 id
+    const payload = {
+      code: form.code, name: form.name, category: form.category, spec: form.spec, unit: form.unit,
+      supplier: form.supplier, price: form.price, stock: form.stock, safeStock: form.safeStock,
+    }
+    if (isEdit.value) await farmApi.updateMaterial(form.id, payload)
+    else await farmApi.createMaterial(payload)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     tableRef.value?.reload(true)
+    loadSupplierStats()
   } catch (e) {
     ElMessage.error(e.message)
   } finally {
@@ -64,10 +90,19 @@ async function handleSubmit() {
   }
 }
 async function handleDelete(row) {
-  await ElMessageBox.confirm(`确定删除农资「${row.name}」档案吗？历史出入库记录将保留。`, '删除确认', { type: 'error' })
-  await farmApi.removeMaterial(row.id)
-  ElMessage.success('删除成功')
-  tableRef.value?.reload(true)
+  try {
+    await ElMessageBox.confirm(`确定删除农资「${row.name}」档案吗？历史出入库记录将保留。`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await farmApi.removeMaterial(row.id)
+    ElMessage.success('删除成功')
+    tableRef.value?.reload(true)
+    loadSupplierStats()
+  } catch (e) {
+    ElMessage.error(e.message || '删除失败')
+  }
 }
 </script>
 
@@ -85,7 +120,7 @@ async function handleDelete(row) {
         <el-icon :size="20" color="var(--ag-green-600)"><OfficeBuilding /></el-icon>
         <div class="s-meta">
           <b>{{ s }}</b>
-          <span class="text-dim">正常合作 · {{ 2 + (s.length % 4) }} 种农资</span>
+          <span class="text-dim">正常合作 · {{ supplierCount[s] || 0 }} 种农资</span>
         </div>
       </div>
     </div>

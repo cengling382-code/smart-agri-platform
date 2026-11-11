@@ -8,7 +8,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import './styles/base.css'
+import './styles/mobile.css'
 import { installGlobalErrorHandlers } from './utils/errorReport'
+import { startLiveSync } from './composables/useDataVersion'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -30,3 +32,7 @@ app.mount('#app')
 
 // 首屏导航若因资源加载失败而未就绪，router.onError 已兜底跳转 /route-error
 router.isReady().catch(() => { /* 已由路由错误处理器接管 */ })
+
+// 启动本地 JSON 数据服务监听：外部修改 data/*.json 时推送变更，页面自动重渲染
+// 静态部署（build 产物）无该服务，内部会自动降级，不产生影响
+startLiveSync().catch(() => { /* 静态模式跳过实时同步 */ })

@@ -1,0 +1,257 @@
+{
+  "_meta": {
+    "collection": "dictGroups",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:36.686Z",
+    "count": 5
+  },
+  "data": [
+    {
+      "type": "crop_type",
+      "name": "作物类型",
+      "items": [
+        {
+          "id": 1,
+          "label": "番茄",
+          "value": "crop_1",
+          "sort": 1,
+          "status": true
+        },
+        {
+          "id": 2,
+          "label": "黄瓜",
+          "value": "crop_2",
+          "sort": 2,
+          "status": true
+        },
+        {
+          "id": 3,
+          "label": "生菜",
+          "value": "crop_3",
+          "sort": 3,
+          "status": true
+        },
+        {
+          "id": 4,
+          "label": "草莓",
+          "value": "crop_4",
+          "sort": 4,
+          "status": true
+        },
+        {
+          "id": 5,
+          "label": "水稻",
+          "value": "crop_5",
+          "sort": 5,
+          "status": true
+        },
+        {
+          "id": 6,
+          "label": "柑橘",
+          "value": "crop_6",
+          "sort": 6,
+          "status": true
+        },
+        {
+          "id": 7,
+          "label": "辣椒",
+          "value": "crop_7",
+          "sort": 7,
+          "status": true
+        },
+        {
+          "id": 8,
+          "label": "西兰花",
+          "value": "crop_8",
+          "sort": 8,
+          "status": true
+        }
+      ]
+    },
+    {
+      "type": "farm_type",
+      "name": "农事类型",
+      "items": [
+        {
+          "id": 10,
+          "label": "播种",
+          "value": "farm_1",
+          "sort": 1,
+          "status": true
+        },
+        {
+          "id": 11,
+          "label": "移栽",
+          "value": "farm_2",
+          "sort": 2,
+          "status": true
+        },
+        {
+          "id": 12,
+          "label": "施肥",
+          "value": "farm_3",
+          "sort": 3,
+          "status": true
+        },
+        {
+          "id": 13,
+          "label": "打药",
+          "value": "farm_4",
+          "sort": 4,
+          "status": true
+        },
+        {
+          "id": 14,
+          "label": "除草",
+          "value": "farm_5",
+          "sort": 5,
+          "status": true
+        },
+        {
+          "id": 15,
+          "label": "灌溉",
+          "value": "farm_6",
+          "sort": 6,
+          "status": true
+        },
+        {
+          "id": 16,
+          "label": "采收",
+          "value": "farm_7",
+          "sort": 7,
+          "status": true
+        }
+      ]
+    },
+    {
+      "type": "device_type",
+      "name": "设备类型",
+      "items": [
+        {
+          "id": 30,
+          "label": "网关",
+          "value": "dev_1",
+          "sort": 1,
+          "status": true
+        },
+        {
+          "id": 31,
+          "label": "传感器",
+          "value": "dev_2",
+          "sort": 2,
+          "status": true
+        },
+        {
+          "id": 32,
+          "label": "执行器",
+          "value": "dev_3",
+          "sort": 3,
+          "status": true
+        },
+        {
+          "id": 33,
+          "label": "摄像头",
+          "value": "dev_4",
+          "sort": 4,
+          "status": true
+        }
+      ]
+    },
+    {
+      "type": "alarm_type",
+      "name": "告警类型",
+      "items": [
+        {
+          "id": 40,
+          "label": "环境超限",
+          "value": "alarm_1",
+          "sort": 1,
+          "status": true
+        },
+        {
+          "id": 41,
+          "label": "设备故障",
+          "value": "alarm_2",
+          "sort": 2,
+          "status": true
+        },
+        {
+          "id": 42,
+          "label": "离线掉线",
+          "value": "alarm_3",
+          "sort": 3,
+          "status": true
+        },
+        {
+          "id": 43,
+          "label": "库存不足",
+          "value": "alarm_4",
+          "sort": 4,
+          "status": true
+        },
+        {
+          "id": 44,
+          "label": "灾害预警",
+          "value": "alarm_5",
+          "sort": 5,
+          "status": true
+        },
+        {
+          "id": 45,
+          "label": "传感器异常",
+          "value": "alarm_6",
+          "sort": 6,
+          "status": true
+        }
+      ]
+    },
+    {
+      "type": "unit",
+      "name": "计量单位",
+      "items": [
+        {
+          "id": 60,
+          "label": "kg",
+          "value": "u_1",
+          "sort": 1,
+          "status": true
+        },
+        {
+          "id": 61,
+          "label": "袋",
+          "value": "u_2",
+          "sort": 2,
+          "status": true
+        },
+        {
+          "id": 62,
+          "label": "瓶",
+          "value": "u_3",
+          "sort": 3,
+          "status": true
+        },
+        {
+          "id": 63,
+          "label": "卷",
+          "value": "u_4",
+          "sort": 4,
+          "status": true
+        },
+        {
+          "id": 64,
+          "label": "箱",
+          "value": "u_5",
+          "sort": 5,
+          "status": true
+        },
+        {
+          "id": 65,
+          "label": "亩",
+          "value": "u_6",
+          "sort": 6,
+          "status": true
+        }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, StatCard } from '@/components/ui'
 import { farmApi } from '@/api'
+import { downloadCsv } from '@/utils/exportFile'
 
 const tableRef = ref(null)
 const onlyLow = ref(false)
@@ -32,8 +33,9 @@ async function loadTable(params) {
 const summary = ref({ total: 0, low: 0, value: 0 })
 async function loadSummary() {
   try {
-    const res = await farmApi.inventory({ page: 1, size: 100 })
-    summary.value.total = res.list.length
+    // 汇总需基于全量农资，避免分页截断导致品类/总价值少算
+    const res = await farmApi.inventory({ page: 1, size: 10000 })
+    summary.value.total = res.total ?? res.list.length
     summary.value.low = res.list.filter((m) => m.low).length
     summary.value.value = res.list.reduce((s, m) => s + m.stock * m.price, 0)
   } catch (e) {
@@ -52,18 +54,67 @@ function diffOf(item) {
 }
 async function submitCheck() {
   const diffs = checkList.value.filter((m) => m.diff !== 0)
-  await ElMessageBox.confirm(
-    `盘点完成：共 ${checkList.value.length} 项，其中 ${diffs.length} 项存在差异${diffs.length ? '，将生成盘盈盘亏调整单' : ''}。确定提交盘点结果吗？`,
-    '盘点确认', { type: 'warning' }
-  )
-  checkDialog.value = false
-  ElMessage.success('盘点结果已提交，库存已按实盘数校准')
-  tableRef.value?.reload(true)
-  loadSummary()
+  try {
+    await ElMessageBox.confirm(
+      `盘点完成：共 ${checkList.value.length} 项，其中 ${diffs.length} 项存在差异${diffs.length ? '，将生成盘盈盘亏调整单' : ''}。确定提交盘点结果吗？`,
+      '盘点确认', { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  try {
+    // 差异项真实写入出入库记录，由服务端同步库存，不再只提示成功
+    for (const m of diffs) {
+      await farmApi.createStock({
+        type: m.diff > 0 ? 'in' : 'out', materialId: m.id, materialName: m.name,
+        qty: Math.abs(m.diff), operator: '库存盘点', supplier: m.supplier,
+        reason: '盘盈盘亏调整', relatedOrder: '—',
+      })
+    }
+    checkDialog.value = false
+    ElMessage.success(diffs.length ? `盘点结果已提交，已生成 ${diffs.length} 条盘盈盘亏调整记录` : '盘点结果已提交，账实一致')
+    tableRef.value?.reload(true)
+    loadSummary()
+  } catch (e) {
+    ElMessage.error(e.message || '盘点提交失败')
+  }
 }
 
-function exportPesticide() {
-  ElMessage.success('农药使用台账已导出（含农资名称、用量、地块、作业人员、安全间隔期，符合农产品安全监管要求）')
+/* ---------- 农药使用台账：数据由农资档案 + 出入库 + 农事台账关联生成 ---------- */
+const pestDialog = ref(false)
+const pestLoading = ref(false)
+const pestRows = ref([])
+
+async function fetchPesticide() {
+  pestLoading.value = true
+  try {
+    const res = await farmApi.pesticideLedger({ page: 1, size: 1000 })
+    pestRows.value = res.list || []
+    return pestRows.value
+  } catch (e) {
+    ElMessage.error(e.message || '农药使用台账加载失败')
+    return []
+  } finally {
+    pestLoading.value = false
+  }
+}
+async function openPesticide() {
+  pestDialog.value = true
+  await fetchPesticide()
+}
+async function exportPesticide() {
+  const rows = await fetchPesticide()
+  if (!rows.length) {
+    ElMessage.warning('当前没有农药使用记录可导出')
+    return
+  }
+  downloadCsv(
+    '农药使用台账',
+    ['使用日期', '农药名称', '用量', '地块', '作业人员', '安全间隔期(天)', '数据来源', '来源编号'],
+    rows.map((r) => [r.date, r.name, r.qty, r.plotName, r.operator, r.safeInterval, r.source, r.code]),
+    [`农药使用台账 · 共 ${rows.length} 条`, '安全间隔期依据《农药合理使用准则》，施药后须满足间隔期方可采收']
+  )
+  ElMessage.success(`已导出 ${rows.length} 条农药使用记录`)
 }
 </script>
 
@@ -73,7 +124,7 @@ function exportPesticide() {
       <template #actions>
         <el-switch v-model="onlyLow" active-text="仅看低库存" @change="tableRef?.reload()" />
         <el-button type="primary" plain :icon="'Finished'" @click="startCheck">库存盘点</el-button>
-        <el-button plain :icon="'Document'" @click="exportPesticide">农药使用台账</el-button>
+        <el-button plain :icon="'Document'" @click="openPesticide">农药使用台账</el-button>
       </template>
     </PageHeader>
 
@@ -123,6 +174,29 @@ function exportPesticide() {
         <el-button type="primary" @click="submitCheck">提交盘点结果</el-button>
       </template>
     </el-dialog>
+
+    <!-- 农药使用台账 -->
+    <el-dialog v-model="pestDialog" title="农药使用台账（安全监管）" width="880px" top="8vh">
+      <div class="pest-head">
+        <span class="text-dim">数据来源：农药农资档案 + 出入库记录 + 农事台账打药记录，实时关联生成</span>
+        <el-button type="primary" plain size="small" :icon="'Download'" @click="exportPesticide">导出 Excel</el-button>
+      </div>
+      <el-table v-loading="pestLoading" :data="pestRows" size="small" max-height="440" border>
+        <el-table-column prop="date" label="使用日期" width="160" />
+        <el-table-column prop="name" label="农药名称" min-width="150" />
+        <el-table-column prop="qty" label="用量" min-width="120" />
+        <el-table-column prop="plotName" label="地块" min-width="120" />
+        <el-table-column prop="operator" label="作业人员" width="100" />
+        <el-table-column prop="safeInterval" label="安全间隔期" width="95" align="center">
+          <template #default="{ row }"><span class="mono-num">{{ row.safeInterval }} 天</span></template>
+        </el-table-column>
+        <el-table-column prop="source" label="来源" width="90" />
+        <el-table-column prop="code" label="来源编号" width="130" />
+      </el-table>
+      <template #footer>
+        <el-button @click="pestDialog = false">关 闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -136,5 +210,12 @@ function exportPesticide() {
 .stock-low {
   color: var(--ag-danger);
   font-weight: 700;
+}
+.pest-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 </style>

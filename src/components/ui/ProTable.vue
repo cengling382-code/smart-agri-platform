@@ -11,6 +11,7 @@
  */
 import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { Rank } from '@element-plus/icons-vue'
+import { onDataChange } from '@/composables/useDataVersion'
 
 const props = defineProps({
   columns: { type: Array, required: true },
@@ -57,7 +58,9 @@ async function load(keepPage = false) {
 }
 function reset() {
   Object.keys(query).forEach((k) => {
-    if (k !== 'page' && k !== 'size' && props.defaultQuery[k] === undefined) query[k] = ''
+    if (k === 'page' || k === 'size') return
+    // 有默认值的字段恢复默认值，其余清空，避免上次筛选条件残留
+    query[k] = props.defaultQuery?.[k] ?? ''
   })
   load()
 }
@@ -68,6 +71,8 @@ function handleSelectionChange(v) {
 defineExpose({ reload: load, query })
 
 onMounted(() => props.immediate && load())
+// 本地 JSON 文件被外部修改后自动重取（保留当前页码）
+onDataChange(() => load(true), { debounce: 350 })
 
 const hasFilters = computed(() => props.filters.length > 0)
 
@@ -250,6 +255,7 @@ onBeforeUnmount(() => {
             :min-width="col.minWidth"
             :fixed="col.fixed"
             :align="col.align || 'left'"
+            :class-name="col.className || undefined"
             :show-overflow-tooltip="col.tooltip !== false"
           >
             <template #default="scope">
@@ -283,7 +289,7 @@ onBeforeUnmount(() => {
         layout="total, sizes, prev, pager, next, jumper"
         background
         @current-change="load(true)"
-        @size-change="load(true)"
+        @size-change="load()"
       />
     </div>
   </div>

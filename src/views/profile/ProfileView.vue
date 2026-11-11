@@ -4,6 +4,9 @@ import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { useAuthStore } from '@/stores/auth'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const auth = useAuthStore()
 const loading = ref(false)
@@ -21,12 +24,7 @@ onMounted(() => {
 })
 
 // 决策依据：头像底色渐变属纯装饰、不承载信息，按 dp 规范取蓝导灰阶单色
-const AVATAR_GRADS = [
-  '#074ce0',
-  '#454c58',
-  '#5c85f5',
-  '#6b7380',
-]
+const AVATAR_GRADS = cfg.avatarColors
 const avatarGrad = ref(AVATAR_GRADS[0])
 
 async function handleSave() {

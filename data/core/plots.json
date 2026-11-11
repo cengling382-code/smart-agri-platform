@@ -1,0 +1,198 @@
+{
+  "_meta": {
+    "collection": "plots",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:37.809Z",
+    "count": 8
+  },
+  "data": [
+    {
+      "id": 1,
+      "code": "P-A01",
+      "name": "1号智能大棚",
+      "type": "设施大棚",
+      "crop": "番茄",
+      "areaMu": 3.2,
+      "manager": "张建国",
+      "startDate": "2026-08-15",
+      "endDate": "2027-02-20",
+      "status": "种植中",
+      "sensors": 8,
+      "lat": 30.512,
+      "lng": 114.312,
+      "env": {
+        "temp": 26.4,
+        "hum": 68,
+        "co2": 520,
+        "light": 32.5,
+        "soilT": 21.8,
+        "soilH": 54.2,
+        "ph": 6.5
+      }
+    },
+    {
+      "id": 2,
+      "code": "P-A02",
+      "name": "2号智能大棚",
+      "type": "设施大棚",
+      "crop": "黄瓜",
+      "areaMu": 3.2,
+      "manager": "李秀兰",
+      "startDate": "2026-09-01",
+      "endDate": "2027-03-01",
+      "status": "种植中",
+      "sensors": 8,
+      "lat": 30.518,
+      "lng": 114.318,
+      "env": {
+        "temp": 25.1,
+        "hum": 72,
+        "co2": 480,
+        "light": 28.6,
+        "soilT": 20.9,
+        "soilH": 61.3,
+        "ph": 6.3
+      }
+    },
+    {
+      "id": 3,
+      "code": "P-A03",
+      "name": "3号育苗棚",
+      "type": "设施大棚",
+      "crop": "生菜",
+      "areaMu": 2,
+      "manager": "王大富",
+      "startDate": "2026-10-10",
+      "endDate": "2027-01-10",
+      "status": "育苗期",
+      "sensors": 6,
+      "lat": 30.521,
+      "lng": 114.305,
+      "env": {
+        "temp": 23.6,
+        "hum": 75,
+        "co2": 450,
+        "light": 21.3,
+        "soilT": 19.5,
+        "soilH": 66.8,
+        "ph": 6.8
+      }
+    },
+    {
+      "id": 4,
+      "code": "P-B01",
+      "name": "东大田A区",
+      "type": "大田",
+      "crop": "水稻",
+      "areaMu": 120,
+      "manager": "刘志强",
+      "startDate": "2026-06-20",
+      "endDate": "2026-11-05",
+      "status": "接近采收",
+      "sensors": 12,
+      "lat": 30.532,
+      "lng": 114.328,
+      "env": {
+        "temp": 18.9,
+        "hum": 58,
+        "co2": 420,
+        "light": 45.2,
+        "soilT": 17.2,
+        "soilH": 48.5,
+        "ph": 6.9
+      }
+    },
+    {
+      "id": 5,
+      "code": "P-B02",
+      "name": "东大田B区",
+      "type": "大田",
+      "crop": "小麦",
+      "areaMu": 96,
+      "manager": "杨春生",
+      "startDate": "2026-10-25",
+      "endDate": "2027-06-01",
+      "status": "种植中",
+      "sensors": 10,
+      "lat": 30.536,
+      "lng": 114.335,
+      "env": {
+        "temp": 16.8,
+        "hum": 52,
+        "co2": 415,
+        "light": 41.8,
+        "soilT": 15.6,
+        "soilH": 42.1,
+        "ph": 7
+      }
+    },
+    {
+      "id": 6,
+      "code": "P-C01",
+      "name": "西山坡果园",
+      "type": "果园",
+      "crop": "柑橘",
+      "areaMu": 85,
+      "manager": "赵德柱",
+      "startDate": "2024-03-01",
+      "endDate": "长期",
+      "status": "挂果期",
+      "sensors": 14,
+      "lat": 30.505,
+      "lng": 114.292,
+      "env": {
+        "temp": 19.2,
+        "hum": 60,
+        "co2": 430,
+        "light": 52.4,
+        "soilT": 18.1,
+        "soilH": 39.6,
+        "ph": 6.6
+      }
+    },
+    {
+      "id": 7,
+      "code": "P-D01",
+      "name": "南湖1号塘",
+      "type": "水产",
+      "crop": "淡水鱼",
+      "areaMu": 26,
+      "manager": "孙丽娟",
+      "startDate": "2026-04-01",
+      "endDate": "2027-01-31",
+      "status": "养殖中",
+      "sensors": 6,
+      "lat": 30.489,
+      "lng": 114.34,
+      "env": {
+        "waterT": 18.4,
+        "oxygen": 7.8,
+        "ph": 7.4,
+        "ammonia": 0.02,
+        "nitrite": 0.01,
+        "turbidity": 12
+      }
+    },
+    {
+      "id": 8,
+      "code": "P-E01",
+      "name": "牧场1号舍",
+      "type": "畜禽",
+      "crop": "生猪",
+      "areaMu": 12,
+      "manager": "周文斌",
+      "startDate": "2026-05-15",
+      "endDate": "2027-02-15",
+      "status": "养殖中",
+      "sensors": 8,
+      "lat": 30.545,
+      "lng": 114.285,
+      "env": {
+        "temp": 21.5,
+        "hum": 64,
+        "nh3": 8.2,
+        "h2s": 1.1
+      }
+    }
+  ]
+}

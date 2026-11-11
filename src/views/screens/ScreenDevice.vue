@@ -5,6 +5,10 @@ import ScreenChart from '@/components/ui/ScreenChart.vue'
 import CountUp from '@/components/ui/CountUp.vue'
 import { darkBase, darkAxis, SCREEN_COLORS } from '@/utils/screenCharts'
 import { deviceApi, controlApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('screens')
 
 const devices = ref([])
 const logs = ref([])
@@ -31,8 +35,10 @@ const statusOptions = computed(() => ({
   }],
 }))
 
+const typeLabels = cfg.deviceTypeLabels
+
 const typeOptions = computed(() => {
-  const types = { gateway: '网关', sensor: '传感器', actuator: '执行器', camera: '摄像头' }
+  const types = typeLabels
   return {
     ...darkBase,
     tooltip: { ...darkBase.tooltip, trigger: 'axis' },
@@ -48,12 +54,7 @@ const typeOptions = computed(() => {
   }
 })
 
-const WORK_ORDERS = [
-  { code: 'WO-2026-0211', device: '牧场氨气传感器', issue: '通信异常，疑似网关掉线', status: '处理中', pct: 60 },
-  { code: 'WO-2026-0208', device: '大棚2号球机', issue: '画面模糊，需调整焦距', status: '待派单', pct: 10 },
-  { code: 'WO-2026-0205', device: '鱼塘增氧机', issue: '例行保养，更换滤芯', status: '已完成', pct: 100 },
-  { code: 'WO-2026-0203', device: '土壤PH传感器#A03', issue: '数据漂移，重新标定', status: '已完成', pct: 100 },
-]
+const WORK_ORDERS = cfg.deviceWorkOrders
 
 const KPI = computed(() => [
   { label: '设备总数', value: total.value, unit: '台', color: '#9FC3DD' },
@@ -77,6 +78,7 @@ onMounted(async () => {
   timer = setInterval(load, 30000)
 })
 onBeforeUnmount(() => clearInterval(timer))
+onDataChange(load, { debounce: 400 })
 </script>
 
 <template>

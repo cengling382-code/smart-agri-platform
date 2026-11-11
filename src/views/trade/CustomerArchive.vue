@@ -3,11 +3,14 @@
 import { ref } from 'vue'
 import { PageHeader, ProTable, StatCard } from '@/components/ui'
 import { tradeApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const summary = ref({ total: 0, vip: 0, big: 0, amount: 0 })
 
-const LEVEL_TAG = { 普通: 'info', VIP: 'primary', 大客户: 'warning' }
+const LEVEL_TAG = cfg.customerLevelTag
 
 const columns = [
   { prop: 'name', label: '客户姓名', width: 110 },

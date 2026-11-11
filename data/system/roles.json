@@ -1,0 +1,60 @@
+{
+  "_meta": {
+    "collection": "roles",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:38.072Z",
+    "count": 5
+  },
+  "data": [
+    {
+      "id": 1,
+      "code": "admin",
+      "name": "系统管理员",
+      "desc": "平台最高权限，管理账号与系统配置",
+      "users": 1,
+      "status": "启用",
+      "dataScope": "全部数据",
+      "builtIn": true
+    },
+    {
+      "id": 2,
+      "code": "manager",
+      "name": "园区管理员",
+      "desc": "园区运营监控、告警处置、审批与报表",
+      "users": 2,
+      "status": "启用",
+      "dataScope": "本园区数据",
+      "builtIn": true
+    },
+    {
+      "id": 3,
+      "code": "tech",
+      "name": "农技人员",
+      "desc": "农事计划制定、工单派发、设备远程控制",
+      "users": 2,
+      "status": "启用",
+      "dataScope": "本园区数据",
+      "builtIn": true
+    },
+    {
+      "id": 4,
+      "code": "farmer",
+      "name": "农户/工人",
+      "desc": "接收工单、打卡上报、查看告警",
+      "users": 2,
+      "status": "启用",
+      "dataScope": "本人数据",
+      "builtIn": true
+    },
+    {
+      "id": 5,
+      "code": "regulator",
+      "name": "监管人员",
+      "desc": "溯源信息与农残检测报告监督查看",
+      "users": 1,
+      "status": "启用",
+      "dataScope": "溯源相关数据",
+      "builtIn": true
+    }
+  ]
+}

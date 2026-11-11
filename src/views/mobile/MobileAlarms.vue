@@ -3,84 +3,116 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { alarmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('mobile')
 
 const alarms = ref([])
 const activeTab = ref('all')
 const detail = ref(null)
 const loading = ref(true)
 
-const LEVEL = { 1: { text: '一般', color: '#6E7883' }, 2: { text: '重要', color: '#E89552' }, 3: { text: '紧急', color: '#E84A5F' } }
+const LEVEL = cfg.alarmLevelStyle
 
 const filtered = computed(() => {
   if (activeTab.value === 'all') return alarms.value
   return alarms.value.filter((a) => a.status === activeTab.value)
 })
 
-onMounted(async () => {
+const LEVEL_FALLBACK = { color: '#8FB3CC', text: '未知' }
+function levelStyle(level) {
+  return LEVEL[level] || LEVEL_FALLBACK
+}
+
+async function load() {
   try {
     const res = await alarmApi.page({ page: 1, size: 30 })
-    alarms.value = res.list
+    alarms.value = Array.isArray(res?.list) ? res.list : []
+    // 详情抽屉打开时重新绑定新数据，避免显示旧状态；不关闭抽屉
+    if (detail.value) {
+      const id = detail.value.id
+      detail.value = alarms.value.find((a) => a.id === id) || null
+    }
   } catch (e) {
     console.warn('[MobileAlarms]', e?.message || e)
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(load)
+onDataChange(load, { debounce: 400 })
 
 async function confirmAlarm(a) {
-  await ElMessageBox.confirm('确认处理该告警吗？确认后进入处置流程。', '处理确认', { type: 'warning' })
-  await alarmApi.update(a.id, { status: 'confirmed', handler: '当前用户' })
-  a.status = 'confirmed'
-  ElMessage.success('告警已确认')
-  detail.value = null
+  // 取消确认框属正常操作，不再让 reject 冒泡到 ErrorBoundary
+  const ok = await ElMessageBox.confirm('确认处理该告警吗？确认后进入处置流程。', '处理确认', { type: 'warning' }).catch(() => false)
+  if (!ok) return
+  try {
+    await alarmApi.update(a.id, { status: 'confirmed', handler: '当前用户' })
+    a.status = 'confirmed'
+    ElMessage.success('告警已确认')
+    detail.value = null
+  } catch (e) {
+    ElMessage.error(e?.message || '告警确认失败')
+  }
 }
 </script>
 
 <template>
-  <div class="m-alarms" v-loading="loading">
-    <div class="ma-head">
-      <h2>告警消息</h2>
-      <div class="tabs">
-        <button :class="{ on: activeTab === 'all' }" @click="activeTab = 'all'">全部</button>
-        <button :class="{ on: activeTab === 'pending' }" @click="activeTab = 'pending'">未处理</button>
-        <button :class="{ on: activeTab === 'resolved' }" @click="activeTab = 'resolved'">已处置</button>
-        <button :class="{ on: activeTab === 'archived' }" @click="activeTab = 'archived'">已归档</button>
+  <div class="m-page m-alarms" v-loading="loading">
+    <div class="m-page-head">
+      <div>
+        <h1 class="m-page-title">告警消息</h1>
+        <p class="m-page-desc">环境与设备告警 · 处置闭环跟踪</p>
       </div>
     </div>
 
+    <div class="m-seg ma-tabs">
+      <button :class="{ on: activeTab === 'all' }" @click="activeTab = 'all'">全部</button>
+      <button :class="{ on: activeTab === 'pending' }" @click="activeTab = 'pending'">未处理</button>
+      <button :class="{ on: activeTab === 'resolved' }" @click="activeTab = 'resolved'">已处置</button>
+      <button :class="{ on: activeTab === 'archived' }" @click="activeTab = 'archived'">已归档</button>
+    </div>
+
     <div class="alarm-list">
-      <button v-for="a in filtered" :key="a.id" class="alarm-card" :class="{ urgent: a.level === 3 && a.status === 'pending' }" @click="detail = a">
-        <span class="al-level" :style="{ background: LEVEL[a.level].color }">{{ LEVEL[a.level].text }}</span>
+      <button
+        v-for="a in filtered"
+        :key="a.id"
+        class="m-card alarm-card"
+        :class="{ urgent: a.level === 3 && a.status === 'pending' }"
+        @click="detail = a"
+      >
+        <span class="al-level" :style="{ background: levelStyle(a.level).color }">{{ levelStyle(a.level).text }}</span>
         <div class="al-main">
           <b>{{ a.type }}</b>
           <span class="al-content">{{ a.content }}</span>
           <span class="al-time mono-num">{{ a.time }}</span>
         </div>
-        <el-icon color="#D5D8D6"><ArrowRight /></el-icon>
+        <el-icon :size="14" class="al-arrow"><ArrowRight /></el-icon>
       </button>
       <div v-if="!filtered.length" class="m-empty">该分类下暂无告警</div>
     </div>
 
     <!-- 告警详情 -->
     <transition name="sheet">
-      <div v-if="detail" class="sheet-mask" @click.self="detail = null">
-        <div class="sheet">
-          <div class="sheet-head">
+      <div v-if="detail" class="m-sheet-mask" @click.self="detail = null">
+        <div class="m-sheet">
+          <div class="m-sheet-head">
             <span class="al-level" :style="{ background: LEVEL[detail.level].color }">{{ LEVEL[detail.level].text }}</span>
-            <b>{{ detail.type }}</b>
-            <button class="close" aria-label="关闭" @click="detail = null"><el-icon><Close /></el-icon></button>
+            <h2 class="m-sheet-title">{{ detail.type }}</h2>
+            <button class="m-icon-btn" aria-label="关闭" @click="detail = null"><el-icon><Close /></el-icon></button>
           </div>
           <p class="sheet-content">{{ detail.content }}</p>
           <div class="sheet-rows">
-            <div><span>告警编号</span><b class="mono-num">{{ detail.code }}</b></div>
-            <div><span>告警时间</span><b class="mono-num">{{ detail.time }}</b></div>
-            <div><span>告警来源</span><b>{{ detail.source }}</b></div>
-            <div><span>处理人</span><b>{{ detail.handler || '待处理' }}</b></div>
-            <div v-if="detail.handleNote"><span>处置记录</span><b>{{ detail.handleNote }}</b></div>
+            <div class="m-row"><span class="m-row-label">告警编号</span><b class="m-row-value mono-num">{{ detail.code }}</b></div>
+            <div class="m-row"><span class="m-row-label">告警时间</span><b class="m-row-value mono-num">{{ detail.time }}</b></div>
+            <div class="m-row"><span class="m-row-label">告警来源</span><b class="m-row-value">{{ detail.source }}</b></div>
+            <div class="m-row"><span class="m-row-label">处理人</span><b class="m-row-value">{{ detail.handler || '待处理' }}</b></div>
+            <div v-if="detail.handleNote" class="m-row"><span class="m-row-label">处置记录</span><b class="m-row-value">{{ detail.handleNote }}</b></div>
           </div>
-          <button v-if="detail.status === 'pending'" class="m-btn primary" @click="confirmAlarm(detail)">确认处理</button>
+          <button v-if="detail.status === 'pending'" class="m-btn m-btn-primary m-btn-block" @click="confirmAlarm(detail)">确认处理</button>
           <div v-else class="done-tip">
-            <el-icon color="#699C78"><CircleCheck /></el-icon>
+            <el-icon><CircleCheck /></el-icon>
             该告警已进入闭环流程（{{ detail.status === 'pending' ? '未处理' : detail.status === 'confirmed' ? '已确认' : detail.status === 'resolved' ? '已处置' : '已归档' }}）
           </div>
         </div>
@@ -90,176 +122,96 @@ async function confirmAlarm(a) {
 </template>
 
 <style scoped>
-.m-alarms {
-  padding: 16px;
-  min-height: 100%;
-}
-.ma-head h2 {
-  margin: 0 0 12px;
-  font-size: 18px;
-}
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.tabs button {
-  border: 1px solid var(--ag-border);
-  background: #fff;
-  color: var(--ag-text-2);
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: var(--ag-radius-sm); /* 决策依据：页签按钮属小控件，对齐控件档 6px */
-  cursor: pointer;
-}
-.tabs button.on {
-  background: var(--ag-green-600);
-  border-color: var(--ag-green-600);
-  color: #fff;
-  font-weight: 600;
+.ma-tabs {
+  margin-bottom: var(--ag-space-3);
 }
 .alarm-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--ag-space-3);
 }
 .alarm-card {
   display: flex;
   align-items: center;
-  gap: 11px;
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：告警列表卡片属卡片类，对齐卡片档 10px */
-  padding: 13px 14px;
-  border: none;
+  gap: var(--ag-space-3);
+  width: 100%;
+  padding: var(--ag-space-3) var(--ag-space-4);
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--ag-shadow-sm);
-  transition: transform 0.2s;
+  transition: border-color var(--ag-dur) var(--ag-ease), transform var(--ag-dur-fast) var(--ag-ease);
 }
+/* 按压反馈发生在 pointer-down（ios-design） */
 .alarm-card:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
+/* 紧急告警：仅用 danger 低透明度描边，替代旧粉色硬编码 */
 .alarm-card.urgent {
-  border: 1px solid #F6C8CC;
+  border-color: rgba(232, 74, 95, 0.42);
 }
 .al-level {
-  font-size: 10px;
-  color: #fff;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--ag-radius-sm); /* 决策依据：等级标签属小控件，对齐控件档 6px */
   flex: none;
+  padding: 2px var(--ag-space-2);
+  border-radius: var(--ag-radius-sm);
+  font-size: var(--ag-fs-micro);
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
 }
 .al-main {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
 .al-main b {
-  font-size: 14px;
+  font-size: var(--ag-fs-caption);
+  font-weight: 600;
+  color: var(--ag-text-1);
 }
 .al-content {
-  font-size: 11.5px;
+  font-size: var(--ag-fs-micro);
   color: var(--ag-text-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .al-time {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ag-text-4);
 }
-.m-empty {
-  text-align: center;
+.al-arrow {
+  flex: none;
   color: var(--ag-text-4);
-  padding: 30px 0;
-  font-size: 13px;
 }
-.sheet-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  z-index: 30;
-  display: flex;
-  align-items: flex-end;
-}
-.sheet {
-  width: 100%;
-  background: #fff;
-  border-radius: var(--ag-radius-lg) var(--ag-radius-lg) 0 0; /* 决策依据：底部抽屉仅顶部两角，归浮层档 14px */
-  padding: 20px 20px 30px;
-  animation: sheetUp 0.3s var(--ag-ease-spring);
-}
-@keyframes sheetUp {
-  from { transform: translateY(60%); opacity: 0.5; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.sheet-head b {
-  flex: 1;
-  font-size: 16px;
-}
-.close {
-  border: none;
-  background: var(--ag-bg-hover);
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  color: var(--ag-text-3);
-}
+
+/* 抽屉内容块：与 PC 卡片内信息块同形制 */
 .sheet-content {
-  font-size: 14px;
+  margin: 0 0 var(--ag-space-3);
+  padding: var(--ag-space-3) var(--ag-space-4);
+  border-radius: var(--ag-radius);
+  background: var(--ag-bg-hover);
+  font-size: var(--ag-fs-caption);
   line-height: 1.8;
   color: var(--ag-text-2);
-  background: var(--ag-bg-hover);
-  border-radius: var(--ag-radius); /* 决策依据：抽屉内内容块属卡片类，对齐卡片档 10px */
-  padding: 12px 14px;
 }
 .sheet-rows {
-  margin: 14px 0;
-}
-.sheet-rows > div {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px dashed var(--ag-border-light);
-  font-size: 13px;
-}
-.sheet-rows span {
-  color: var(--ag-text-3);
-}
-.m-btn.primary {
-  width: 100%;
-  border: none;
-  /* 决策依据：主按钮渐变属纯装饰、不承载信息，按简约高级规范改为单色实底 */
-  background: var(--ag-green-700);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: var(--ag-radius-sm); /* 决策依据：全宽主按钮属控件，对齐控件档 6px */
-  padding: 12px;
-  cursor: pointer;
+  margin-bottom: var(--ag-space-4);
 }
 .done-tip {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: var(--ag-green-700);
-  font-size: 13px;
-  padding: 8px;
+  padding: var(--ag-space-2);
+  font-size: var(--ag-fs-caption);
+  color: var(--ag-success);
 }
+
+/* 抽屉过渡：与 PC 浮层一致的短透明度 + 位移淡入 */
 .sheet-enter-active {
-  transition: opacity 0.25s;
+  transition: opacity var(--ag-dur-slow) var(--ag-ease);
 }
 .sheet-enter-from {
   opacity: 0;

@@ -5,6 +5,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, StatusTag } from '@/components/ui'
 import { deviceApi, controlApi, plotApi } from '@/api'
 import { useAuthStore } from '@/stores/auth'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const auth = useAuthStore()
 const actuators = ref([])
@@ -14,10 +17,7 @@ const batchTarget = ref(null)
 const batchDialog = ref(false)
 const logTableRef = ref(null)
 
-const ACT_ICON = {
-  水泵: 'Pouring', 电磁阀: 'Odometer', 风机: 'WindPower', 卷帘机: 'Sort', 补光灯: 'Sunny',
-  加温设备: 'Sunny', 增氧机: 'Sugar', 遮阳帘: 'Umbrella',
-}
+const ACT_ICON = cfg.actuatorIcons
 
 const groupStats = computed(() => {
   const map = {}
@@ -54,15 +54,20 @@ async function load() {
 async function toggleDevice(dev) {
   const action = dev.running ? '关闭' : '开启'
   const online = dev.status === 'online'
-  const { value } = await ElMessageBox.confirm(
-    `确定要${action}「${dev.name}」吗？${online ? '' : '该设备当前离线，指令可能无法送达。'}`,
-    `${action}设备 · 安全确认`,
-    { type: 'warning', confirmButtonText: `确认${action}`, cancelButtonText: '取消' }
-  ).catch(() => ({ value: false }))
-  if (!value) return
+  try {
+    // Element Plus 确认框成功时 resolve 的是字符串 'confirm'，不是 { value }
+    await ElMessageBox.confirm(
+      `确定要${action}「${dev.name}」吗？${online ? '' : '该设备当前离线，指令可能无法送达。'}`,
+      `${action}设备 · 安全确认`,
+      { type: 'warning', confirmButtonText: `确认${action}`, cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
   try {
     const res = await deviceApi.control(dev.id, { action: dev.running ? 'off' : 'on', operator: auth.displayName, source: 'manual' })
-    dev.running = res.running
+    // 用新数组替换以确保响应式刷新（直接改对象属性在部分深层结构下不会触发视图更新）
+    actuators.value = actuators.value.map((d) => (d.id === dev.id ? { ...d, running: res.running } : d))
     ElMessage[online ? 'success' : 'warning'](res.msg || `已${action}`)
     logTableRef.value?.reload(true)
   } catch (e) {
@@ -78,19 +83,27 @@ function openBatch(groupType) {
 async function confirmBatch(on) {
   const targets = actuators.value.filter((a) => (plots.value.find((p) => p.id === a.plotId)?.type || '其他') === batchTarget.value)
   const action = on ? 'on' : 'off'
-  for (const t of targets) {
-    await deviceApi.control(t.id, { action, operator: auth.displayName, source: 'manual' })
-    t.running = on
+  try {
+    await Promise.all(targets.map((t) => deviceApi.control(t.id, { action, operator: auth.displayName, source: 'manual' })))
+    // 重新拉取设备状态，确保分组在线数量与进度条同步刷新
+    await load()
+    ElMessage.success(`已${on ? '开启' : '关闭'} ${batchTarget.value} 分组下 ${targets.length} 台设备`)
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    batchDialog.value = false
+    logTableRef.value?.reload(true)
   }
-  ElMessage.success(`已${on ? '开启' : '关闭'} ${batchTarget.value} 分组下 ${targets.length} 台设备`)
-  batchDialog.value = false
-  logTableRef.value?.reload(true)
 }
 
 const logFilters = [
   { key: 'keyword', label: '关键字', placeholder: '操作人 / 设备' },
-  { key: 'source', label: '来源', type: 'select', options: [{ label: '手动', value: 'manual' }, { label: '自动策略', value: 'auto' }] },
-  { key: 'result', label: '结果', type: 'select', options: [{ label: '成功', value: '成功' }, { label: '失败', value: '失败' }] },
+  { key: 'source', label: '来源', type: 'select', options: cfg.statusOptionGroups.controlSource },
+  {
+    key: 'result', label: '结果', type: 'select',
+    // 控制日志的失败结果带原因后缀（失败(设备离线)），选项值必须与数据完全一致才能命中
+    options: cfg.statusOptionGroups.controlResult,
+  },
 ]
 
 onMounted(load)

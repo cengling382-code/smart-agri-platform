@@ -1,0 +1,170 @@
+{
+  "_meta": {
+    "collection": "fileResources",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:36.894Z",
+    "count": 16
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "现场照片_1000.jpg",
+      "type": "img",
+      "size": "4344KB",
+      "path": "/upload/2026/10/1000.jpg",
+      "uploadBy": "谢雨欣",
+      "time": "2026-11-06 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 2,
+      "name": "大棚巡检视频_1001.mp4",
+      "type": "video",
+      "size": "77MB",
+      "path": "/upload/2026/10/1001.mp4",
+      "uploadBy": "谢雨欣",
+      "time": "2026-11-04 09:41",
+      "related": "农事工单"
+    },
+    {
+      "id": 3,
+      "name": "检测报告_1002.pdf",
+      "type": "doc",
+      "size": "2037KB",
+      "path": "/upload/2026/10/1002.pdf",
+      "uploadBy": "梁山伯",
+      "time": "2026-11-02 09:41",
+      "related": "设备巡检"
+    },
+    {
+      "id": 4,
+      "name": "现场照片_1003.jpg",
+      "type": "img",
+      "size": "5176KB",
+      "path": "/upload/2026/10/1003.jpg",
+      "uploadBy": "谢雨欣",
+      "time": "2026-10-31 09:41",
+      "related": "设备巡检"
+    },
+    {
+      "id": 5,
+      "name": "大棚巡检视频_1004.mp4",
+      "type": "video",
+      "size": "218MB",
+      "path": "/upload/2026/10/1004.mp4",
+      "uploadBy": "吴桂香",
+      "time": "2026-10-29 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 6,
+      "name": "检测报告_1005.pdf",
+      "type": "doc",
+      "size": "5093KB",
+      "path": "/upload/2026/10/1005.pdf",
+      "uploadBy": "刘志强",
+      "time": "2026-10-27 09:41",
+      "related": "农事工单"
+    },
+    {
+      "id": 7,
+      "name": "现场照片_1006.jpg",
+      "type": "img",
+      "size": "3233KB",
+      "path": "/upload/2026/10/1006.jpg",
+      "uploadBy": "杨春生",
+      "time": "2026-10-25 09:41",
+      "related": "农事工单"
+    },
+    {
+      "id": 8,
+      "name": "大棚巡检视频_1007.mp4",
+      "type": "video",
+      "size": "394MB",
+      "path": "/upload/2026/10/1007.mp4",
+      "uploadBy": "赵德柱",
+      "time": "2026-10-23 09:41",
+      "related": "设备巡检"
+    },
+    {
+      "id": 9,
+      "name": "检测报告_1008.pdf",
+      "type": "doc",
+      "size": "3445KB",
+      "path": "/upload/2026/10/1008.pdf",
+      "uploadBy": "刘志强",
+      "time": "2026-10-21 09:41",
+      "related": "设备巡检"
+    },
+    {
+      "id": 10,
+      "name": "现场照片_1009.jpg",
+      "type": "img",
+      "size": "442KB",
+      "path": "/upload/2026/10/1009.jpg",
+      "uploadBy": "张建国",
+      "time": "2026-10-19 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 11,
+      "name": "大棚巡检视频_1010.mp4",
+      "type": "video",
+      "size": "70MB",
+      "path": "/upload/2026/10/1010.mp4",
+      "uploadBy": "韩梅梅",
+      "time": "2026-10-17 09:41",
+      "related": "农事工单"
+    },
+    {
+      "id": 12,
+      "name": "检测报告_1011.pdf",
+      "type": "doc",
+      "size": "1194KB",
+      "path": "/upload/2026/10/1011.pdf",
+      "uploadBy": "孙丽娟",
+      "time": "2026-10-15 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 13,
+      "name": "现场照片_1012.jpg",
+      "type": "img",
+      "size": "4408KB",
+      "path": "/upload/2026/10/1012.jpg",
+      "uploadBy": "杨春生",
+      "time": "2026-10-13 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 14,
+      "name": "大棚巡检视频_1013.mp4",
+      "type": "video",
+      "size": "392MB",
+      "path": "/upload/2026/10/1013.mp4",
+      "uploadBy": "李秀兰",
+      "time": "2026-10-11 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 15,
+      "name": "检测报告_1014.pdf",
+      "type": "doc",
+      "size": "8545KB",
+      "path": "/upload/2026/10/1014.pdf",
+      "uploadBy": "张建国",
+      "time": "2026-10-09 09:41",
+      "related": "溯源批次"
+    },
+    {
+      "id": 16,
+      "name": "现场照片_1015.jpg",
+      "type": "img",
+      "size": "1804KB",
+      "path": "/upload/2026/10/1015.jpg",
+      "uploadBy": "吴桂香",
+      "time": "2026-10-07 09:41",
+      "related": "设备巡检"
+    }
+  ]
+}

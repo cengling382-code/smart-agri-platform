@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "collection": "mobile",
+    "kind": "config",
+    "description": "移动端页面配置：问候语时段、快捷入口、设备图标、告警级别样式",
+    "updatedAt": "2026-11-06T02:10:00.000Z",
+    "count": 6
+  },
+  "data": {
+    "greeting": {
+      "night": "凌晨好",
+      "morning": "上午好",
+      "afternoon": "下午好",
+      "evening": "晚上好",
+      "nightUntil": 6,
+      "morningUntil": 12,
+      "afternoonUntil": 18
+    },
+    "quickEntries": [
+      { "title": "实时环境", "icon": "Sunny", "path": "/m/env", "color": "#C9803E" },
+      { "title": "视频监控", "icon": "VideoCamera", "path": "/m/video", "color": "#4C6983" },
+      { "title": "地块信息", "icon": "Place", "path": "/m/plots", "color": "#063CB4" },
+      { "title": "采收登记", "icon": "Apple", "path": "/m/harvest", "color": "#B17179" }
+    ],
+    "orderPreviewLimit": 4,
+    "devicePreviewLimit": 4,
+    "controlIcons": {
+      "水泵": "Pouring",
+      "电磁阀": "Odometer",
+      "风机": "WindPower",
+      "卷帘机": "Sort",
+      "补光灯": "Sunny",
+      "加温设备": "Sunny",
+      "增氧机": "Sugar",
+      "遮阳帘": "Umbrella"
+    },
+    "alarmLevelStyle": {
+      "1": { "text": "一般", "color": "#6B7380" },
+      "2": { "text": "重要", "color": "#C9803E" },
+      "3": { "text": "紧急", "color": "#E84A5F" }
+    }
+  }
+}

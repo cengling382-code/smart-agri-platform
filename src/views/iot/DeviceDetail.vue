@@ -4,19 +4,20 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { PageHeader, ChartCard, StatusTag } from '@/components/ui'
 import { deviceApi, controlApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
 const device = ref(null)
+const notFound = ref(false)
 const logs = ref([])
 const range = ref(48)
 const paramKey = ref('temp')
 
-const PARAM_LABEL = {
-  temp: '空气温度(℃)', hum: '空气湿度(%)', co2: 'CO₂(ppm)', light: '光照(klx)',
-  soilT: '土壤温度(℃)', soilH: '土壤湿度(%)', ph: 'PH值', wind: '风速(m/s)', rain: '降雨量(mm)', oxygen: '溶解氧(mg/L)', nh3: '氨气(ppm)',
-}
+const PARAM_LABEL = cfg.deviceParamLabels
 
 const series = ref({ arr: [], meta: { name: '', unit: '' } })
 const chartLoading = ref(false)
@@ -65,10 +66,12 @@ onMounted(async () => {
   try {
     device.value = await deviceApi.detail(route.params.id)
     paramKey.value = device.value.params?.[0] || 'temp'
-    const lg = await deviceApi.logs(route.params.id)
-    logs.value = lg.list
     await loadSeries()
+    const lg = await deviceApi.logs(route.params.id)
+    logs.value = lg.list || []
   } catch (e) {
+    device.value = null
+    notFound.value = true
     console.warn(e)
   } finally {
     loading.value = false
@@ -84,7 +87,11 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <div class="detail-grid" v-if="device">
+    <el-empty v-if="notFound && !loading" description="设备不存在或已删除">
+      <el-button type="primary" :icon="'Back'" @click="router.push('/iot/devices')">返回列表</el-button>
+    </el-empty>
+
+    <div class="detail-grid" v-else-if="device">
       <!-- 左：参数信息 -->
       <div class="ag-card anim-left info-card">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>设备参数</div><StatusTag :value="device.status" /></div>

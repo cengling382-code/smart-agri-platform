@@ -1,21 +1,29 @@
 <script setup>
 /** 页面 40 · 溯源扫码预览页：预览消费者端溯源页面效果（手机模拟器） */
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import QRCode from 'qrcode'
+import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { traceApi } from '@/api'
+import {
+  getConfiguredBase, setConfiguredBase, buildTraceUrl, isLocalBase,
+  renderQr as renderQrImage, copyText,
+} from '@/utils/traceQr'
 
 const router = useRouter()
 const batches = ref([])
 const activeCode = ref('')
 const qrCanvas = ref(null)
+const qrBase = ref(getConfiguredBase())
+const qrError = ref('')
+const qrUrl = computed(() => (activeCode.value ? buildTraceUrl(activeCode.value, qrBase.value) : ''))
+const qrIsLocal = computed(() => isLocalBase(qrBase.value))
 
 onMounted(async () => {
   try {
     const res = await traceApi.page({ page: 1, size: 20, status: '已发布' })
-    batches.value = res.list
-    if (res.list.length) {
+    batches.value = Array.isArray(res?.list) ? res.list : []
+    if (batches.value.length) {
       activeCode.value = res.list[0].code
       renderQr()
     }
@@ -24,15 +32,32 @@ onMounted(async () => {
   }
 })
 async function renderQr() {
+  qrError.value = ''
   try {
-    await qrCanvas.value && QRCode.toCanvas(qrCanvas.value, `${window.location.origin}/trace/${activeCode.value}`, { width: 160, margin: 1 })
+    setConfiguredBase(qrBase.value)
+    await renderQrImage(qrCanvas.value, qrUrl.value, { width: 180 })
   } catch (e) {
-    console.warn('[TracePreview] QR:', e?.message || e)
+    qrError.value = `二维码生成失败：${e?.message || e}`
+  }
+}
+async function copyQrUrl() {
+  try {
+    await copyText(qrUrl.value)
+    ElMessage.success('扫码链接已复制')
+  } catch (e) {
+    ElMessage.error(e?.message || '复制失败')
   }
 }
 function pick(code) {
   activeCode.value = code
   renderQr()
+}
+function openPreview() {
+  if (!activeCode.value) {
+    ElMessage.warning('请先选择要预览的溯源批次')
+    return
+  }
+  router.push(`/trace/${activeCode.value}`)
 }
 </script>
 
@@ -62,10 +87,23 @@ function pick(code) {
 
         <div class="ag-card anim-up anim-delay-1 qr-card">
           <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>扫码入口</div></div>
-          <div class="ag-card__body" style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+          <div class="ag-card__body qr-body">
+            <el-input v-model="qrBase" placeholder="扫码访问地址" @change="renderQr" @keyup.enter="renderQr">
+              <template #prepend>扫码地址</template>
+            </el-input>
+            <el-alert
+              v-if="qrIsLocal"
+              type="warning" :closable="false" show-icon
+              title="本机地址手机打不开，请填局域网 IP 或公网域名"
+            />
             <canvas ref="qrCanvas" class="pv-qr"></canvas>
+            <el-alert v-if="qrError" type="error" :closable="false" show-icon :title="qrError" />
+            <div class="qr-url mono-num">
+              <span :title="qrUrl">{{ qrUrl || '暂无已发布批次' }}</span>
+              <el-button link type="primary" :icon="'DocumentCopy'" :disabled="!qrUrl" @click="copyQrUrl">复制</el-button>
+            </div>
             <span class="text-dim">使用手机浏览器或微信扫描体验</span>
-            <el-button type="primary" :icon="'Iphone'" @click="router.push(`/trace/${activeCode}`)">在手机模拟器中打开</el-button>
+            <el-button type="primary" :icon="'Iphone'" :disabled="!activeCode" @click="openPreview">在手机模拟器中打开</el-button>
           </div>
         </div>
       </div>
@@ -138,6 +176,28 @@ function pick(code) {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+.qr-body :deep(.el-alert),
+.qr-body :deep(.el-input) {
+  width: 100%;
+}
+.qr-body .qr-url {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ag-text-3);
+  background: var(--ag-bg-hover);
+  border-radius: 8px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+}
+.qr-body .qr-url span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pv-qr {
   border-radius: var(--ag-radius); /* 决策依据：二维码块属卡片类，token 化为卡片档 10px（值不变） */

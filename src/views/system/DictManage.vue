@@ -41,10 +41,16 @@ function openEdit(item) {
   dialogVisible.value = true
 }
 async function handleSubmit() {
-  await formRef.value.validate()
   try {
-    if (isEdit.value) await sysApi.updateDictItem(activeType.value, form.id, form)
-    else await sysApi.addDictItem(activeType.value, form)
+    await formRef.value.validate()
+  } catch {
+    return
+  }
+  // 只提交字典项自身字段，避免把只读 id / 展示字段回写
+  const payload = { label: form.label, value: form.value, sort: form.sort, status: form.status }
+  try {
+    if (isEdit.value) await sysApi.updateDictItem(activeType.value, form.id, payload)
+    else await sysApi.addDictItem(activeType.value, payload)
     ElMessage.success('保存成功')
     dialogVisible.value = false
     groups.value = await sysApi.dicts()
@@ -53,10 +59,18 @@ async function handleSubmit() {
   }
 }
 async function handleDelete(item) {
-  await ElMessageBox.confirm(`确定删除字典项「${item.label}」吗？`, '删除确认', { type: 'error' })
-  await sysApi.removeDictItem(activeType.value, item.id)
-  ElMessage.success('删除成功')
-  groups.value = await sysApi.dicts()
+  try {
+    await ElMessageBox.confirm(`确定删除字典项「${item.label}」吗？`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await sysApi.removeDictItem(activeType.value, item.id)
+    ElMessage.success('删除成功')
+    groups.value = await sysApi.dicts()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
 }
 </script>
 

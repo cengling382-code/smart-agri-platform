@@ -2,12 +2,15 @@
 /** 页面 68 · 扫码启动加载页：扫描溯源二维码后跳转的加载页（自动跳转溯源详情） */
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const route = useRoute()
 const router = useRouter()
 const progress = ref(0)
 const code = route.params.code || 'TR-2026-0700'
-const STEP = ['验证二维码', '加载溯源档案', '关联农事记录', '准备完成']
+const STEP = cfg.scanSteps
 
 let timer = null
 onMounted(() => {

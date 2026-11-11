@@ -4,14 +4,19 @@ import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { farmApi, plotApi } from '@/api'
+import { disabledFutureDate, notFutureValidator } from '@/utils/dateRule'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
 const submitting = ref(false)
+const isEdit = ref(false)
 const plots = ref([])
 
-const GRADES = ['特级', '一级', '二级']
-const QUALITIES = ['优', '良', '合格']
+const GRADES = cfg.grades
+const QUALITIES = cfg.qualities
 
 const form = reactive({
   id: null, batchCode: '', plotId: null, crop: '', date: '', qty: 100,
@@ -19,7 +24,10 @@ const form = reactive({
 })
 const rules = {
   plotId: [{ required: true, message: '请选择采收地块', trigger: 'change' }],
-  date: [{ required: true, message: '请选择采收日期', trigger: 'change' }],
+  date: [
+    { required: true, message: '请选择采收日期', trigger: 'change' },
+    notFutureValidator('采收日期不能晚于今天'),
+  ],
   qty: [{ required: true, message: '请录入产量', trigger: 'blur' }],
   grade: [{ required: true, message: '请选择分级', trigger: 'change' }],
 }
@@ -39,7 +47,7 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '批次号 / 地块 / 作物' },
   { key: 'grade', label: '分级', type: 'select', options: GRADES.map((g) => ({ label: g, value: g })) },
-  { key: 'status', label: '状态', type: 'select', options: [{ label: '待登记', value: '待登记' }, { label: '已入库', value: '已入库' }] },
+  { key: 'status', label: '状态', type: 'select', options: cfg.statusOptionGroups.harvest },
 ]
 
 async function loadTable(params) {
@@ -48,28 +56,66 @@ async function loadTable(params) {
 }
 
 function openCreate() {
+  isEdit.value = false
   Object.assign(form, { id: null, batchCode: '', plotId: plots.value[0]?.id, crop: plots.value[0]?.crop, date: '', qty: 100, grade: '一级', inspector: '', quality: '良', status: '待登记' })
+  dialogVisible.value = true
+}
+function openEdit(row) {
+  isEdit.value = true
+  const plot = plots.value.find((p) => p.name === row.plotName)
+  Object.assign(form, {
+    id: row.id, batchCode: row.batchCode, plotId: plot?.id || row.plotId, crop: row.crop,
+    date: row.date, qty: row.qty, grade: row.grade, inspector: row.inspector || '',
+    quality: row.quality || '良', status: row.status || '待登记',
+  })
   dialogVisible.value = true
 }
 async function handleSubmit() {
   submitting.value = true
   try {
     const plot = plots.value.find((p) => p.id === form.plotId)
-    await farmApi.createHarvest({ ...form, plotName: plot?.name })
-    ElMessage.success('采收批次登记成功')
+    const payload = {
+      plotId: form.plotId, plotName: plot?.name, crop: form.crop, date: form.date,
+      qty: form.qty, grade: form.grade, inspector: form.inspector, quality: form.quality,
+    }
+    if (isEdit.value) await farmApi.updateHarvest(form.id, payload)
+    else await farmApi.createHarvest({ ...payload, status: form.status })
+    ElMessage.success(isEdit.value ? '采收批次已更新' : '采收批次登记成功')
     dialogVisible.value = false
     tableRef.value?.reload(true)
   } catch (e) {
-    ElMessage.error(e.message)
+    ElMessage.error(e.message || '保存失败')
   } finally {
     submitting.value = false
   }
 }
 async function confirmStock(row) {
-  await ElMessageBox.confirm(`确认将批次「${row.batchCode}」入库吗？入库后可生成溯源批次。`, '入库确认', { type: 'info' })
-  await farmApi.updateHarvest(row.id, { status: '已入库' })
-  ElMessage.success('批次已入库')
-  tableRef.value?.reload(true)
+  try {
+    await ElMessageBox.confirm(`确认将批次「${row.batchCode}」入库吗？入库后可生成溯源批次。`, '入库确认', { type: 'info' })
+  } catch {
+    return
+  }
+  try {
+    await farmApi.updateHarvest(row.id, { status: '已入库' })
+    ElMessage.success('批次已入库')
+    tableRef.value?.reload(true)
+  } catch (e) {
+    ElMessage.error(e.message || '入库失败')
+  }
+}
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除采收批次「${row.batchCode}」吗？`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await farmApi.removeHarvest(row.id)
+    ElMessage.success('采收批次已删除')
+    tableRef.value?.reload(true)
+  } catch (e) {
+    ElMessage.error(e.message || '删除失败')
+  }
 }
 </script>
 
@@ -81,7 +127,7 @@ async function confirmStock(row) {
       </template>
     </PageHeader>
 
-    <ProTable ref="tableRef" :columns="columns" :fetch="loadTable" :filters="filters" action-width="180">
+    <ProTable ref="tableRef" :columns="columns" :fetch="loadTable" :filters="filters" action-width="240">
       <template #col-qty="{ row }">
         <span class="mono-num qty">{{ row.qty }}</span>
       </template>
@@ -97,17 +143,19 @@ async function confirmStock(row) {
       <template #col-action="{ row }">
         <el-button v-if="row.status === '待登记'" link type="success" @click="confirmStock(row)">确认入库</el-button>
         <el-tag v-else size="small" type="info" effect="plain">已入库</el-tag>
+        <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+        <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
       </template>
     </ProTable>
 
-    <FormDialog v-model="dialogVisible" title="采收批次登记" :rules="rules" :model="form" :submit-loading="submitting" width="580px" @submit="handleSubmit">
+    <FormDialog v-model="dialogVisible" :title="isEdit ? '编辑采收批次' : '采收批次登记'" :rules="rules" :model="form" :submit-loading="submitting" width="580px" @submit="handleSubmit">
       <el-form-item label="采收地块" prop="plotId">
         <el-select v-model="form.plotId" style="width: 100%" @change="() => (form.crop = plots.find((p) => p.id === form.plotId)?.crop)">
           <el-option v-for="p in plots" :key="p.id" :label="`${p.name}（${p.crop}）`" :value="p.id" />
         </el-select>
       </el-form-item>
       <el-form-item label="采收日期" prop="date">
-        <el-date-picker v-model="form.date" type="date" value-format="YYYY-MM-DD" style="width: 200px" />
+        <el-date-picker v-model="form.date" type="date" value-format="YYYY-MM-DD" style="width: 200px" :disabled-date="disabledFutureDate" />
       </el-form-item>
       <el-form-item label="产量(kg)" prop="qty">
         <el-input-number v-model="form.qty" :min="1" :max="100000" style="width: 200px" />

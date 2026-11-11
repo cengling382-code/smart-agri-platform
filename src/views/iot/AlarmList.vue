@@ -4,12 +4,15 @@ import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, StatusTag } from '@/components/ui'
 import { alarmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const selected = ref([])
 
-const LEVELS = { 1: { text: '一般', tag: 'info' }, 2: { text: '重要', tag: 'warning' }, 3: { text: '紧急', tag: 'danger' } }
-const STATUS_FLOW = { pending: '未处理', confirmed: '已确认', resolved: '已处置', archived: '已归档' }
+const LEVELS = cfg.alarmLevels
+const STATUS_FLOW = cfg.alarmStatusMap
 
 const columns = [
   { prop: 'code', label: '告警编号', width: 125 },
@@ -25,7 +28,7 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '编号 / 内容 / 来源' },
   { key: 'level', label: '级别', type: 'select', options: Object.entries(LEVELS).map(([v, m]) => ({ label: m.text, value: v })) },
-  { key: 'type', label: '类型', type: 'select', options: ['环境超限', '设备故障', '离线掉线', '库存不足', '灾害预警', '传感器异常'].map((t) => ({ label: t, value: t })) },
+  { key: 'type', label: '类型', type: 'select', options: cfg.alarmTypes.map((t) => ({ label: t, value: t })) },
   { key: 'status', label: '状态', type: 'select', options: Object.entries(STATUS_FLOW).map(([v, l]) => ({ label: l, value: v })) },
 ]
 

@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "collection": "cronTasks",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:36.242Z",
+    "count": 4
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "大棚1号晨间灌溉",
+      "cron": "0 30 6 * * ?",
+      "cronText": "每天 06:30",
+      "action": "开启滴灌 25 分钟",
+      "plotId": 1,
+      "enabled": true,
+      "nextRun": "明日 06:30"
+    },
+    {
+      "id": 2,
+      "name": "育苗棚晚间补光",
+      "cron": "0 0 17,19 * * ?",
+      "cronText": "每天 17:00 / 19:00",
+      "action": "开启补光灯 2 小时",
+      "plotId": 3,
+      "enabled": true,
+      "nextRun": "今日 17:00"
+    },
+    {
+      "id": 3,
+      "name": "鱼塘午后增氧",
+      "cron": "0 0 13 * * ?",
+      "cronText": "每天 13:00",
+      "action": "开启增氧机 90 分钟",
+      "plotId": 7,
+      "enabled": true,
+      "nextRun": "今日 13:00"
+    },
+    {
+      "id": 4,
+      "name": "果园周报数据归档",
+      "cron": "0 0 2 ? * MON",
+      "cronText": "每周一 02:00",
+      "action": "生成环境周报并归档",
+      "plotId": 6,
+      "enabled": false,
+      "nextRun": "—"
+    }
+  ]
+}

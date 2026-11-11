@@ -4,6 +4,9 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, StatusTag } from '@/components/ui'
 import { controlApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const config = reactive({
   defaultInterval: 300, retentionDays: 365, filterRule: '3σ去噪 + 中值滤波', anomalyPolicy: '标记并告警',
@@ -12,11 +15,9 @@ const deviceList = ref([])
 const loading = ref(true)
 const saving = ref(false)
 
-const INTERVALS = [
-  { v: 60, label: '1 分钟' }, { v: 300, label: '5 分钟' }, { v: 600, label: '10 分钟' }, { v: 1800, label: '30 分钟' },
-]
-const FILTERS = ['原始数据（不过滤）', '中值滤波', '3σ去噪 + 中值滤波', '滑动平均滤波']
-const ANOMALY = ['仅标记', '标记并告警', '自动剔除并插值']
+const INTERVALS = cfg.collectIntervals
+const FILTERS = cfg.collectFilters
+const ANOMALY = cfg.collectAnomalyPolicies
 
 async function load() {
   loading.value = true

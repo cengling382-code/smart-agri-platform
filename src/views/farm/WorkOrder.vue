@@ -4,6 +4,10 @@ import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag } from '@/components/ui'
 import { farmApi, plotApi } from '@/api'
+import { disabledPastDate, notPastValidator } from '@/utils/dateRule'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
@@ -20,12 +24,19 @@ const rules = {
   type: [{ required: true, message: '请选择农事类型', trigger: 'change' }],
   plotId: [{ required: true, message: '请选择地块', trigger: 'change' }],
   assignee: [{ required: true, message: '请选择执行人', trigger: 'change' }],
-  planDate: [{ required: true, message: '请选择作业日期', trigger: 'change' }],
+  phone: [
+    { required: true, message: '请输入联系电话', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
+  ],
+  planDate: [
+    { required: true, message: '请选择作业日期', trigger: 'change' },
+    notPastValidator('作业日期不能早于今天'),
+  ],
   content: [{ required: true, message: '请填写作业要求', trigger: 'blur' }],
 }
 
-const WORKERS = ['张建国', '李秀兰', '王大富', '刘志强', '陈美凤', '杨春生', '赵德柱', '孙丽娟']
-const FARM_TYPES = ['播种', '移栽', '施肥', '打药', '除草', '灌溉', '采收']
+const WORKERS = cfg.workerNames
+const FARM_TYPES = cfg.farmTypes
 
 const columns = [
   { prop: 'code', label: '工单编号', width: 118 },
@@ -43,10 +54,8 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '工单号 / 地块 / 执行人' },
   { key: 'type', label: '类型', type: 'select', options: FARM_TYPES.map((t) => ({ label: t, value: t })) },
-  { key: 'status', label: '状态', type: 'select', options: ['待接单', '进行中', '待验收', '已完成', '已驳回'].map((s) => ({ label: s, value: s })) },
+  { key: 'status', label: '状态', type: 'select', options: cfg.workOrderStatuses.map((s) => ({ label: s, value: s })) },
 ]
-
-const selected = ref([])
 
 function openCreate() {
   Object.assign(form, { id: null, code: '', type: '施肥', plotId: plots.value[0]?.id, assignee: WORKERS[0], phone: '', planDate: '', content: '', status: '待接单' })
@@ -56,7 +65,11 @@ async function handleSubmit() {
   submitting.value = true
   try {
     const plot = plots.value.find((p) => p.id === form.plotId)
-    await farmApi.createOrder({ ...form, plotName: plot?.name })
+    // 只提交业务字段，id/编号/状态/派单时间交给服务端生成
+    await farmApi.createOrder({
+      type: form.type, plotId: form.plotId, plotName: plot?.name,
+      assignee: form.assignee, phone: form.phone, planDate: form.planDate, content: form.content,
+    })
     ElMessage.success('工单派发成功，已通知执行人')
     dialogVisible.value = false
     tableRef.value?.reload(true)
@@ -67,24 +80,47 @@ async function handleSubmit() {
   }
 }
 
+async function updateOrderStatus(row, data, successMsg) {
+  try {
+    await farmApi.updateOrder(row.id, data)
+    ElMessage.success(successMsg)
+    tableRef.value?.reload(true)
+  } catch (e) {
+    // 统一兜底，避免接口异常冒泡到全局错误页
+    ElMessage.error(e.message || '工单状态更新失败')
+  }
+}
 async function acceptOrder(row) {
-  await ElMessageBox.confirm(`确认接受工单「${row.code}」并开始作业吗？`, '接单确认', { type: 'info' })
-  await farmApi.updateOrder(row.id, { status: '进行中' })
-  ElMessage.success('已接单，工单进入执行中')
-  tableRef.value?.reload(true)
+  try {
+    await ElMessageBox.confirm(`确认接受工单「${row.code}」并开始作业吗？`, '接单确认', { type: 'info' })
+  } catch {
+    return
+  }
+  await updateOrderStatus(row, { status: '进行中' }, '已接单，工单进入执行中')
 }
 async function rejectOrder(row) {
-  const { value } = await ElMessageBox.prompt('请填写驳回原因：', '驳回工单', { inputPlaceholder: '如：天气原因暂缓作业', type: 'warning' }).catch(() => ({ value: null }))
+  let value = null
+  try {
+    const res = await ElMessageBox.prompt('请填写驳回原因：', '驳回工单', { inputPlaceholder: '如：天气原因暂缓作业', type: 'warning' })
+    value = res?.value ?? null
+  } catch {
+    return // 取消弹窗
+  }
   if (value === null) return
-  await farmApi.updateOrder(row.id, { status: '已驳回', rejectReason: value })
-  ElMessage.success('工单已驳回')
-  tableRef.value?.reload(true)
+  const reason = String(value).trim()
+  if (!reason) {
+    ElMessage.warning('驳回原因不能为空')
+    return
+  }
+  await updateOrderStatus(row, { status: '已驳回', rejectReason: reason }, '工单已驳回')
 }
 async function verifyOrder(row) {
-  await ElMessageBox.confirm(`确认验收工单「${row.code}」的现场作业情况吗？`, '验收确认', { type: 'info' })
-  await farmApi.updateOrder(row.id, { status: '已完成' })
-  ElMessage.success('工单验收通过')
-  tableRef.value?.reload(true)
+  try {
+    await ElMessageBox.confirm(`确认验收工单「${row.code}」的现场作业情况吗？`, '验收确认', { type: 'info' })
+  } catch {
+    return
+  }
+  await updateOrderStatus(row, { status: '已完成' }, '工单验收通过')
 }
 
 function showDetail(row) {
@@ -115,10 +151,7 @@ async function onMountedInit() {
       </template>
     </PageHeader>
 
-    <ProTable
-      ref="tableRef" :columns="columns" :fetch="farmApi.orderPage" :filters="filters"
-      selectable action-width="230" @selection-change="(v) => (selected = v)"
-    >
+    <ProTable ref="tableRef" :columns="columns" :fetch="farmApi.orderPage" :filters="filters" action-width="230">
       <template #col-type="{ row }">
         <el-tag size="small" effect="plain">{{ row.type }}</el-tag>
       </template>
@@ -158,8 +191,11 @@ async function onMountedInit() {
           <el-option v-for="w in WORKERS" :key="w" :label="w" :value="w" />
         </el-select>
       </el-form-item>
+      <el-form-item label="联系电话" prop="phone">
+        <el-input v-model="form.phone" placeholder="执行人联系电话" style="width: 200px" />
+      </el-form-item>
       <el-form-item label="作业日期" prop="planDate">
-        <el-date-picker v-model="form.planDate" type="date" value-format="YYYY-MM-DD" style="width: 200px" />
+        <el-date-picker v-model="form.planDate" type="date" value-format="YYYY-MM-DD" style="width: 200px" :disabled-date="disabledPastDate" />
       </el-form-item>
       <el-form-item label="作业要求" prop="content">
         <el-input v-model="form.content" type="textarea" :rows="3" placeholder="工单作业要求与注意事项" />

@@ -108,6 +108,7 @@ const routes = [
   {
     path: '/m',
     component: () => import('@/layouts/MobileLayout.vue'),
+    meta: { layout: 'MobileLayout' },
     children: [
       { path: 'login', name: 'MobileLogin', component: () => import('@/views/mobile/MobileLogin.vue'), meta: { title: '移动端登录', public: true } },
       { path: 'home', name: 'MobileHome', component: () => import('@/views/mobile/MobileHome.vue'), meta: { title: '移动工作台' } },
@@ -140,6 +141,8 @@ router.beforeEach((to) => {
   // 手机直接使用与桌面完全一致的管理功能；/m/* 演示门户保留，可从「更多」进入。
   const isPublic = to.meta.public || PUBLIC_PATHS.has(to.path) || to.path.startsWith('/scan/') || to.path.startsWith('/trace/')
   if (!auth.isLoggedIn && !isPublic) {
+    // 移动端未登录时回到移动端登录页，避免跳到桌面登录页丢失移动布局
+    if (to.path.startsWith('/m/')) return { path: '/m/login', query: { redirect: to.fullPath } }
     return { path: '/login', query: { redirect: to.fullPath } }
   }
   // 已登录访问登录页 → 回工作台

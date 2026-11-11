@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { PageHeader, StatusTag } from '@/components/ui'
 import { plotApi, deviceApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const router = useRouter()
 const plots = ref([])
@@ -17,12 +20,8 @@ const popupPos = ref([0, 0])
 const layers = reactive({ plots: true, devices: true, weather: true, labels: true })
 const basemap = ref('satellite') // satellite | standard
 
-const TYPE_COLOR = {
-  设施大棚: '#074ce0', 大田: '#D4B95E', 果园: '#c9803e', 水产: '#4C6983', 畜禽: '#B17179',
-}
-const TYPE_FILL = {
-  设施大棚: 'rgba(7,76,224,.18)', 大田: 'rgba(234,179,8,.24)', 果园: 'rgba(201,128,62,.24)', 水产: 'rgba(76,105,131,.24)', 畜禽: 'rgba(177,113,121,.24)',
-}
+const TYPE_COLOR = cfg.plotTypeColors
+const TYPE_FILL = cfg.plotTypeFills
 
 const points = computed(() =>
   devices.value
@@ -55,6 +54,20 @@ function closePopup() {
 
 const plotDevices = computed(() =>
   activePlot.value ? devices.value.filter((d) => d.plotId === activePlot.value.id) : []
+)
+
+/** 气象图层：取各地块 env 中的温度/湿度，在地块中心叠加标注 */
+const weatherPoints = computed(() =>
+  plots.value
+    .map((p) => {
+      const shape = p.shape || []
+      const x = shape.length ? shape.reduce((s, pt) => s + pt[0], 0) / shape.length : 50
+      const y = shape.length ? shape.reduce((s, pt) => s + pt[1], 0) / shape.length : 50
+      const temp = p.env?.temp ?? p.env?.waterT ?? null
+      const hum = p.env?.hum ?? p.env?.oxygen ?? null
+      return { id: p.id, x, y, temp, hum }
+    })
+    .filter((p) => p.temp !== null || p.hum !== null)
 )
 
 onMounted(async () => {
@@ -129,6 +142,18 @@ onMounted(async () => {
             >
               {{ p.name }}
             </text>
+          </g>
+
+          <!-- 气象图层：地块中心温度/湿度标注 -->
+          <g v-if="layers.weather">
+            <g v-for="w in weatherPoints" :key="'w' + w.id">
+              <rect :x="w.x - 5.6" :y="w.y - 4.5" width="11.2" height="4.1" rx="1.2" fill="rgba(16, 34, 50, 0.78)" />
+              <text :x="w.x" :y="w.y - 1.7" text-anchor="middle" class="weather-label">
+                <tspan v-if="w.temp !== null">{{ w.temp }}℃</tspan>
+                <tspan v-if="w.temp !== null && w.hum !== null"> / </tspan>
+                <tspan v-if="w.hum !== null">{{ w.hum }}%</tspan>
+              </text>
+            </g>
           </g>
 
           <!-- 设备点位 -->
@@ -262,6 +287,12 @@ onMounted(async () => {
 .plot-label {
   font-size: 1.6px;
   fill: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  pointer-events: none;
+}
+.weather-label {
+  font-size: 1.7px;
+  fill: #fff;
   font-weight: 600;
   pointer-events: none;
 }

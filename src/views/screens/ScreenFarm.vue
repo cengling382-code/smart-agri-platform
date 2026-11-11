@@ -5,21 +5,68 @@ import ScreenChart from '@/components/ui/ScreenChart.vue'
 import CountUp from '@/components/ui/CountUp.vue'
 import { darkBase, darkAxis, SCREEN_COLORS } from '@/utils/screenCharts'
 import { farmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
 
-const stats = ref(null)
+const cfg = getConfig('screens')
+
+/**
+ * 修复（页面 56 显示异常）：
+ * data/config/screens.json 未定义 farmColors，原代码 `const FARM_COLORS = cfg.farmColors`
+ * 得到 undefined；模板渲染农事计划时执行 FARM_COLORS[pl.type]，第一条计划
+ * type 为「施肥」即抛出 TypeError: Cannot read properties of undefined (reading '施肥')，
+ * 被 ErrorBoundary 捕获后整页降级。
+ * 这里改为「本地默认配色 + 配置覆盖」的 computed：配置缺字段时用默认值，
+ * 后续配置补齐或热更新时自动采用配置值，不改变原有配色驱动的业务逻辑。
+ */
+const DEFAULT_FARM_COLORS = {
+  播种: '#7DC383', 移栽: '#9FC3DD', 施肥: '#FFB37B', 打药: '#E84A5F',
+  除草: '#B17179', 采收: '#FFF199', 灌溉: '#8FB3CC', 修剪: '#B17179',
+}
+const DEFAULT_KPI_META = {
+  total: { label: '年度采收总量', unit: 'kg', color: '#7DC383' },
+  batches: { label: '采收批次', unit: '批', color: '#9FC3DD' },
+  avg: { label: '批均产量', unit: 'kg', color: '#FFB37B' },
+  orders: { label: '进行中工单', unit: '个', color: '#E84A5F' },
+}
+const DEFAULT_PROGRESS = [
+  { name: '东大田A区 · 水稻', stage: '接近采收', pct: 92, color: '#FFB37B' },
+  { name: '1号智能大棚 · 番茄', stage: '结果期', pct: 68, color: '#7DC383' },
+  { name: '西山坡果园 · 柑橘', stage: '挂果期', pct: 55, color: '#E89552' },
+  { name: '2号智能大棚 · 黄瓜', stage: '开花期', pct: 42, color: '#9FC3DD' },
+  { name: '3号育苗棚 · 生菜', stage: '育苗期', pct: 18, color: '#B17179' },
+]
+const FALLBACK_COLOR = '#8FB3CC'
+const EMPTY_STATS = { total: 0, batches: 0, avg: 0, byMonth: [], byPlot: [] }
+
+const stats = ref({ ...EMPTY_STATS })
 const plans = ref([])
 
-const FARM_COLORS = { 播种: '#7DC383', 施肥: '#FFB37B', 打药: '#E84A5F', 灌溉: '#9FC3DD', 采收: '#B17179', 除草: '#8FB3CC', 移栽: '#E89552' }
+const FARM_COLORS = computed(() => ({ ...DEFAULT_FARM_COLORS, ...(cfg.farmColors || {}) }))
+const KPI_META = computed(() => cfg.farmKpiMeta || DEFAULT_KPI_META)
+const PROGRESS = computed(() => (Array.isArray(cfg.farmProgress) ? cfg.farmProgress : DEFAULT_PROGRESS))
+/** 只返回 6 位 hex，保证模板里拼接 '22' 透明度后仍是合法颜色 */
+function planColor(type) {
+  const c = FARM_COLORS.value[type] || FALLBACK_COLOR
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : FALLBACK_COLOR
+}
+function num(v) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
+const monthRows = computed(() => (Array.isArray(stats.value?.byMonth) ? stats.value.byMonth : []))
+const plotRows = computed(() => (Array.isArray(stats.value?.byPlot) ? stats.value.byPlot : []))
 
 const monthOptions = computed(() => ({
   ...darkBase,
   tooltip: { ...darkBase.tooltip, trigger: 'axis' },
   grid: { left: 8, right: 14, top: 30, bottom: 0, containLabel: true },
-  xAxis: darkAxis({ type: 'category', data: stats.value?.byMonth?.map((m) => m.month) || [] }),
+  xAxis: darkAxis({ type: 'category', data: monthRows.value.map((m) => m.month) }),
   yAxis: darkAxis({ type: 'value', name: 'kg' }),
   series: [{
     type: 'bar', barWidth: 20,
-    data: (stats.value?.byMonth || []).map((m, i) => ({
+    data: monthRows.value.map((m) => ({
       value: m.value,
       itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#9FC3DD' }, { offset: 1, color: 'rgba(159,195,221,.1)' }] }, borderRadius: [4, 4, 0, 0] },
     })),
@@ -31,35 +78,57 @@ const plotOptions = computed(() => ({
   tooltip: { ...darkBase.tooltip, trigger: 'axis', axisPointer: { type: 'shadow' } },
   grid: { left: 8, right: 20, top: 20, bottom: 0, containLabel: true },
   xAxis: darkAxis({ type: 'value' }),
-  yAxis: darkAxis({ type: 'category', data: (stats.value?.byPlot || []).slice(0, 6).map((p) => p.name).reverse() }),
+  yAxis: darkAxis({ type: 'category', data: plotRows.value.slice(0, 6).map((p) => p.name).reverse() }),
   series: [{
     type: 'bar', barWidth: 14,
-    data: (stats.value?.byPlot || []).slice(0, 6).reverse().map((p, i) => ({
+    data: plotRows.value.slice(0, 6).reverse().map((p, i) => ({
       value: p.value, itemStyle: { color: SCREEN_COLORS[i % SCREEN_COLORS.length], borderRadius: [0, 4, 4, 0] },
     })),
   }],
 }))
 
-const KPI = computed(() => [
-  { label: '年度采收总量', value: stats.value?.total || 0, unit: 'kg', color: '#7DC383' },
-  { label: '采收批次', value: stats.value?.batches || 0, unit: '批', color: '#9FC3DD' },
-  { label: '批均产量', value: stats.value?.avg || 0, unit: 'kg', color: '#FFB37B' },
-  { label: '进行中工单', value: 6, unit: '个', color: '#E84A5F' },
-])
-
-const PROGRESS = [
-  { name: '东大田A区 · 水稻', stage: '接近采收', pct: 92, color: '#FFB37B' },
-  { name: '1号智能大棚 · 番茄', stage: '结果期', pct: 68, color: '#7DC383' },
-  { name: '西山坡果园 · 柑橘', stage: '挂果期', pct: 55, color: '#E89552' },
-  { name: '2号智能大棚 · 黄瓜', stage: '开花期', pct: 42, color: '#9FC3DD' },
-  { name: '3号育苗棚 · 生菜', stage: '育苗期', pct: 18, color: '#B17179' },
-]
-
-onMounted(async () => {
-  stats.value = await farmApi.harvestStats()
-  const res = await farmApi.planPage({ page: 1, size: 8 })
-  plans.value = res.list
+const KPI = computed(() => {
+  const meta = KPI_META.value
+  const orders = plans.value.filter((p) => p.status === '已审批' || p.status === '进行中').length
+  return [
+    { ...(meta.total || {}), value: num(stats.value?.total) },
+    { ...(meta.batches || {}), value: num(stats.value?.batches) },
+    { ...(meta.avg || {}), value: num(stats.value?.avg) },
+    { ...(meta.orders || {}), value: orders },
+  ]
 })
+
+onMounted(load)
+onDataChange(load, { debounce: 400 })
+
+let loading = false
+/**
+ * 数据加载：两个接口并行取回，统一赋值；任何一步失败都保留上一次成功的数据，
+ * 避免异步异常冒泡为整页错误、或数据半更新造成的空白与闪烁。
+ * loading 标志防止数据版本高频变更时的并发重复刷新。
+ */
+async function load() {
+  if (loading) return
+  loading = true
+  try {
+    const [s, res] = await Promise.all([
+      farmApi.harvestStats(),
+      farmApi.planPage({ page: 1, size: 8 }),
+    ])
+    stats.value = {
+      ...EMPTY_STATS,
+      ...(s && typeof s === 'object' ? s : {}),
+      byMonth: Array.isArray(s?.byMonth) ? s.byMonth : [],
+      byPlot: Array.isArray(s?.byPlot) ? s.byPlot : [],
+    }
+    const list = Array.isArray(res?.list) ? res.list : (Array.isArray(res) ? res : [])
+    plans.value = list
+  } catch (e) {
+    console.warn('[农事采收大屏] 数据加载失败，沿用上次结果：', e?.message || e)
+  } finally {
+    loading = false
+  }
+}
 </script>
 
 <template>
@@ -89,7 +158,7 @@ onMounted(async () => {
         <div class="p-title" style="margin-top: 16px">最新农事计划</div>
         <div class="plan-list">
           <div v-for="pl in plans.slice(0, 5)" :key="pl.id" class="plan-row">
-            <span class="plan-type" :style="{ background: (FARM_COLORS[pl.type] || '#8FB3CC') + '22', color: FARM_COLORS[pl.type] || '#8FB3CC' }">{{ pl.type }}</span>
+            <span class="plan-type" :style="{ background: planColor(pl.type) + '22', color: planColor(pl.type) }">{{ pl.type }}</span>
             <span class="plan-name">{{ pl.plotName }}</span>
             <span class="plan-date mono-num">{{ pl.planDate }}</span>
             <span class="plan-status" :class="{ done: pl.status === '已完成' }">{{ pl.status }}</span>

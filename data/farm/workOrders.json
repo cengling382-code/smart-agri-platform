@@ -1,0 +1,322 @@
+{
+  "_meta": {
+    "collection": "workOrders",
+    "kind": "array",
+    "updatedAt": "2026-11-10T01:06:04.375Z",
+    "count": 16
+  },
+  "data": [
+    {
+      "id": 1,
+      "code": "WO-2026-200",
+      "type": "施肥",
+      "planCode": "FP-2026-100",
+      "plotId": 4,
+      "plotName": "东大田A区",
+      "assignee": "李秀兰",
+      "phone": "13842180663",
+      "planDate": "2026-10-31",
+      "status": "进行中",
+      "checkin": null,
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-11-05 21:41"
+    },
+    {
+      "id": 2,
+      "code": "WO-2026-201",
+      "type": "播种",
+      "planCode": "FP-2026-101",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "陈美凤",
+      "phone": "13895305935",
+      "planDate": "2026-11-01",
+      "status": "待验收",
+      "checkin": {
+        "time": "2026/11/10 09:06:01",
+        "location": "西山坡果园入口",
+        "photos": 1,
+        "hours": 4,
+        "remark": "作业现场已完成"
+      },
+      "materials": [],
+      "createdAt": "2026-11-05 09:41"
+    },
+    {
+      "id": 3,
+      "code": "WO-2026-202",
+      "type": "移栽",
+      "planCode": "FP-2026-102",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "冯春华",
+      "phone": "13891912634",
+      "planDate": "2026-11-02",
+      "status": "待验收",
+      "checkin": {
+        "time": "2026-11-06 00:41",
+        "location": "西山坡果园入口",
+        "photos": 2,
+        "hours": 3.7,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [],
+      "createdAt": "2026-11-04 21:41"
+    },
+    {
+      "id": 4,
+      "code": "WO-2026-203",
+      "type": "施肥",
+      "planCode": "FP-2026-103",
+      "plotId": 3,
+      "plotName": "3号育苗棚",
+      "assignee": "何小芳",
+      "phone": "13821348133",
+      "planDate": "2026-11-03",
+      "status": "已完成",
+      "checkin": {
+        "time": "2026-11-06 06:41",
+        "location": "3号育苗棚入口",
+        "photos": 2,
+        "hours": 4.5,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-11-04 09:41"
+    },
+    {
+      "id": 5,
+      "code": "WO-2026-204",
+      "type": "播种",
+      "planCode": "FP-2026-104",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "罗永刚",
+      "phone": "13887289846",
+      "planDate": "2026-11-04",
+      "status": "已驳回",
+      "checkin": null,
+      "materials": [],
+      "createdAt": "2026-11-03 21:41"
+    },
+    {
+      "id": 6,
+      "code": "WO-2026-205",
+      "type": "灌溉",
+      "planCode": "FP-2026-105",
+      "plotId": 4,
+      "plotName": "东大田A区",
+      "assignee": "冯春华",
+      "phone": "13844232324",
+      "planDate": "2026-11-05",
+      "status": "待接单",
+      "checkin": null,
+      "materials": [],
+      "createdAt": "2026-11-03 09:41"
+    },
+    {
+      "id": 7,
+      "code": "WO-2026-206",
+      "type": "施肥",
+      "planCode": "FP-2026-100",
+      "plotId": 4,
+      "plotName": "东大田A区",
+      "assignee": "罗永刚",
+      "phone": "13884515697",
+      "planDate": "2026-10-31",
+      "status": "进行中",
+      "checkin": null,
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-11-02 21:41"
+    },
+    {
+      "id": 8,
+      "code": "WO-2026-207",
+      "type": "播种",
+      "planCode": "FP-2026-101",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "张建国",
+      "phone": "13877436010",
+      "planDate": "2026-11-01",
+      "status": "待验收",
+      "checkin": {
+        "time": "2026-11-05 23:41",
+        "location": "西山坡果园入口",
+        "photos": 2,
+        "hours": 5.8,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [],
+      "createdAt": "2026-11-02 09:41"
+    },
+    {
+      "id": 9,
+      "code": "WO-2026-208",
+      "type": "移栽",
+      "planCode": "FP-2026-102",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "梁山伯",
+      "phone": "13824303835",
+      "planDate": "2026-11-02",
+      "status": "已完成",
+      "checkin": {
+        "time": "2026-11-06 06:41",
+        "location": "西山坡果园入口",
+        "photos": 2,
+        "hours": 2.1,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [],
+      "createdAt": "2026-11-01 21:41"
+    },
+    {
+      "id": 10,
+      "code": "WO-2026-209",
+      "type": "施肥",
+      "planCode": "FP-2026-103",
+      "plotId": 3,
+      "plotName": "3号育苗棚",
+      "assignee": "李秀兰",
+      "phone": "13878692566",
+      "planDate": "2026-11-03",
+      "status": "已驳回",
+      "checkin": null,
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-11-01 09:41"
+    },
+    {
+      "id": 11,
+      "code": "WO-2026-210",
+      "type": "播种",
+      "planCode": "FP-2026-104",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "孙丽娟",
+      "phone": "13827053072",
+      "planDate": "2026-11-04",
+      "status": "待接单",
+      "checkin": null,
+      "materials": [],
+      "createdAt": "2026-10-31 21:41"
+    },
+    {
+      "id": 12,
+      "code": "WO-2026-211",
+      "type": "灌溉",
+      "planCode": "FP-2026-105",
+      "plotId": 4,
+      "plotName": "东大田A区",
+      "assignee": "罗永刚",
+      "phone": "13851701151",
+      "planDate": "2026-11-05",
+      "status": "进行中",
+      "checkin": null,
+      "materials": [],
+      "createdAt": "2026-10-31 09:41"
+    },
+    {
+      "id": 13,
+      "code": "WO-2026-212",
+      "type": "施肥",
+      "planCode": "FP-2026-100",
+      "plotId": 4,
+      "plotName": "东大田A区",
+      "assignee": "李秀兰",
+      "phone": "13862473977",
+      "planDate": "2026-10-31",
+      "status": "待验收",
+      "checkin": {
+        "time": "2026-11-06 05:41",
+        "location": "东大田A区入口",
+        "photos": 2,
+        "hours": 2.1,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-10-30 21:41"
+    },
+    {
+      "id": 14,
+      "code": "WO-2026-213",
+      "type": "播种",
+      "planCode": "FP-2026-101",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "吴桂香",
+      "phone": "13865075883",
+      "planDate": "2026-11-01",
+      "status": "已完成",
+      "checkin": {
+        "time": "2026-11-06 07:41",
+        "location": "西山坡果园入口",
+        "photos": 2,
+        "hours": 7,
+        "remark": "作业现场已完成，附件为现场照片"
+      },
+      "materials": [],
+      "createdAt": "2026-10-30 09:41"
+    },
+    {
+      "id": 15,
+      "code": "WO-2026-214",
+      "type": "移栽",
+      "planCode": "FP-2026-102",
+      "plotId": 6,
+      "plotName": "西山坡果园",
+      "assignee": "冯春华",
+      "phone": "13839357087",
+      "planDate": "2026-11-02",
+      "status": "已驳回",
+      "checkin": null,
+      "materials": [],
+      "createdAt": "2026-10-29 21:41"
+    },
+    {
+      "id": 16,
+      "code": "WO-2026-215",
+      "type": "施肥",
+      "planCode": "FP-2026-103",
+      "plotId": 3,
+      "plotName": "3号育苗棚",
+      "assignee": "周文斌",
+      "phone": "13879872361",
+      "planDate": "2026-11-03",
+      "status": "待接单",
+      "checkin": null,
+      "materials": [
+        {
+          "name": "复合化肥",
+          "qty": "25kg"
+        }
+      ],
+      "createdAt": "2026-10-29 09:41"
+    }
+  ]
+}

@@ -4,24 +4,27 @@ import { ref, computed, onMounted } from 'vue'
 import { PageHeader, ChartCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { aiApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const weather = ref(null)
 const loading = ref(true)
+const loadError = ref(false)
 
-const WARN_LEVEL = {
-  蓝色: { color: '#5E7F9A', icon: 'Cloudy' },
-  黄色: { color: '#c9803e', icon: 'Sunny' },
-  橙色: { color: '#ea580c', icon: 'Lightning' },
-  红色: { color: '#E84A5F', icon: 'WarningFilled' },
-}
+const WARN_LEVEL = cfg.weatherWarnLevel
 
-/* 预警推送记录（演示数据） */
-const pushRecords = [
-  { id: 1, time: '2026-11-02 06:30', type: '霜冻蓝色预警', channel: '短信+公众号', targets: '全部园区管理员、农技人员（18 人）', status: '已送达' },
-  { id: 2, time: '2026-10-28 14:20', type: '高温橙色预警', channel: '短信', targets: '1/2/3 号棚负责人（3 人）', status: '已送达' },
-  { id: 3, time: '2026-10-21 09:05', type: '暴雨黄色预警', channel: '公众号', targets: '全部在线用户（86 人）', status: '已送达' },
-  { id: 4, time: '2026-10-15 17:40', type: '大风蓝色预警', channel: '站内消息', targets: '全体用户', status: '已送达' },
-]
+/** 预警记录由气象接口返回的 warnings 派生，不维护硬编码记录 */
+const pushRecords = computed(() =>
+  (weather.value?.warnings || []).map((w, i) => ({
+    id: i,
+    time: weather.value?.updatedAt || weather.value?.date || '—',
+    type: `${w.level}${w.type}预警`,
+    source: w.publish || '—',
+    content: w.content,
+    status: '已发布',
+  }))
+)
 
 const forecastOptions = computed(() => ({
   color: CHART_COLORS,
@@ -36,11 +39,15 @@ const forecastOptions = computed(() => ({
   ],
 }))
 
-const ICONS = { rain: 'Pouring', sunny: 'Sunny', cloudy: 'Cloudy' }
+const ICONS = cfg.weatherIcons
 
 onMounted(async () => {
   try {
     weather.value = await aiApi.weather()
+  } catch (e) {
+    console.warn('[WeatherWarning]', e?.message || e)
+    weather.value = null
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -54,26 +61,30 @@ onMounted(async () => {
     <div class="weather-layout">
       <!-- 当前天气 -->
       <div class="ag-card anim-left current-card">
-        <div class="cw-main">
-          <el-icon :size="46" color="#c9803e"><Sunny /></el-icon>
-          <div>
-            <div class="cw-temp mono-num">{{ weather?.temp }}℃</div>
-            <div class="cw-cond">{{ weather?.city }} · {{ weather?.cond }}</div>
+        <template v-if="weather">
+          <div class="cw-main">
+            <el-icon :size="46" color="#c9803e"><Sunny /></el-icon>
+            <div>
+              <div class="cw-temp mono-num">{{ weather.temp }}℃</div>
+              <div class="cw-cond">{{ weather.city }} · {{ weather.cond }}</div>
+            </div>
           </div>
-        </div>
-        <div class="cw-grid">
-          <div class="cw-item"><span>湿度</span><b class="mono-num">{{ weather?.humidity }}%</b></div>
-          <div class="cw-item"><span>风力</span><b>{{ weather?.wind }}</b></div>
-          <div class="cw-item"><span>空气质量</span><b class="mono-num">AQI {{ weather?.aqi }}</b></div>
-        </div>
+          <div class="cw-grid">
+            <div class="cw-item"><span>湿度</span><b class="mono-num">{{ weather.humidity }}%</b></div>
+            <div class="cw-item"><span>风力</span><b>{{ weather.wind }}</b></div>
+            <div class="cw-item"><span>空气质量</span><b class="mono-num">AQI {{ weather.aqi }}</b></div>
+          </div>
+        </template>
+        <el-empty v-else description="暂无天气数据" :image-size="80" />
       </div>
 
       <!-- 7日预报 -->
       <div class="ag-card anim-up anim-delay-1">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>7 日预报</div></div>
         <div class="ag-card__body">
-          <div class="forecast-row stagger">
-            <div v-for="f in weather?.forecast" :key="f.day" class="f-card">
+          <el-empty v-if="!weather?.forecast?.length" description="暂无预报数据" :image-size="80" />
+          <div v-else class="forecast-row stagger">
+            <div v-for="f in weather.forecast" :key="f.day" class="f-card">
               <span class="f-day">{{ f.day }}</span>
               <el-icon :size="22" :color="f.icon === 'rain' ? '#4C6983' : f.icon === 'sunny' ? '#c9803e' : '#9AA4AE'">
                 <component :is="ICONS[f.icon]" />
@@ -96,6 +107,9 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    <div class="ag-card warn-empty" v-else-if="!loading">
+      <el-empty :description="loadError ? '气象数据加载失败，暂无法获取预警' : '暂无灾害预警'" :image-size="80" />
+    </div>
 
     <div class="bottom-grid">
       <div class="ag-card anim-up">
@@ -106,14 +120,16 @@ onMounted(async () => {
       <div class="ag-card anim-up anim-delay-1">
         <div class="ag-card__head"><div class="ag-card__title"><span class="dot"></span>预警推送记录</div></div>
         <div class="ag-card__body push-list">
-          <el-timeline>
+          <el-empty v-if="!pushRecords.length" description="暂无预警记录" :image-size="80" />
+          <el-timeline v-else>
             <el-timeline-item v-for="p in pushRecords" :key="p.id" :timestamp="p.time" placement="top" type="primary">
               <div class="push-item ag-card ag-card--hover">
                 <div class="pi-head">
                   <b>{{ p.type }}</b>
                   <el-tag size="small" type="success" effect="light">{{ p.status }}</el-tag>
                 </div>
-                <div class="text-dim">渠道：{{ p.channel }} · 接收：{{ p.targets }}</div>
+                <div class="text-dim">来源：{{ p.source }}</div>
+                <div class="pi-content">{{ p.content }}</div>
               </div>
             </el-timeline-item>
           </el-timeline>
@@ -224,6 +240,10 @@ onMounted(async () => {
   color: var(--ag-text-2);
   font-size: 13px;
 }
+.warn-empty {
+  margin-bottom: 16px;
+  padding: 6px 0;
+}
 .bottom-grid {
   display: grid;
   grid-template-columns: 1fr 420px;
@@ -240,6 +260,12 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   margin-bottom: 3px;
+}
+.pi-content {
+  margin-top: 4px;
+  color: var(--ag-text-2);
+  font-size: 12px;
+  line-height: 1.6;
 }
 @media (max-width: 1100px) {
   .weather-layout, .bottom-grid { grid-template-columns: 1fr; }

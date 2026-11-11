@@ -5,26 +5,23 @@ import { ElMessage } from 'element-plus'
 import { PageHeader, ProTable, StatCard, StatusTag } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { aiApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const records = ref([])
+const allRecords = ref([])
 const stats = ref(null)
 const active = ref(null)
 
 /* 病虫害知识库 */
-const KNOWLEDGE = [
-  { name: '番茄晚疫病', type: '真菌病害', symptom: '叶片出现水浸状暗绿色病斑，湿度大时背面有白色霉层', condition: '低温高湿（15-23℃、RH>85%）易发', prevention: '控制棚内湿度，发病初期喷施霜脲氰·锰锌或氟菌·霜霉威，连续 2-3 次' },
-  { name: '黄瓜霜霉病', type: '真菌病害', symptom: '叶面出现多角形黄褐色病斑，背面有灰黑色霉层', condition: '高湿夜凉（16-22℃）易流行', prevention: '加强通风降湿，喷施烯酰吗啉或代森锰锌预防' },
-  { name: '白粉虱', type: '虫害', symptom: '成虫、若虫群集叶背吸汁，分泌蜜露诱发煤污病', condition: '温室全年发生，繁殖极快', prevention: '黄板诱杀成虫 + 释放丽蚜小蜂，严重时喷施吡虫啉/噻虫嗪' },
-  { name: '蚜虫', type: '虫害', symptom: '群集嫩叶吸汁致叶片卷缩，传播病毒病', condition: '干旱温暖条件爆发快', prevention: '银灰膜避蚜 + 黄板诱杀，喷施吡虫啉 800 倍液' },
-  { name: '红蜘蛛', type: '螨害', symptom: '叶面出现灰白小点，严重时叶片枯焦脱落', condition: '高温干燥（25-30℃、RH<70%）', prevention: '增加湿度，喷施阿维菌素或联苯肼酯，注意轮换用药' },
-  { name: '灰霉病', type: '真菌病害', symptom: '花、果出现灰褐色霉层，组织软腐', condition: '低温高湿、通风不良', prevention: '及时摘除病果，喷施腐霉利或嘧霉胺，加强通风' },
-]
+const KNOWLEDGE = cfg.pestKnowledge
 const activeKB = ref(KNOWLEDGE[0])
 
 const pestOptions = computed(() => {
   const count = {}
-  records.value.forEach((r) => (count[r.pest] = (count[r.pest] || 0) + 1))
+  allRecords.value.forEach((r) => (count[r.pest] = (count[r.pest] || 0) + 1))
   const entries = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 6)
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -51,7 +48,7 @@ const columns = [
 
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '地块 / 病虫害名称' },
-  { key: 'status', label: '状态', type: 'select', options: [{ label: '待处理', value: '待处理' }, { label: '已处理', value: '已处理' }] },
+  { key: 'status', label: '状态', type: 'select', options: cfg.statusOptionGroups.pestStatus },
 ]
 
 async function loadTable(params) {
@@ -59,23 +56,37 @@ async function loadTable(params) {
   records.value = res.list
   return res
 }
-aiApi.pests({ page: 1, size: 100 }).then((res) => {
-  stats.value = {
-    total: res.total, pending: res.list.filter((r) => r.status === '待处理').length,
-    avgConf: Math.round(res.list.reduce((s, r) => s + r.conf, 0) / Math.max(1, res.list.length)),
+
+/** KPI 与发生统计基于全量记录（独立全量请求），不随当前页 8 条变化 */
+async function refreshStats() {
+  try {
+    const res = await aiApi.pests({ page: 1, size: 10000 })
+    allRecords.value = res.list || []
+    stats.value = {
+      total: res.total ?? allRecords.value.length,
+      pending: allRecords.value.filter((r) => r.status === '待处理').length,
+      avgConf: Math.round(allRecords.value.reduce((s, r) => s + (r.conf || 0), 0) / Math.max(1, allRecords.value.length)),
+    }
+  } catch (e) {
+    console.warn('[PestAnalysis]', e?.message || e)
   }
-}).catch((e) => console.warn('[PestAnalysis]', e?.message || e))
+}
+
+onMounted(refreshStats)
 
 function showSuggestion(row) {
   active.value = row
   const kb = KNOWLEDGE.find((k) => row.pest.includes(k.name.slice(0, 3)))
   if (kb) activeKB.value = kb
 }
-function markHandled(row) {
-  aiApi.updatePest(row.id, { status: '已处理' }).then(() => {
+async function markHandled(row) {
+  try {
+    await aiApi.updatePest(row.id, { status: '已处理' })
     ElMessage.success('已标记为处理完成')
-    tableRef.value?.reload(true)
-  })
+    await Promise.all([tableRef.value?.reload(true), refreshStats()])
+  } catch (e) {
+    ElMessage.error(e?.message || '操作失败，请重试')
+  }
 }
 </script>
 

@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "collection": "growthAnalysis",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:36.982Z",
+    "count": 6
+  },
+  "data": [
+    {
+      "id": 1,
+      "plotName": "1号智能大棚",
+      "crop": "番茄",
+      "stage": "成熟期",
+      "score": 89,
+      "level": "优",
+      "maturity": 11,
+      "yieldEst": 3698,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.81,
+      "compare": 0.1,
+      "updatedAt": "2026-11-05 04:41"
+    },
+    {
+      "id": 2,
+      "plotName": "2号智能大棚",
+      "crop": "黄瓜",
+      "stage": "成熟期",
+      "score": 93,
+      "level": "优",
+      "maturity": 17,
+      "yieldEst": 5513,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.66,
+      "compare": -3.4,
+      "updatedAt": "2026-11-04 13:41"
+    },
+    {
+      "id": 3,
+      "plotName": "3号育苗棚",
+      "crop": "生菜",
+      "stage": "莲座期",
+      "score": 77,
+      "level": "中",
+      "maturity": 9,
+      "yieldEst": 2248,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.8,
+      "compare": -0.2,
+      "updatedAt": "2026-11-05 15:41"
+    },
+    {
+      "id": 4,
+      "plotName": "东大田A区",
+      "crop": "水稻",
+      "stage": "拔节期",
+      "score": 91,
+      "level": "优",
+      "maturity": 30,
+      "yieldEst": 567,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.51,
+      "compare": -4,
+      "updatedAt": "2026-11-04 23:41"
+    },
+    {
+      "id": 5,
+      "plotName": "东大田B区",
+      "crop": "小麦",
+      "stage": "拔节期",
+      "score": 91,
+      "level": "优",
+      "maturity": 8,
+      "yieldEst": 390,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.71,
+      "compare": 4.5,
+      "updatedAt": "2026-11-04 18:41"
+    },
+    {
+      "id": 6,
+      "plotName": "西山坡果园",
+      "crop": "柑橘",
+      "stage": "幼果期",
+      "score": 77,
+      "level": "中",
+      "maturity": 10,
+      "yieldEst": 2432,
+      "yieldUnit": "kg/亩",
+      "ndvi": 0.67,
+      "compare": -6.5,
+      "updatedAt": "2026-11-04 05:41"
+    }
+  ]
+}

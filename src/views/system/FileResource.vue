@@ -1,19 +1,21 @@
 <script setup>
 /** 页面 50 · 文件资源管理：上传图片、视频、附件统一管理、预览、下载 */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable } from '@/components/ui'
 import { sysApi } from '@/api'
+import { downloadBlob } from '@/utils/exportFile'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const uploadVisible = ref(false)
+const fileList = ref([])
+const uploading = ref(false)
 const summary = ref({ total: 0, img: 0, video: 0, doc: 0 })
 
-const TYPE_META = {
-  img: { label: '图片', icon: 'Picture', color: '#074ce0' },
-  video: { label: '视频', icon: 'VideoCamera', color: '#4C6983' },
-  doc: { label: '文档', icon: 'Document', color: '#c9803e' },
-}
+const TYPE_META = cfg.fileTypeMeta
 
 const columns = [
   { prop: 'name', label: '文件名', minWidth: 240 },
@@ -34,9 +36,9 @@ async function loadTable(params) {
   const res = await sysApi.files(params)
   return res
 }
-onMounted(async () => {
+async function refreshSummary() {
   try {
-    const res = await sysApi.files({ page: 1, size: 100 })
+    const res = await sysApi.files({ page: 1, size: 1000 })
     summary.value = {
       total: res.total,
       img: res.list.filter((f) => f.type === 'img').length,
@@ -46,7 +48,110 @@ onMounted(async () => {
   } catch (e) {
     console.warn('[FileResource]', e?.message || e)
   }
-})
+}
+onMounted(refreshSummary)
+
+function typeOf(file) {
+  const name = file.name.toLowerCase()
+  if (file.type?.startsWith('image') || /\.(jpg|jpeg|png|gif|webp|bmp)$/.test(name)) return 'img'
+  if (file.type?.startsWith('video') || /\.(mp4|avi|mov|mkv|webm)$/.test(name)) return 'video'
+  return 'doc'
+}
+function sizeText(bytes) {
+  if (!bytes) return '—'
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`
+}
+function baseName(name) {
+  return String(name).replace(/\.(\w+)$/, '')
+}
+
+/* 真实下载：演示环境无原始二进制，按类型生成可打开的真实文件（图片/视频封面为 PNG，文档为 TXT） */
+function download(row) {
+  try {
+    if (row.type === 'img' || row.type === 'video') {
+      const canvas = document.createElement('canvas')
+      canvas.width = 800
+      canvas.height = 450
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#1c2a3c'
+      ctx.fillRect(0, 0, 800, 450)
+      ctx.fillStyle = '#699c78'
+      ctx.fillRect(0, 340, 800, 110)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 30px "Microsoft YaHei", sans-serif'
+      ctx.fillText(row.type === 'img' ? '现场照片' : '巡检视频封面', 48, 120)
+      ctx.font = '20px "Microsoft YaHei", sans-serif'
+      ctx.fillStyle = '#cfe3d4'
+      ctx.fillText(row.name, 48, 170)
+      ctx.fillText(`${row.related} · ${row.uploadBy} · ${row.time}`, 48, 210)
+      canvas.toBlob((blob) => {
+        if (blob) downloadBlob(`${baseName(row.name)}.png`, blob)
+      }, 'image/png')
+    } else {
+      const content = [
+        `文件名称：${row.name}`,
+        `文件类型：${TYPE_META[row.type]?.label || row.type}`,
+        `文件大小：${row.size}`,
+        `关联业务：${row.related}`,
+        `上传人员：${row.uploadBy}`,
+        `上传时间：${row.time}`,
+        `存储路径：${row.path}`,
+        '',
+        '（演示环境导出文件信息，生产环境将下载原始文件流）',
+      ].join('\r\n')
+      downloadBlob(`${baseName(row.name)}.txt`, new Blob([content], { type: 'text/plain;charset=utf-8' }))
+    }
+    ElMessage.success(`「${row.name}」已开始下载`)
+  } catch (e) {
+    ElMessage.error(`下载失败：${e.message}`)
+  }
+}
+async function removeFile(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除文件「${row.name}」吗？删除后不可恢复。`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await sysApi.removeFile(row.id)
+    ElMessage.success('文件已删除')
+    tableRef.value?.reload(true)
+    refreshSummary()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
+}
+async function handleUpload() {
+  if (!fileList.value.length) {
+    ElMessage.warning('请先选择要上传的文件')
+    return
+  }
+  uploading.value = true
+  try {
+    for (const f of fileList.value) {
+      const raw = f.raw || f
+      await sysApi.uploadFile({
+        name: raw.name,
+        type: typeOf(raw),
+        size: sizeText(raw.size),
+        related: '文件资源',
+        uploadBy: '当前用户',
+        path: `/upload/${new Date().toISOString().slice(0, 10).replace(/-/g, '/')}/${raw.name}`,
+      })
+    }
+    ElMessage.success(`已上传 ${fileList.value.length} 个文件`)
+    uploadVisible.value = false
+    fileList.value = []
+    tableRef.value?.reload(true)
+    refreshSummary()
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    uploading.value = false
+  }
+}
 
 function preview(row) {
   ElMessageBox.alert(
@@ -60,20 +165,6 @@ function preview(row) {
     '文件预览',
     { dangerouslyUseHTMLString: true, confirmButtonText: '关闭' }
   ).catch(() => {})
-}
-function download(row) {
-  ElMessage.success(`「${row.name}」已开始下载（演示）`)
-}
-async function removeFile(row) {
-  await ElMessageBox.confirm(`确定删除文件「${row.name}」吗？删除后不可恢复。`, '删除确认', { type: 'error' })
-  await sysApi.removeFile(row.id)
-  ElMessage.success('文件已删除')
-  tableRef.value?.reload(true)
-}
-function handleUpload() {
-  ElMessage.success('文件上传成功（演示环境模拟上传）')
-  uploadVisible.value = false
-  tableRef.value?.reload(true)
 }
 </script>
 
@@ -120,7 +211,7 @@ function handleUpload() {
     </ProTable>
 
     <el-dialog v-model="uploadVisible" title="上传文件" width="480px">
-      <el-upload drag multiple action="#" :auto-upload="false" accept="image/*,video/*,.pdf">
+      <el-upload v-model:file-list="fileList" drag multiple action="#" :auto-upload="false" accept="image/*,video/*,.pdf">
         <el-icon :size="42" color="var(--ag-text-4)"><UploadFilled /></el-icon>
         <div class="el-upload__text">拖拽文件到此处，或 <em>点击选择文件</em></div>
         <template #tip>
@@ -129,7 +220,7 @@ function handleUpload() {
       </el-upload>
       <template #footer>
         <el-button @click="uploadVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleUpload">开始上传</el-button>
+        <el-button type="primary" :loading="uploading" @click="handleUpload">开始上传</el-button>
       </template>
     </el-dialog>
   </div>

@@ -1,30 +1,38 @@
 <script setup>
 /** 页面 69 · 溯源详情页（消费者端）：产地信息、生长周期、农事记录、环境数据、检测报告、企业信息 */
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { traceApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const route = useRoute()
 const loading = ref(true)
 const detail = ref(null)
+const errorMsg = ref('')
 const activeTab = ref('story')
 let spinTimer = null
 const spin = ref(0)
 
-const TABS = [
-  { key: 'story', label: '产地故事', icon: 'Promotion' },
-  { key: 'farm', label: '生长周期', icon: 'Calendar' },
-  { key: 'env', label: '产地环境', icon: 'Sunny' },
-  { key: 'report', label: '检测报告', icon: 'Document' },
-  { key: 'company', label: '企业信息', icon: 'OfficeBuilding' },
-]
+const TABS = cfg.tracePublicTabs
+const CROP_EMOJI = { 番茄: '🍅', 水稻: '🌾', 柑橘: '🍊', 黄瓜: '🥒', 生菜: '🥬', 草莓: '🍓', 葡萄: '🍇', 玉米: '🌽', 小麦: '🌾' }
+const cropEmoji = computed(() => CROP_EMOJI[detail.value?.batch?.crop] || '🌱')
+const statusNote = computed(() => {
+  const s = detail.value?.batch?.status
+  if (s === '已召回') return '该批次已发布召回公告，请勿购买或食用，详情请联系园区。'
+  if (s === '已下架') return '该批次溯源页面已下架，暂不对外展示。'
+  if (s === '待完善') return '该批次溯源信息尚未发布，农事与检测数据仍在完善中。'
+  return ''
+})
 
 onMounted(async () => {
   try {
     detail.value = await traceApi.publicDetail(route.params.code)
-  } catch {
-    // 演示兜底
-    detail.value = { batch: { code: route.params.code, crop: '番茄', plotName: '1号智能大棚', qty: '1860kg' }, plot: {}, farmRecords: [], report: null, company: null }
+  } catch (e) {
+    // 不再伪造「番茄 / 1号智能大棚」演示数据：查不到就明确告知消费者
+    detail.value = null
+    errorMsg.value = e?.message || '未找到该溯源码，请确认二维码来源'
   } finally {
     loading.value = false
   }
@@ -35,13 +43,21 @@ onBeforeUnmount(() => clearInterval(spinTimer))
 
 <template>
   <div class="trace-detail" v-loading="loading">
-    <template v-if="detail">
+    <div v-if="errorMsg" class="td-error" role="alert">
+      <div class="td-error__icon">!</div>
+      <h2>无法查询该溯源码</h2>
+      <p>{{ errorMsg }}</p>
+      <p class="mono-num">溯源码：{{ route.params.code }}</p>
+      <p class="td-error__tip">请核对包装上的二维码是否完整，或联系园区核实批次信息。</p>
+    </div>
+    <template v-else-if="detail">
+      <div v-if="statusNote" class="td-notice">{{ statusNote }}</div>
       <!-- 顶部产品头 -->
       <header class="td-hero">
         <div class="td-bg"></div>
         <span class="td-badge">✓ 平台认证 · 一物一码</span>
         <div class="td-product">
-          <div class="td-img">🍅</div>
+          <div class="td-img">{{ cropEmoji }}</div>
           <div class="td-info">
             <h1>{{ detail.batch?.crop }} · {{ detail.plot?.name || detail.batch?.plotName }}</h1>
             <p class="mono-num">溯源码 {{ detail.batch?.code }}</p>
@@ -71,9 +87,9 @@ onBeforeUnmount(() => clearInterval(spinTimer))
             扫一扫下方溯源码，见证它从一粒种子到餐桌的全过程。
           </p>
           <div class="story-stats">
-            <div><b class="mono-num">{{ detail.batch?.records?.farm || 12 }}</b><span>条农事记录</span></div>
-            <div><b class="mono-num">{{ detail.batch?.records?.env || 520 }}</b><span>条环境数据</span></div>
-            <div><b class="mono-num">{{ detail.batch?.records?.tests || 1 }}</b><span>份检测报告</span></div>
+            <div><b class="mono-num">{{ detail.batch?.records?.farm ?? 0 }}</b><span>条农事记录</span></div>
+            <div><b class="mono-num">{{ detail.batch?.records?.env ?? 0 }}</b><span>条环境数据</span></div>
+            <div><b class="mono-num">{{ detail.batch?.records?.tests ?? 0 }}</b><span>份检测报告</span></div>
           </div>
         </section>
 
@@ -138,7 +154,7 @@ onBeforeUnmount(() => clearInterval(spinTimer))
             <div><span>联系电话</span><b class="mono-num">{{ detail.company?.phone }}</b></div>
           </div>
           <div class="certs">
-            <span v-for="c in detail.company?.certs || []" :key="c">🏅 {{ c }}</span>
+            <span v-for="c in detail.company?.cert || []" :key="c">🏅 {{ c }}</span>
           </div>
         </section>
       </div>
@@ -369,6 +385,51 @@ onBeforeUnmount(() => clearInterval(spinTimer))
   color: var(--ag-text-4);
   font-size: 10.5px;
   padding: 22px 0 0;
+}
+.td-error {
+  max-width: 460px;
+  margin: 60px auto;
+  padding: 32px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--ag-border, #dde0e6);
+  border-radius: 12px;
+}
+.td-error__icon {
+  width: 48px;
+  height: 48px;
+  line-height: 48px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: rgba(232, 74, 95, 0.12);
+  color: #e84a5f;
+  font-size: 26px;
+  font-weight: 700;
+}
+.td-error h2 {
+  font-size: 18px;
+  margin: 0 0 10px;
+  color: var(--ag-text-1, #16191f);
+}
+.td-error p {
+  font-size: 13px;
+  color: var(--ag-text-3, #6b7380);
+  line-height: 1.7;
+  margin: 4px 0;
+}
+.td-error__tip {
+  margin-top: 14px !important;
+  font-size: 12px !important;
+}
+.td-notice {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fff5e6;
+  border: 1px solid #f0c48a;
+  color: #8a5316;
+  font-size: 12.5px;
+  line-height: 1.6;
 }
 @media (max-width: 420px) {
   .env-grid {

@@ -1,10 +1,13 @@
 <script setup>
 /** 页面 13 · 传感器数据监测：环境实时数据表格、多地块/大棚切换、趋势曲线图表 */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader, ChartCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { plotApi, deviceApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const plots = ref([])
 const activePlotId = ref(null)
@@ -13,15 +16,7 @@ const series = ref([])
 const autoRefresh = ref(true)
 let refreshTimer = null
 
-const PARAMS = [
-  { key: 'temp', label: '空气温度', unit: '℃', icon: 'Sunny', color: '#c9803e' },
-  { key: 'hum', label: '空气湿度', unit: '%RH', icon: 'Drizzling', color: '#4C6983' },
-  { key: 'co2', label: 'CO₂浓度', unit: 'ppm', icon: 'Cloudy', color: '#B17179' },
-  { key: 'light', label: '光照强度', unit: 'klx', icon: 'Sunrise', color: '#c9803e' },
-  { key: 'soilT', label: '土壤温度', unit: '℃', icon: 'Sunny', color: '#C77F3B' },
-  { key: 'soilH', label: '土壤湿度', unit: '%', icon: 'Pouring', color: '#074ce0' },
-  { key: 'ph', label: 'PH值', unit: '', icon: 'Odometer', color: '#14b8a6' },
-]
+const PARAMS = cfg.sensorParams
 
 const activePlot = computed(() => plots.value.find((p) => p.id === activePlotId.value))
 
@@ -56,6 +51,12 @@ const trendOptions = computed(() => {
 
 async function loadAll() {
   if (!plots.value.length) plots.value = await plotApi.all()
+  if (!plots.value.length) {
+    activePlotId.value = null
+    multiTrend.value = []
+    loading.value = false
+    return
+  }
   if (!activePlotId.value) activePlotId.value = plots.value[0].id
   await loadSeries()
 }
@@ -63,6 +64,10 @@ async function loadSeries() {
   loading.value = true
   try {
     const plot = activePlot.value
+    if (!plot) {
+      multiTrend.value = []
+      return
+    }
     const keys = (plot?.type === '水产' ? ['oxygen'] : plot?.type === '畜禽' ? ['nh3'] : ['temp', 'hum', 'co2', 'light']).filter(Boolean)
     const res = await Promise.all(keys.map((k, i) => deviceApi.series(100 + i * 7 + (plot?.id || 1), k, 72)))
     // 接口返回 { meta, series: [[t,v],...] }，统一映射为页面使用的 { param, meta, arr }
@@ -79,18 +84,59 @@ function switchPlot(id) {
   loadSeries()
 }
 function toggleAuto() {
-  if (autoRefresh.value) {
-    refreshTimer = setInterval(loadSeries, 15000)
-  } else clearInterval(refreshTimer)
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+  if (autoRefresh.value) refreshTimer = setInterval(loadSeries, 15000)
 }
 
+const pad2 = (n) => String(n).padStart(2, '0')
+const csvTime = (ts) => {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+}
+const csvCell = (v) => {
+  const s = String(v ?? '')
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+/** 导出当前地块近 72 小时趋势数据 */
 function exportCsv() {
-  ElMessage.success('环境数据 CSV 已生成并开始下载（演示）')
+  if (!multiTrend.value.length) {
+    ElMessage.warning('暂无可导出的环境数据')
+    return
+  }
+  const rows = [['地块', '监测指标', '单位', '时间', '数值']]
+  multiTrend.value.forEach((s) => {
+    const meta = s.meta || {}
+    ;(s.arr || []).forEach(([t, v]) => {
+      rows.push([activePlot.value?.name || '', meta.name || s.param, meta.unit || '', csvTime(t), v])
+    })
+  })
+  const csv = '\uFEFF' + rows.map((r) => r.map(csvCell).join(',')).join('\r\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `环境监测_${activePlot.value?.name || '地块'}_${csvTime(Date.now()).replace(/[-: ]/g, '')}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+  const count = multiTrend.value.reduce((n, s) => n + (s.arr?.length || 0), 0)
+  ElMessage.success(`已导出 ${count} 条环境数据`)
 }
 
 onMounted(async () => {
   await loadAll()
   if (autoRefresh.value) toggleAuto()
+})
+onBeforeUnmount(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
 })
 </script>
 
@@ -105,44 +151,48 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <!-- 地块切换器 -->
-    <div class="plot-switch stagger">
-      <button
-        v-for="p in plots"
-        :key="p.id"
-        class="p-chip"
-        :class="{ active: p.id === activePlotId }"
-        @click="switchPlot(p.id)"
-      >
-        <span class="p-type">{{ p.type }}</span>
-        <span class="p-name">{{ p.name }}</span>
-      </button>
-    </div>
+    <el-empty v-if="!loading && !plots.length" description="暂无地块数据，请先在地块档案中新建地块" />
 
-    <!-- 实时指标卡 -->
-    <div class="env-cards stagger" v-loading="loading">
-      <div v-for="p in envCards" :key="p.key" class="e-card ag-card ag-card--hover">
-        <div class="e-head">
-          <el-icon :size="18" :color="p.color"><component :is="p.icon" /></el-icon>
-          <span class="e-name">{{ p.label }}</span>
-        </div>
-        <div class="e-val mono-num">{{ p.value ?? '—' }}<small>{{ p.unit }}</small></div>
-        <div class="e-bar">
-          <i :style="{ width: Math.min(100, Math.abs(p.value || 0) / (p.key === 'co2' ? 8 : p.key === 'light' ? 0.8 : 1)) + '%', background: p.color }"></i>
-        </div>
+    <template v-else-if="plots.length">
+      <!-- 地块切换器 -->
+      <div class="plot-switch stagger">
+        <button
+          v-for="p in plots"
+          :key="p.id"
+          class="p-chip"
+          :class="{ active: p.id === activePlotId }"
+          @click="switchPlot(p.id)"
+        >
+          <span class="p-type">{{ p.type }}</span>
+          <span class="p-name">{{ p.name }}</span>
+        </button>
       </div>
-    </div>
 
-    <!-- 趋势对比 -->
-    <div class="ag-card anim-up">
-      <div class="ag-card__head">
-        <div class="ag-card__title"><span class="dot"></span>{{ activePlot?.name }} · 近 72 小时趋势（多参数对比）</div>
-        <el-button link type="primary" :icon="'Download'" @click="exportCsv">导出 CSV</el-button>
+      <!-- 实时指标卡 -->
+      <div class="env-cards stagger" v-loading="loading">
+        <div v-for="p in envCards" :key="p.key" class="e-card ag-card ag-card--hover">
+          <div class="e-head">
+            <el-icon :size="18" :color="p.color"><component :is="p.icon" /></el-icon>
+            <span class="e-name">{{ p.label }}</span>
+          </div>
+          <div class="e-val mono-num">{{ p.value ?? '—' }}<small>{{ p.unit }}</small></div>
+          <div class="e-bar">
+            <i :style="{ width: Math.min(100, Math.abs(p.value || 0) / (p.key === 'co2' ? 8 : p.key === 'light' ? 0.8 : 1)) + '%', background: p.color }"></i>
+          </div>
+        </div>
       </div>
-      <div class="ag-card__body">
-        <ChartCard :options="trendOptions" :height="340" :loading="loading" />
+
+      <!-- 趋势对比 -->
+      <div class="ag-card anim-up">
+        <div class="ag-card__head">
+          <div class="ag-card__title"><span class="dot"></span>{{ activePlot?.name }} · 近 72 小时趋势（多参数对比）</div>
+          <el-button link type="primary" :icon="'Download'" @click="exportCsv">导出 CSV</el-button>
+        </div>
+        <div class="ag-card__body">
+          <ChartCard :options="trendOptions" :height="340" :loading="loading" />
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 

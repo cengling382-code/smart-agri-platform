@@ -1,0 +1,106 @@
+{
+  "_meta": {
+    "collection": "strategies",
+    "kind": "array",
+    "updatedAt": "2026-11-10T02:09:06.208Z",
+    "count": 8
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "番茄棚智能灌溉",
+      "plotId": 1,
+      "trigger": "threshold",
+      "condition": "土壤湿度 < 45% 持续 15 分钟",
+      "action": "开启滴灌电磁阀 20 分钟",
+      "enabled": true,
+      "times": 32,
+      "scene": "",
+      "updatedAt": "2026-11-9 08:52:04"
+    },
+    {
+      "id": 2,
+      "name": "高温自动通风",
+      "plotId": 1,
+      "trigger": "threshold",
+      "condition": "空气温度 > 30℃ 且 CO₂ < 600ppm",
+      "action": "开启风机 + 开启遮阳帘",
+      "enabled": true,
+      "times": 18,
+      "scene": "",
+      "updatedAt": "2026-11-02 09:41"
+    },
+    {
+      "id": 3,
+      "name": "育苗棚补光",
+      "plotId": 3,
+      "trigger": "schedule",
+      "condition": "每日 06:00-08:00 / 17:30-19:30",
+      "action": "开启补光灯（强度 80%）",
+      "enabled": true,
+      "times": 210,
+      "scene": "",
+      "updatedAt": "2026-10-31 09:41"
+    },
+    {
+      "id": 4,
+      "name": "鱼塘溶氧保护",
+      "plotId": 7,
+      "trigger": "threshold",
+      "condition": "溶解氧 < 5mg/L",
+      "action": "开启增氧机直至恢复正常",
+      "enabled": true,
+      "times": 7,
+      "scene": "",
+      "updatedAt": "2026-11-05 09:41"
+    },
+    {
+      "id": 5,
+      "name": "多条件组合：夜间低温防护",
+      "plotId": 2,
+      "trigger": "combo",
+      "condition": "02:00-06:00 且 空气温度 < 8℃",
+      "action": "开启加温设备 + 关闭天窗",
+      "enabled": false,
+      "times": 3,
+      "scene": "",
+      "updatedAt": "2026-11-10 10:09:01"
+    },
+    {
+      "id": 6,
+      "name": "育苗场景模板",
+      "plotId": 3,
+      "trigger": "scene",
+      "condition": "温度 22-26℃ / 湿度 65-75% / 光照 20klx",
+      "action": "一键切换设备组合（加温+补光+微喷）",
+      "enabled": true,
+      "times": 12,
+      "scene": "育苗",
+      "updatedAt": "2026-11-10 10:09:05"
+    },
+    {
+      "id": 7,
+      "name": "开花场景模板",
+      "plotId": 1,
+      "trigger": "scene",
+      "condition": "温度 20-25℃ / 湿度 55-65%",
+      "action": "一键切换设备组合（通风+滴灌）",
+      "enabled": false,
+      "times": 5,
+      "scene": "开花",
+      "updatedAt": "2026-11-10 10:09:05"
+    },
+    {
+      "id": 8,
+      "name": "越冬场景模板",
+      "plotId": 8,
+      "trigger": "scene",
+      "condition": "温度 18-22℃ / 氨气 < 10ppm",
+      "action": "一键切换设备组合（加温+风机）",
+      "enabled": false,
+      "times": 1,
+      "scene": "越冬",
+      "updatedAt": "2026-10-07 09:41"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "_meta": {
+    "collection": "manifest",
+    "kind": "manifest",
+    "updatedAt": "2026-11-06T01:41:36.032Z",
+    "description": "数据清单：集合/单例/静态字典/页面配置到文件的映射"
+  },
+  "version": 51,
+  "savedAt": "2026-11-10T02:09:13.164Z",
+  "seq": {
+    "user": 100,
+    "role": 10,
+    "plots": 10000,
+    "devices": 10000,
+    "alarms": 10000,
+    "strategies": 10000,
+    "tasks": 10000,
+    "plans": 10000,
+    "orders": 10000,
+    "materials": 10000,
+    "stock": 10000,
+    "ledger": 10000,
+    "personnel": 10000,
+    "harvests": 10001,
+    "trace": 10000,
+    "residue": 10000,
+    "products": 10000,
+    "sales": 10000,
+    "customers": 10000,
+    "dict": 10000,
+    "params": 10000,
+    "logs": 10006,
+    "files": 10000,
+    "tenants": 10000,
+    "apis": 10000,
+    "reports": 10000,
+    "misc": 10000
+  },
+  "collections": {
+    "tenants": {
+      "file": "core/tenants.json",
+      "kind": "array",
+      "seqKey": "tenants"
+    },
+    "plots": {
+      "file": "core/plots.json",
+      "kind": "array",
+      "seqKey": "plots"
+    },
+    "devices": {
+      "file": "core/devices.json",
+      "kind": "array",
+      "seqKey": "devices"
+    },
+    "farmPlans": {
+      "file": "farm/farmPlans.json",
+      "kind": "array",
+      "seqKey": "plans"
+    },
+    "workOrders": {
+      "file": "farm/workOrders.json",
+      "kind": "array",
+      "seqKey": "orders"
+    },
+    "ledgerRecords": {
+      "file": "farm/ledgerRecords.json",
+      "kind": "array",
+      "seqKey": "ledger"
+    },
+    "materials": {
+      "file": "farm/materials.json",
+      "kind": "array",
+      "seqKey": "materials"
+    },
+    "stockRecords": {
+      "file": "farm/stockRecords.json",
+      "kind": "array",
+      "seqKey": "stock"
+    },
+    "personnel": {
+      "file": "farm/personnel.json",
+      "kind": "array",
+      "seqKey": "personnel"
+    },
+    "harvests": {
+      "file": "farm/harvests.json",
+      "kind": "array",
+      "seqKey": "harvests"
+    },
+    "alarms": {
+      "file": "iot/alarms.json",
+      "kind": "array",
+      "seqKey": "alarms"
+    },
+    "strategies": {
+      "file": "iot/strategies.json",
+      "kind": "array",
+      "seqKey": "strategies"
+    },
+    "cronTasks": {
+      "file": "iot/cronTasks.json",
+      "kind": "array",
+      "seqKey": "tasks"
+    },
+    "controlLogs": {
+      "file": "iot/controlLogs.json",
+      "kind": "array",
+      "seqKey": "logs"
+    },
+    "apiConfigs": {
+      "file": "iot/apiConfigs.json",
+      "kind": "array",
+      "seqKey": "apis"
+    },
+    "traceBatches": {
+      "file": "trace/traceBatches.json",
+      "kind": "array",
+      "seqKey": "trace"
+    },
+    "residueReports": {
+      "file": "trace/residueReports.json",
+      "kind": "array",
+      "seqKey": "residue"
+    },
+    "products": {
+      "file": "trade/products.json",
+      "kind": "array",
+      "seqKey": "products"
+    },
+    "salesOrders": {
+      "file": "trade/salesOrders.json",
+      "kind": "array",
+      "seqKey": "sales"
+    },
+    "customers": {
+      "file": "trade/customers.json",
+      "kind": "array",
+      "seqKey": "customers"
+    },
+    "growthAnalysis": {
+      "file": "ai/growthAnalysis.json",
+      "kind": "array",
+      "seqKey": "misc"
+    },
+    "pestRecords": {
+      "file": "ai/pestRecords.json",
+      "kind": "array",
+      "seqKey": "misc"
+    },
+    "reports": {
+      "file": "ai/reports.json",
+      "kind": "array",
+      "seqKey": "reports"
+    },
+    "dictGroups": {
+      "file": "system/dictGroups.json",
+      "kind": "array",
+      "seqKey": "dict"
+    },
+    "sysParams": {
+      "file": "system/sysParams.json",
+      "kind": "array",
+      "seqKey": "params"
+    },
+    "logs": {
+      "file": "system/logs.json",
+      "kind": "array",
+      "seqKey": "logs"
+    },
+    "fileResources": {
+      "file": "system/fileResources.json",
+      "kind": "array",
+      "seqKey": "files"
+    },
+    "roles": {
+      "file": "system/roles.json",
+      "kind": "array",
+      "seqKey": "role"
+    },
+    "accountUsers": {
+      "file": "system/accountUsers.json",
+      "kind": "array",
+      "seqKey": "user"
+    },
+    "menuTree": {
+      "file": "system/menuTree.json",
+      "kind": "array",
+      "seqKey": "role"
+    }
+  },
+  "singletons": {
+    "plotShapes": "core/plotShapes.json",
+    "paramMeta": "iot/paramMeta.json",
+    "collectConfig": "iot/collectConfig.json",
+    "weather": "ai/weather.json"
+  },
+  "statics": {
+    "CROPS": "core/crops.json"
+  },
+  "configs": {
+    "constants": "config/constants.json",
+    "screens": "config/screens.json",
+    "workbench": "config/workbench.json",
+    "mobile": "config/mobile.json"
+  }
+}

@@ -1,9 +1,13 @@
 <script setup>
 /** 页面 22 · 地块档案管理：地块列表、新增地块、绘制边界、档案信息编辑 */
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { plotApi } from '@/api'
+import { rangeValidator, toDateStr } from '@/utils/dateRule'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
@@ -12,8 +16,8 @@ const submitting = ref(false)
 const detailVisible = ref(false)
 const detailRow = ref(null)
 
-const CROPS = ['番茄', '黄瓜', '生菜', '草莓', '水稻', '小麦', '柑橘', '淡水鱼', '生猪']
-const TYPES = ['设施大棚', '大田', '果园', '水产', '畜禽']
+const CROPS = cfg.cropNames
+const TYPES = cfg.plotTypes
 
 const form = reactive({
   id: null, code: '', name: '', type: '设施大棚', crop: '番茄', areaMu: 3, manager: '',
@@ -24,7 +28,13 @@ const rules = {
   name: [{ required: true, message: '请输入地块名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择地块类型', trigger: 'change' }],
   areaMu: [{ required: true, message: '请输入面积', trigger: 'blur' }],
+  endDate: [rangeValidator(() => form.startDate, '种植结束不能早于种植开始')],
 }
+
+// 开始日期后移时清掉已失效的结束日期，避免出现倒置周期
+watch(() => form.startDate, (v) => {
+  if (v && form.endDate && form.endDate < v) form.endDate = ''
+})
 
 /* 模拟边界绘制 */
 const drawing = ref(false)
@@ -63,7 +73,7 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '编号 / 名称 / 作物 / 负责人' },
   { key: 'type', label: '类型', type: 'select', options: TYPES.map((t) => ({ label: t, value: t })) },
-  { key: 'status', label: '状态', type: 'select', options: ['种植中', '育苗期', '接近采收', '挂果期', '养殖中', '休耕'].map((s) => ({ label: s, value: s })) },
+  { key: 'status', label: '状态', type: 'select', options: cfg.plotStatuses.map((s) => ({ label: s, value: s })) },
 ]
 
 function openCreate() {
@@ -72,16 +82,40 @@ function openCreate() {
   autoShape()
   dialogVisible.value = true
 }
-function openEdit(row) {
+async function openEdit(row) {
   isEdit.value = true
-  Object.assign(form, { ...row })
+  let shape = row.shape || row.points || []
+  // 列表接口不返回边界时，从 /plots/all 取回完整多边形
+  if (!shape.length) {
+    try {
+      const all = await plotApi.all()
+      const d = all.find((x) => x.id === row.id)
+      shape = d?.shape || d?.points || []
+    } catch (e) {
+      console.warn('[PlotArchive]', e?.message || e)
+    }
+  }
+  Object.assign(form, {
+    id: row.id, code: row.code, name: row.name, type: row.type, crop: row.crop,
+    areaMu: row.areaMu, manager: row.manager, startDate: row.startDate, endDate: row.endDate,
+    status: row.status, lat: row.lat, lng: row.lng,
+  })
+  drawPoints.value = shape.map((pt) => [+pt[0], +pt[1]])
   dialogVisible.value = true
 }
 async function handleSubmit() {
   submitting.value = true
   try {
-    if (isEdit.value) await plotApi.update(form.id, form)
-    else await plotApi.create(form)
+    // 白名单提交业务字段，避免携带 id / env / sensors 等服务端字段
+    const boundary = drawPoints.value.map((pt) => [+pt[0], +pt[1]])
+    const payload = {
+      code: form.code, name: form.name, type: form.type, crop: form.crop,
+      areaMu: form.areaMu, manager: form.manager, startDate: form.startDate, endDate: form.endDate,
+      status: form.status, lat: form.lat, lng: form.lng,
+      shape: boundary, points: boundary,
+    }
+    if (isEdit.value) await plotApi.update(form.id, payload)
+    else await plotApi.create(payload)
     ElMessage.success(isEdit.value ? '地块档案已更新' : '地块创建成功')
     dialogVisible.value = false
     tableRef.value?.reload(true)
@@ -157,7 +191,7 @@ function showDetail(row) {
           <el-form-item label="种植周期">
             <el-date-picker v-model="form.startDate" type="date" value-format="YYYY-MM-DD" placeholder="开始日期" style="width: 150px" />
             <span style="margin: 0 6px">至</span>
-            <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" placeholder="结束日期" style="width: 150px" />
+            <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" placeholder="结束日期" style="width: 150px" :disabled-date="(d) => !!form.startDate && toDateStr(d) < form.startDate" />
           </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="form.status" style="width: 200px">

@@ -3,13 +3,17 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { deviceApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('mobile')
 
 const devices = ref([])
 const loading = ref(true)
 
-const ICONS = { 水泵: 'Pouring', 电磁阀: 'Odometer', 风机: 'WindPower', 卷帘机: 'Sort', 补光灯: 'Sunny', 加温设备: 'Sunny', 增氧机: 'Sugar', 遮阳帘: 'Umbrella' }
+const ICONS = cfg.controlIcons
 
-onMounted(async () => {
+async function load() {
   try {
     const all = await deviceApi.all()
     devices.value = all.filter((d) => d.type === 'actuator')
@@ -18,34 +22,44 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(load)
+onDataChange(load, { debounce: 400 })
 
 async function toggle(d) {
+  if (d.status !== 'online') {
+    ElMessage.warning('设备离线，无法下发控制指令')
+    return
+  }
   const action = d.running ? '关闭' : '开启'
   try {
     await ElMessageBox.confirm(`确定要${action}「${d.name}」吗？`, `${action}设备`, { type: 'warning', confirmButtonText: `确认${action}` })
   } catch {
     return
   }
-  const online = d.status === 'online'
-  const res = await deviceApi.control(d.id, { action: d.running ? 'off' : 'on', operator: '移动端用户' })
-  d.running = res.running
-  if (online) ElMessage.success(`「${d.name}」已${action}`)
-  else ElMessage.warning('设备离线，指令下发失败')
+  try {
+    const res = await deviceApi.control(d.id, { action: d.running ? 'off' : 'on', operator: '移动端用户' })
+    d.running = res.running ?? !d.running
+    ElMessage.success(`「${d.name}」已${action}`)
+  } catch (e) {
+    ElMessage.error(`「${d.name}」控制失败：${e.message}`)
+  }
 }
 </script>
 
 <template>
-  <div class="m-control" v-loading="loading">
-    <div class="mc-head">
-      <h2>设备远程控制</h2>
-      <span class="text-dim">操作即点即达 · 全程留痕</span>
+  <div class="m-page m-control" v-loading="loading">
+    <div class="m-page-head">
+      <div>
+        <h1 class="m-page-title">设备远程控制</h1>
+        <p class="m-page-desc">操作即点即达 · 全程留痕</p>
+      </div>
     </div>
 
     <div class="dev-list">
-      <div v-for="d in devices" :key="d.id" class="dev-card" :class="{ run: d.running, off: d.status !== 'online' }">
+      <div v-for="d in devices" :key="d.id" class="m-card dev-card" :class="{ run: d.running, off: d.status !== 'online' }">
         <span class="d-ico" :class="{ run: d.running }">
-          <el-icon :size="22"><component :is="ICONS[d.subtype] || 'SwitchButton'" /></el-icon>
+          <el-icon :size="20"><component :is="ICONS[d.subtype] || 'SwitchButton'" /></el-icon>
         </span>
         <div class="d-info">
           <b>{{ d.name }}</b>
@@ -53,7 +67,15 @@ async function toggle(d) {
         </div>
         <div class="d-state">
           <span class="d-st" :class="{ on: d.running }">{{ d.running ? '运行中' : '已停止' }}</span>
-          <button class="switch" :class="{ on: d.running }" :disabled="d.status === 'offline'" role="switch" :aria-checked="d.running" :aria-label="`${d.running ? '关闭' : '开启'}设备 ${d.name}`" @click="toggle(d)">
+          <button
+            class="switch"
+            :class="{ on: d.running }"
+            :disabled="d.status === 'offline'"
+            role="switch"
+            :aria-checked="d.running"
+            :aria-label="`${d.running ? '关闭' : '开启'}设备 ${d.name}`"
+            @click="toggle(d)"
+          >
             <i></i>
           </button>
         </div>
@@ -69,64 +91,52 @@ async function toggle(d) {
 </template>
 
 <style scoped>
-.m-control {
-  padding: 16px;
-  min-height: 100%;
-}
-.mc-head {
-  margin-bottom: 14px;
-}
-.mc-head h2 {
-  margin: 0 0 3px;
-  font-size: 18px;
-}
 .dev-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--ag-space-3);
 }
 .dev-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：设备列表卡片属卡片类，对齐卡片档 10px */
-  padding: 14px;
-  box-shadow: var(--ag-shadow-sm);
-  border: 1px solid transparent;
-  transition: all 0.25s;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-4);
+  transition: border-color var(--ag-dur) var(--ag-ease), opacity var(--ag-dur) var(--ag-ease);
 }
+/* 运行态仅以 PC 淡蓝描边提示，不做彩色顶条/发光块 */
 .dev-card.run {
   border-color: var(--ag-green-300);
 }
 .dev-card.off {
   opacity: 0.55;
 }
+/* 图标块：对齐 PC StatCard .icon-box（同色系低透明度底 + 同色图标） */
 .d-ico {
   width: 44px;
   height: 44px;
-  border-radius: var(--ag-radius); /* 决策依据：44px 设备图标块非控件，对齐卡片档 10px */
-  background: var(--ag-bg-hover);
-  color: var(--ag-text-4);
+  flex: none;
   display: grid;
   place-items: center;
-  flex: none;
-  transition: all 0.3s var(--ag-ease-spring);
+  border-radius: var(--ag-radius);
+  background: var(--ag-bg-hover);
+  color: var(--ag-text-4);
+  transition: background var(--ag-dur) var(--ag-ease), color var(--ag-dur) var(--ag-ease);
 }
 .d-ico.run {
-  /* 决策依据：图标块装饰性渐变底属"发光方块"，按简约高级规范改为同色系低透明度实色 + 语义色图标（同 StatCard 已清理样式） */
-  background: rgba(105, 156, 120, 0.14);
+  background: rgba(7, 76, 224, 0.1);
   color: var(--ag-green-700);
-  /* 决策依据：agCountGlow 已改为一次性淡入，保留 infinite 会令图标不停闪烁，故移除该动画 */
 }
 .d-info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  gap: 2px;
 }
 .d-info b {
-  font-size: 14px;
+  font-size: var(--ag-fs-caption);
+  font-weight: 600;
+  color: var(--ag-text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,28 +144,43 @@ async function toggle(d) {
 .d-state {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--ag-space-2);
+  flex: none;
 }
 .d-st {
-  font-size: 11px;
+  font-size: var(--ag-fs-micro);
   color: var(--ag-text-4);
 }
 .d-st.on {
   color: var(--ag-green-600);
-  font-weight: 700;
+  font-weight: 600;
 }
+/* 开关：胶囊形 + accent 选中色，关闭态取发丝边框色而非旧灰绿 */
 .switch {
   width: 46px;
   height: 26px;
-  border-radius: var(--ag-radius-lg); /* 决策依据：开关需胶囊形大圆角，token 化为浮层档 14px（值不变） */
+  padding: 0;
   border: none;
-  background: #D5D8D6;
+  border-radius: var(--ag-radius-pill);
+  background: var(--ag-border);
   position: relative;
   cursor: pointer;
-  transition: background 0.25s;
+  transition: background var(--ag-dur) var(--ag-ease);
+  touch-action: manipulation;
+  flex: none;
+}
+/* 触控热区扩展到 44×44，满足移动端最小点击尺寸 */
+.switch::before {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: var(--ag-radius-pill);
 }
 .switch.on {
-  background: var(--ag-green-500);
+  background: var(--ag-green-600);
+}
+.switch:disabled {
+  cursor: not-allowed;
 }
 .switch i {
   position: absolute;
@@ -165,26 +190,23 @@ async function toggle(d) {
   height: 20px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-  transition: transform 0.25s var(--ag-ease-spring);
+  box-shadow: var(--ag-shadow-sm);
+  transition: transform var(--ag-dur) var(--ag-ease);
 }
 .switch.on i {
   transform: translateX(20px);
 }
-.m-empty {
-  text-align: center;
-  color: var(--ag-text-4);
-  padding: 30px 0;
-}
 .safe-tip {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
+  align-items: flex-start;
+  gap: var(--ag-space-2);
+  margin-top: var(--ag-space-3);
+  padding: var(--ag-space-3) var(--ag-space-4);
+  border: 1px solid var(--ag-border-light);
+  border-radius: var(--ag-radius);
   background: var(--ag-blue-50);
   color: var(--ag-blue-700);
-  border-radius: var(--ag-radius); /* 决策依据：安全提示条属卡片类容器，对齐卡片档 10px */
-  padding: 11px 14px;
-  font-size: 12px;
+  font-size: var(--ag-fs-micro);
+  line-height: 1.6;
 }
 </style>

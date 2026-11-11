@@ -1,0 +1,302 @@
+{
+  "_meta": {
+    "collection": "constants",
+    "kind": "config",
+    "description": "全局业务枚举、状态映射与页面常量配置；字段含义见 docs/JSON数据规范.md",
+    "updatedAt": "2026-11-06T02:10:00.000Z",
+    "count": 60
+  },
+  "data": {
+    "cropNames": ["番茄", "黄瓜", "生菜", "草莓", "水稻", "小麦", "柑橘", "淡水鱼", "生猪"],
+    "plotTypes": ["设施大棚", "大田", "果园", "水产", "畜禽"],
+    "plotStatuses": ["种植中", "育苗期", "接近采收", "挂果期", "养殖中", "休耕"],
+    "plotTypeColors": {
+      "设施大棚": "#074ce0",
+      "大田": "#D4B95E",
+      "果园": "#c9803e",
+      "水产": "#4C6983",
+      "畜禽": "#B17179"
+    },
+    "plotTypeFills": {
+      "设施大棚": "rgba(7,76,224,.18)",
+      "大田": "rgba(234,179,8,.24)",
+      "果园": "rgba(201,128,62,.24)",
+      "水产": "rgba(76,105,131,.24)",
+      "畜禽": "rgba(177,113,121,.24)"
+    },
+    "farmTypes": ["播种", "移栽", "施肥", "打药", "除草", "灌溉", "采收"],
+    "farmPlanStatuses": ["待审批", "已审批", "已驳回", "进行中", "已完成"],
+    "workOrderStatuses": ["待接单", "进行中", "待验收", "已完成", "已驳回"],
+    "farmTypeTag": {
+      "播种": "success",
+      "移栽": "primary",
+      "施肥": "warning",
+      "打药": "danger",
+      "除草": "info",
+      "灌溉": "primary",
+      "采收": "success"
+    },
+    "farmTypeColors": {
+      "播种": "#7DC383",
+      "施肥": "#FFB37B",
+      "打药": "#E84A5F",
+      "灌溉": "#9FC3DD",
+      "采收": "#B17179",
+      "除草": "#8FB3CC",
+      "移栽": "#E89552"
+    },
+    "workerNames": ["张建国", "李秀兰", "王大富", "刘志强", "陈美凤", "杨春生", "赵德柱", "孙丽娟"],
+    "grades": ["特级", "一级", "二级"],
+    "qualities": ["优", "良", "合格"],
+    "materialCategories": ["种子", "化肥", "农药", "地膜"],
+    "suppliers": ["金穗农资有限公司", "绿丰种业", "丰收化肥厂", "生物农药科技", "兴农地膜制品", "川农供应链"],
+    "materialCatMeta": {
+      "种子": { "icon": "Cherry", "color": "#074ce0" },
+      "化肥": { "icon": "Box", "color": "#c9803e" },
+      "农药": { "icon": "WarningFilled", "color": "#E84A5F" },
+      "地膜": { "icon": "Crop", "color": "#4C6983" }
+    },
+    "pesticideSafeInterval": { "吡虫啉": 7, "多菌灵": 15, "百菌清": 10, "阿维菌素": 14 },
+    "reportStatusLabels": {
+      "online": "在线",
+      "offline": "离线",
+      "fault": "故障",
+      "pending": "未处理",
+      "confirmed": "已确认",
+      "resolved": "已处置",
+      "archived": "已归档"
+    },
+    "personnelSkills": ["播种", "施肥", "打药", "采收", "嫁接", "修剪", "滴灌维护", "大棚管理", "农机操作", "水产养殖"],
+    "personnelRoles": ["农户", "工人", "技术员"],
+    "personnelStatusOptions": [
+      { "label": "在岗", "value": "在岗" },
+      { "label": "休假", "value": "休假" }
+    ],
+    "alarmTypes": ["环境超限", "设备故障", "离线掉线", "库存不足", "灾害预警", "传感器异常"],
+    "alarmLevels": {
+      "1": { "text": "一般", "tag": "info", "color": "#6E7883" },
+      "2": { "text": "重要", "tag": "warning", "color": "#E89552" },
+      "3": { "text": "紧急", "tag": "danger", "color": "#E84A5F" }
+    },
+    "alarmStatusMap": {
+      "pending": "未处理",
+      "confirmed": "已确认",
+      "resolved": "已处置",
+      "archived": "已归档"
+    },
+    "deviceTypeMeta": {
+      "gateway": { "label": "网关", "tag": "warning", "icon": "Link" },
+      "sensor": { "label": "传感器", "tag": "success", "icon": "Odometer" },
+      "actuator": { "label": "执行器", "tag": "primary", "icon": "SwitchButton" },
+      "camera": { "label": "摄像头", "tag": "info", "icon": "VideoCamera" }
+    },
+    "deviceStatusMap": { "online": "在线", "offline": "离线", "fault": "故障" },
+    "deviceGroupOptions": ["设施大棚", "大田", "果园", "水产", "畜禽"],
+    "deviceParamLabels": {
+      "temp": "空气温度(℃)",
+      "hum": "空气湿度(%)",
+      "co2": "CO₂(ppm)",
+      "light": "光照(klx)",
+      "soilT": "土壤温度(℃)",
+      "soilH": "土壤湿度(%)",
+      "ph": "PH值",
+      "wind": "风速(m/s)",
+      "rain": "降雨量(mm)",
+      "oxygen": "溶解氧(mg/L)",
+      "nh3": "氨气(ppm)"
+    },
+    "sensorParams": [
+      { "key": "temp", "label": "空气温度", "unit": "℃", "icon": "Sunny", "color": "#c9803e" },
+      { "key": "hum", "label": "空气湿度", "unit": "%RH", "icon": "Drizzling", "color": "#4C6983" },
+      { "key": "co2", "label": "CO₂浓度", "unit": "ppm", "icon": "Cloudy", "color": "#B17179" },
+      { "key": "light", "label": "光照强度", "unit": "klx", "icon": "Sunrise", "color": "#c9803e" },
+      { "key": "soilT", "label": "土壤温度", "unit": "℃", "icon": "Sunny", "color": "#C77F3B" },
+      { "key": "soilH", "label": "土壤湿度", "unit": "%", "icon": "Pouring", "color": "#074ce0" },
+      { "key": "ph", "label": "PH值", "unit": "", "icon": "Odometer", "color": "#14b8a6" }
+    ],
+    "strategyParams": [
+      { "v": "temp", "l": "空气温度(℃)" },
+      { "v": "hum", "l": "空气湿度(%)" },
+      { "v": "co2", "l": "CO₂(ppm)" },
+      { "v": "light", "l": "光照(klx)" },
+      { "v": "soilH", "l": "土壤湿度(%)" },
+      { "v": "soilT", "l": "土壤温度(℃)" },
+      { "v": "oxygen", "l": "溶解氧(mg/L)" }
+    ],
+    "strategyTriggerMeta": {
+      "threshold": { "label": "阈值触发", "tag": "success", "icon": "Odometer" },
+      "combo": { "label": "多条件组合", "tag": "primary", "icon": "Operation" },
+      "schedule": { "label": "定时计划", "tag": "warning", "icon": "AlarmClock" },
+      "scene": { "label": "场景模板", "tag": "danger", "icon": "MagicStick" }
+    },
+    "actuatorIcons": {
+      "水泵": "Pouring",
+      "电磁阀": "Odometer",
+      "风机": "WindPower",
+      "卷帘机": "Sort",
+      "补光灯": "Sunny",
+      "加温设备": "Sunny",
+      "增氧机": "Sugar",
+      "遮阳帘": "Umbrella"
+    },
+    "collectIntervals": [
+      { "v": 60, "label": "1 分钟" },
+      { "v": 300, "label": "5 分钟" },
+      { "v": 600, "label": "10 分钟" },
+      { "v": 1800, "label": "30 分钟" }
+    ],
+    "collectFilters": ["原始数据（不过滤）", "中值滤波", "3σ去噪 + 中值滤波", "滑动平均滤波"],
+    "collectAnomalyPolicies": ["仅标记", "标记并告警", "自动剔除并插值"],
+    "reportGenTypes": ["环境报表", "水肥报表", "设备报表", "农事报表", "采收报表", "告警报表"],
+    "reportTypeIcon": {
+      "环境报表": "Cloudy",
+      "水肥报表": "Pouring",
+      "设备报表": "Cpu",
+      "农事报表": "Tickets",
+      "采收报表": "Apple",
+      "告警报表": "Bell"
+    },
+    "reportFmtMeta": {
+      "PDF": { "tag": "danger", "icon": "Document" },
+      "Excel": { "tag": "success", "icon": "Grid" }
+    },
+    "weatherWarnLevel": {
+      "蓝色": { "color": "#5E7F9A", "icon": "Cloudy" },
+      "黄色": { "color": "#c9803e", "icon": "Sunny" },
+      "橙色": { "color": "#ea580c", "icon": "Lightning" },
+      "红色": { "color": "#E84A5F", "icon": "WarningFilled" }
+    },
+    "weatherIcons": { "rain": "Pouring", "sunny": "Sunny", "cloudy": "Cloudy" },
+    "pestKnowledge": [
+      { "name": "番茄晚疫病", "type": "真菌病害", "symptom": "叶片出现水浸状暗绿色病斑，湿度大时背面有白色霉层", "condition": "低温高湿（15-23℃、RH>85%）易发", "prevention": "控制棚内湿度，发病初期喷施霜脲氰·锰锌或氟菌·霜霉威，连续 2-3 次" },
+      { "name": "黄瓜霜霉病", "type": "真菌病害", "symptom": "叶面出现多角形黄褐色病斑，背面有灰黑色霉层", "condition": "高湿夜凉（16-22℃）易流行", "prevention": "加强通风降湿，喷施烯酰吗啉或代森锰锌预防" },
+      { "name": "白粉虱", "type": "虫害", "symptom": "成虫、若虫群集叶背吸汁，分泌蜜露诱发煤污病", "condition": "温室全年发生，繁殖极快", "prevention": "黄板诱杀成虫 + 释放丽蚜小蜂，严重时喷施吡虫啉/噻虫嗪" },
+      { "name": "蚜虫", "type": "虫害", "symptom": "群集嫩叶吸汁致叶片卷缩，传播病毒病", "condition": "干旱温暖条件爆发快", "prevention": "银灰膜避蚜 + 黄板诱杀，喷施吡虫啉 800 倍液" },
+      { "name": "红蜘蛛", "type": "螨害", "symptom": "叶面出现灰白小点，严重时叶片枯焦脱落", "condition": "高温干燥（25-30℃、RH<70%）", "prevention": "增加湿度，喷施阿维菌素或联苯肼酯，注意轮换用药" },
+      { "name": "灰霉病", "type": "真菌病害", "symptom": "花、果出现灰褐色霉层，组织软腐", "condition": "低温高湿、通风不良", "prevention": "及时摘除病果，喷施腐霉利或嘧霉胺，加强通风" }
+    ],
+    "tracePublicTabs": [
+      { "key": "story", "label": "产地故事", "icon": "Promotion" },
+      { "key": "farm", "label": "生长周期", "icon": "Calendar" },
+      { "key": "env", "label": "产地环境", "icon": "Sunny" },
+      { "key": "report", "label": "检测报告", "icon": "Document" },
+      { "key": "company", "label": "企业信息", "icon": "OfficeBuilding" }
+    ],
+    "scanSteps": ["验证二维码", "加载溯源档案", "关联农事记录", "准备完成"],
+    "customerLevelTag": { "普通": "info", "VIP": "primary", "大客户": "warning" },
+    "traceStatusTag": { "待完善": "warning", "已发布": "success", "已召回": "danger", "已下架": "info" },
+    "apiStatusTag": { "已连接": "success", "异常": "danger", "未启用": "info" },
+    "fileTypeMeta": {
+      "img": { "label": "图片", "icon": "Picture", "color": "#074ce0" },
+      "video": { "label": "视频", "icon": "VideoCamera", "color": "#4C6983" },
+      "doc": { "label": "文档", "icon": "Document", "color": "#c9803e" }
+    },
+    "apiTypeMeta": {
+      "weather": { "label": "气象平台", "icon": "Cloudy", "color": "#4C6983" },
+      "gov": { "label": "监管平台", "icon": "Stamp", "color": "#E84A5F" },
+      "iot": { "label": "物联网平台", "icon": "Cpu", "color": "#074ce0" },
+      "video": { "label": "视频平台", "icon": "VideoCamera", "color": "#B17179" },
+      "erp": { "label": "ERP/电商", "icon": "ShoppingCart", "color": "#c9803e" }
+    },
+    "logTypeMeta": {
+      "login": { "label": "登录日志", "tag": "primary" },
+      "operate": { "label": "操作日志", "tag": "success" },
+      "error": { "label": "异常日志", "tag": "danger" }
+    },
+    "menuIcons": ["Odometer", "Cpu", "LocationInformation", "Cherry", "DataAnalysis", "Postcard", "ShoppingCart", "Setting", "Monitor", "Bell", "User"],
+    "roleButtonPerms": [
+      { "id": "btn-add", "label": "新增" },
+      { "id": "btn-edit", "label": "编辑" },
+      { "id": "btn-delete", "label": "删除" },
+      { "id": "btn-export", "label": "导出" },
+      { "id": "btn-approve", "label": "审批" },
+      { "id": "btn-control", "label": "设备控制" }
+    ],
+    "roleDataScopes": ["全部数据", "本园区数据", "本人数据", "溯源相关数据"],
+    "roleDefaultMenus": {
+      "admin": "all",
+      "manager": "all",
+      "tech": [100, 200, 300, 400, 501, 502, 503, 601, 602, 603],
+      "farmer": [100, 204, 206, 207, 402, 408],
+      "regulator": [100, 505, 601, 603, 604, 605]
+    },
+    "avatarColors": ["#074ce0", "#454c58", "#5c85f5", "#6b7380"],
+    "loginFeatures": [
+      { "icon": "Cpu", "title": "物联网感知", "desc": "环境数据实时采集监测" },
+      { "icon": "SwitchButton", "title": "远程智控", "desc": "设备策略自动化联动" },
+      { "icon": "DataAnalysis", "title": "AI 分析", "desc": "长势预测与产量预估" },
+      { "icon": "Postcard", "title": "一物一码", "desc": "全链路农产品溯源" }
+    ],
+    "loginDemoAccounts": [
+      { "role": "系统管理员", "u": "admin" },
+      { "role": "园区管理员", "u": "manager" },
+      { "role": "农技人员", "u": "tech" },
+      { "role": "农户/工人", "u": "farmer" },
+      { "role": "监管人员", "u": "regulator" }
+    ],
+    "productImgMeta": {
+      "tomato": { "bg": "rgba(7, 76, 224, 0.05)", "label": "番" },
+      "cucumber": { "bg": "rgba(7, 76, 224, 0.08)", "label": "黄" },
+      "lettuce": { "bg": "rgba(7, 76, 224, 0.11)", "label": "生" },
+      "rice": { "bg": "rgba(7, 76, 224, 0.14)", "label": "稻" },
+      "orange": { "bg": "rgba(7, 76, 224, 0.17)", "label": "橙" }
+    },
+    "statusTagMaps": {
+      "online": { "label": "在线", "type": "success", "effect": "light" },
+      "offline": { "label": "离线", "type": "info", "effect": "light" },
+      "fault": { "label": "故障", "type": "danger", "effect": "light" },
+      "启用": { "label": "启用", "type": "success" },
+      "禁用": { "label": "禁用", "type": "danger" },
+      "正常": { "label": "正常", "type": "success" },
+      "异常": { "label": "异常", "type": "danger" },
+      "未启用": { "label": "未启用", "type": "info" },
+      "已连接": { "label": "已连接", "type": "success" },
+      "在岗": { "label": "在岗", "type": "success" },
+      "休假": { "label": "休假", "type": "warning" },
+      "上架": { "label": "上架", "type": "success" },
+      "下架": { "label": "下架", "type": "info" },
+      "合格": { "label": "合格", "type": "success" },
+      "不合格": { "label": "不合格", "type": "danger" },
+      "成功": { "label": "成功", "type": "success" },
+      "失败": { "label": "失败", "type": "danger" },
+      "待接单": { "label": "待接单", "type": "warning" },
+      "进行中": { "label": "进行中", "type": "primary" },
+      "待验收": { "label": "待验收", "type": "warning" },
+      "已完成": { "label": "已完成", "type": "success" },
+      "已驳回": { "label": "已驳回", "type": "danger" },
+      "待审批": { "label": "待审批", "type": "warning" },
+      "已审批": { "label": "已审批", "type": "primary" },
+      "已发布": { "label": "已发布", "type": "success" },
+      "待完善": { "label": "待完善", "type": "warning" },
+      "已召回": { "label": "已召回", "type": "danger" },
+      "待登记": { "label": "待登记", "type": "warning" },
+      "已入库": { "label": "已入库", "type": "success" },
+      "待付款": { "label": "待付款", "type": "warning" },
+      "待发货": { "label": "待发货", "type": "primary" },
+      "已发货": { "label": "发货中", "type": "primary" },
+      "已退款": { "label": "已退款", "type": "info" },
+      "pending": { "label": "未处理", "type": "danger", "effect": "light" },
+      "confirmed": { "label": "已确认", "type": "warning", "effect": "light" },
+      "resolved": { "label": "已处置", "type": "success", "effect": "light" },
+      "archived": { "label": "已归档", "type": "info", "effect": "light" }
+    },
+    "statusOptionGroups": {
+      "salesOrder": [{ "label": "待付款", "value": "待付款" }, { "label": "待发货", "value": "待发货" }, { "label": "已发货", "value": "已发货" }, { "label": "已完成", "value": "已完成" }, { "label": "已退款", "value": "已退款" }],
+      "product": [{ "label": "上架", "value": "上架" }, { "label": "下架", "value": "下架" }],
+      "user": [{ "label": "启用", "value": "启用" }, { "label": "禁用", "value": "禁用" }],
+      "stockType": [{ "label": "入库", "value": "in" }, { "label": "出库", "value": "out" }],
+      "logResult": [{ "label": "成功", "value": "成功" }, { "label": "失败", "value": "失败" }],
+      "harvest": [{ "label": "待登记", "value": "待登记" }, { "label": "已入库", "value": "已入库" }],
+      "residue": [{ "label": "合格", "value": "合格" }, { "label": "不合格", "value": "不合格" }],
+      "controlSource": [{ "label": "手动", "value": "manual" }, { "label": "自动策略", "value": "auto" }],
+      "controlResult": [{ "label": "成功", "value": "成功" }, { "label": "失败", "value": "失败(设备离线)" }],
+      "strategyEnabled": [{ "label": "已启用", "value": "true" }, { "label": "已停用", "value": "false" }],
+      "pestStatus": [{ "label": "待处理", "value": "待处理" }, { "label": "已处理", "value": "已处理" }]
+    },
+    "sysParamGroups": [
+      { "name": "平台基础", "keys": ["platform.name", "trace.expire"] },
+      { "name": "数据采集", "keys": ["collect.interval"] },
+      { "name": "告警通知（短信 / 微信公众号）", "keys": ["alarm.sms", "alarm.wechat", "alarm.threshold.temp.max", "alarm.threshold.temp.min", "alarm.threshold.hum.min"] }
+    ]
+  }
+}

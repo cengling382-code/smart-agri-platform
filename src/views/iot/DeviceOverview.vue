@@ -2,9 +2,12 @@
 /** 页面 11 · 设备总览：网关/传感器/执行器列表、在线离线状态、搜索筛选、分组统计 */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag } from '@/components/ui'
 import { deviceApi, plotApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const router = useRouter()
 const tableRef = ref(null)
@@ -13,14 +16,10 @@ const isEdit = ref(false)
 const submitting = ref(false)
 const plots = ref([])
 const stats = ref(null)
+const activeType = ref('')
 
-const TYPE_META = {
-  gateway: { label: '网关', tag: 'warning', icon: 'Link' },
-  sensor: { label: '传感器', tag: 'success', icon: 'Odometer' },
-  actuator: { label: '执行器', tag: 'primary', icon: 'SwitchButton' },
-  camera: { label: '摄像头', tag: 'info', icon: 'VideoCamera' },
-}
-const STATUS_MAP = { online: '在线', offline: '离线', fault: '故障' }
+const TYPE_META = cfg.deviceTypeMeta
+const STATUS_MAP = cfg.deviceStatusMap
 
 const form = reactive({ id: null, code: '', name: '', type: 'sensor', subtype: '', model: '', plotId: null, gatewayCode: '' })
 const rules = {
@@ -44,7 +43,7 @@ const filters = [
   { key: 'keyword', label: '关键字', placeholder: '编号 / 名称 / 型号' },
   { key: 'type', label: '类型', type: 'select', options: Object.entries(TYPE_META).map(([v, m]) => ({ label: m.label, value: v })) },
   { key: 'status', label: '状态', type: 'select', options: Object.entries(STATUS_MAP).map(([v, l]) => ({ label: l, value: v })) },
-  { key: 'group', label: '分组', type: 'select', options: [{ label: '设施大棚', value: '设施大棚' }, { label: '大田', value: '大田' }, { label: '果园', value: '果园' }, { label: '水产', value: '水产' }, { label: '畜禽', value: '畜禽' }] },
+  { key: 'group', label: '分组', type: 'select', options: cfg.deviceGroupOptions.map((g) => ({ label: g, value: g })) },
 ]
 
 async function fetchPage(params) {
@@ -62,6 +61,14 @@ async function fetchPage(params) {
   return res
 }
 
+/** 点击顶部分类卡片：真正写入 ProTable 的 type 筛选条件并刷新列表 */
+function filterByType(type) {
+  activeType.value = activeType.value === type ? '' : type
+  const q = tableRef.value?.query
+  if (!q) return
+  q.type = activeType.value
+  tableRef.value.reload()
+}
 function plotName(row) {
   return plots.value.find((p) => p.id === row.plotId)?.name || '—'
 }
@@ -115,7 +122,7 @@ async function handleDelete(row) {
 
     <!-- 分组统计 -->
     <div class="type-stats stagger" v-if="stats">
-      <div v-for="(t, k) in TYPE_META" :key="k" class="t-card ag-card ag-card--hover" @click="tableRef?.reload()">
+      <div v-for="(t, k) in TYPE_META" :key="k" class="t-card ag-card ag-card--hover" :class="{ active: activeType === k }" role="button" tabindex="0" :aria-label="`只看${t.label}设备`" @click="filterByType(k)" @keyup.enter="filterByType(k)">
         <div class="t-icon" :class="'ic-' + k"><el-icon :size="20"><component :is="t.icon" /></el-icon></div>
         <div class="t-meta">
           <div class="t-name">{{ t.label }}<span class="t-total mono-num">{{ stats[k]?.total || 0 }}</span></div>
@@ -186,6 +193,14 @@ async function handleDelete(row) {
   gap: 14px;
   padding: 16px;
   cursor: pointer;
+  outline: none;
+}
+.t-card.active {
+  border-color: var(--ag-green-600);
+  box-shadow: 0 0 0 2px var(--ag-green-50);
+}
+.t-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--ag-green-600);
 }
 .t-icon {
   width: 46px;

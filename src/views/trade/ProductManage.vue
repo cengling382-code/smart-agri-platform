@@ -4,19 +4,16 @@ import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { tradeApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 
-const IMG_META = {
-  tomato: { bg: 'rgba(7, 76, 224, 0.05)', label: '番' },
-  cucumber: { bg: 'rgba(7, 76, 224, 0.08)', label: '黄' },
-  lettuce: { bg: 'rgba(7, 76, 224, 0.11)', label: '生' },
-  rice: { bg: 'rgba(7, 76, 224, 0.14)', label: '稻' },
-  orange: { bg: 'rgba(7, 76, 224, 0.17)', label: '橙' },
-}
+const IMG_META = cfg.productImgMeta
 
 const form = reactive({ id: null, name: '', crop: '番茄', spec: '', price: 0, stock: 100, status: '上架', img: 'tomato', traceCode: '' })
 const rules = {
@@ -38,7 +35,7 @@ const columns = [
 
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '产品名称 / 作物' },
-  { key: 'status', label: '状态', type: 'select', options: [{ label: '上架', value: '上架' }, { label: '下架', value: '下架' }] },
+  { key: 'status', label: '状态', type: 'select', options: cfg.statusOptionGroups.product },
 ]
 
 function openCreate() {

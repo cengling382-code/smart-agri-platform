@@ -20,6 +20,8 @@ const form = reactive({
 const timeline = computed(() =>
   farmPool.value.filter((f) => form.bindFarm.includes(f.id))
 )
+/** 环境数据条数取该批次已接入的真实记录数，未接入即为 0，不再写死 520 */
+const envCount = computed(() => (form.bindEnv ? (batch.value?.records?.env ?? 0) : 0))
 
 onMounted(async () => {
   try {
@@ -29,18 +31,28 @@ onMounted(async () => {
     farmPool.value = ledger.list.map((l) => ({
       id: l.id, time: l.time, type: l.type, plotName: l.plotName, operator: l.operator,
     }))
-    form.code = batch.value?.code
-    form.crop = batch.value?.crop
-    form.plotName = batch.value?.plotName
-    form.story = `本批次${batch.value?.crop}产自${batch.value?.plotName}，全生长期采用水肥一体化智能灌溉，全程农事记录上链存证，采收后经农残检测合格。`
-    form.bindFarm = farmPool.value.slice(0, 5).map((f) => f.id)
-    form.bindReport = batch.value?.records?.tests ? ['JC-2026-0801'] : []
+    const b = batch.value
+    form.code = b?.code
+    form.crop = b?.crop
+    form.plotName = b?.plotName
+    form.variety = b?.variety || ''
+    form.growDays = b?.growDays ?? 90
+    form.organic = b?.organic ?? true
+    form.bindEnv = b?.bindEnv ?? true
+    form.story = b?.story || `本批次${b?.crop}产自${b?.plotName}，全生长期采用水肥一体化智能灌溉，全程农事记录上链存证，采收后经农残检测合格。`
+    form.bindFarm = Array.isArray(b?.bindFarm) && b.bindFarm.length
+      ? b.bindFarm
+      : farmPool.value.slice(0, 5).map((f) => f.id)
+    form.bindReport = Array.isArray(b?.bindReport)
+      ? b.bindReport
+      : (b?.records?.tests ? ['JC-2026-0801'] : [])
   } catch (e) {
     ElMessage.error(e.message)
   }
 })
 
 async function save(publish) {
+  if (!batch.value) return
   if (publish && !String(form.story || '').trim()) {
     ElMessage.warning('请先填写溯源故事，再保存并发布')
     return
@@ -49,12 +61,18 @@ async function save(publish) {
   try {
     await traceApi.update(batch.value.id, {
       status: publish ? '已发布' : batch.value.status,
+      story: form.story,
+      variety: form.variety,
+      growDays: form.growDays,
+      organic: form.organic,
+      bindFarm: [...form.bindFarm],
+      bindReport: [...form.bindReport],
+      bindEnv: form.bindEnv,
       records: {
         farm: form.bindFarm.length,
-        env: form.bindEnv ? 520 : 0,
+        env: envCount.value,
         tests: form.bindReport.length,
       },
-      story: form.story,
     })
     ElMessage.success(publish ? '溯源信息已保存并发布' : '溯源信息已保存')
     if (publish) router.push({ name: 'TraceBatch' })
@@ -130,6 +148,7 @@ async function save(publish) {
             <div class="bc-head">
               <el-icon color="#4C6983" :size="20"><Sunny /></el-icon>
               <b>环境数据</b>
+              <el-tag size="small" :type="envCount ? 'success' : 'info'">{{ envCount }} 条</el-tag>
               <el-switch v-model="form.bindEnv" size="small" />
             </div>
             <p class="text-dim">自动关联地块全周期环境数据（温湿度、光照、土壤、CO₂），消费者扫码可查看环境曲线。</p>

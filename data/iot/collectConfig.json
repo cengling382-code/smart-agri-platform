@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "collection": "collectConfig",
+    "kind": "object",
+    "updatedAt": "2026-11-09T02:36:38.809Z",
+    "count": 5
+  },
+  "data": {
+    "defaultInterval": 300,
+    "retentionDays": 365,
+    "filterRule": "3σ去噪 + 中值滤波",
+    "anomalyPolicy": "标记并告警",
+    "devices": [
+      {
+        "id": 5,
+        "code": "SN-1006",
+        "name": "空气温湿度传感器#P-A01-1",
+        "interval": 300,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 6,
+        "code": "SN-1007",
+        "name": "CO₂浓度传感器#P-A01-2",
+        "interval": 300,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 7,
+        "code": "SN-1008",
+        "name": "光照度传感器#P-A01-3",
+        "interval": 600,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 8,
+        "code": "SN-1009",
+        "name": "土壤温湿度传感器#P-A01-4",
+        "interval": 1800,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 9,
+        "code": "SN-1010",
+        "name": "空气温湿度传感器#P-A02-1",
+        "interval": 60,
+        "enabled": false,
+        "status": "online"
+      },
+      {
+        "id": 10,
+        "code": "SN-1011",
+        "name": "CO₂浓度传感器#P-A02-2",
+        "interval": 300,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 11,
+        "code": "SN-1012",
+        "name": "光照度传感器#P-A02-3",
+        "interval": 600,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 12,
+        "code": "SN-1013",
+        "name": "土壤温湿度传感器#P-A02-4",
+        "interval": 1800,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 13,
+        "code": "SN-1014",
+        "name": "空气温湿度传感器#P-A03-1",
+        "interval": 60,
+        "enabled": true,
+        "status": "fault"
+      },
+      {
+        "id": 14,
+        "code": "SN-1015",
+        "name": "CO₂浓度传感器#P-A03-2",
+        "interval": 300,
+        "enabled": false,
+        "status": "fault"
+      },
+      {
+        "id": 15,
+        "code": "SN-1016",
+        "name": "光照度传感器#P-A03-3",
+        "interval": 600,
+        "enabled": true,
+        "status": "online"
+      },
+      {
+        "id": 16,
+        "code": "SN-1017",
+        "name": "土壤温湿度传感器#P-A03-4",
+        "interval": 1800,
+        "enabled": true,
+        "status": "online"
+      }
+    ]
+  }
+}

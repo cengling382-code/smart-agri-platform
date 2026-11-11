@@ -65,8 +65,17 @@ function openEdit(row) {
 async function handleSubmit() {
   submitting.value = true
   try {
-    if (isEdit.value) await deviceApi.update(form.id, form)
-    else await deviceApi.create({ ...form, type: 'gateway' })
+    // 只提交业务字段：id 由服务端维护，其余状态字段不可由表单伪造
+    const payload = {
+      code: form.code.trim(),
+      name: form.name.trim(),
+      model: form.model,
+      plotId: form.plotId,
+      ip: form.ip,
+      type: 'gateway',
+    }
+    if (isEdit.value) await deviceApi.update(form.id, payload)
+    else await deviceApi.create(payload)
     ElMessage.success(isEdit.value ? '网关已更新' : '网关注册成功，等待设备接入')
     dialogVisible.value = false
     tableRef.value?.reload(true)
@@ -77,8 +86,18 @@ async function handleSubmit() {
   }
 }
 async function reboot(row) {
-  await ElMessageBox.confirm(`确定重启网关「${row.name}」吗？重启期间约 30 秒无法转发数据。`, '重启确认', { type: 'warning', confirmButtonText: '重启' })
-  ElMessage.success('重启指令已下发')
+  try {
+    await ElMessageBox.confirm(`确定重启网关「${row.name}」吗？重启期间约 30 秒无法转发数据。`, '重启确认', { type: 'warning', confirmButtonText: '重启' })
+  } catch {
+    return // 用户取消
+  }
+  try {
+    await deviceApi.update(row.id, { status: 'online', lastReport: Date.now() })
+    ElMessage.success('重启指令已下发，网关已恢复在线')
+    tableRef.value?.reload(true)
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
 }
 </script>
 

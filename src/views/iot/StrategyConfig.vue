@@ -1,15 +1,19 @@
 <script setup>
 /** 页面 15 · 策略联动配置：自动控制规则新增编辑、阈值设置、定时任务、场景模板 */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag } from '@/components/ui'
 import { strategyApi, taskApi, plotApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const plots = ref([])
+const activeScene = ref(localStorage.getItem('agri-active-scene') || '')
 
 const form = reactive({
   id: null, name: '', plotId: null, trigger: 'threshold',
@@ -22,20 +26,12 @@ const rules = {
   action: [{ required: true, message: '请填写执行动作', trigger: 'blur' }],
 }
 
-const TRIGGER_META = {
-  threshold: { label: '阈值触发', tag: 'success', icon: 'Odometer' },
-  combo: { label: '多条件组合', tag: 'primary', icon: 'Operation' },
-  schedule: { label: '定时计划', tag: 'warning', icon: 'AlarmClock' },
-  scene: { label: '场景模板', tag: 'danger', icon: 'MagicStick' },
-}
+const TRIGGER_META = cfg.strategyTriggerMeta
 
 /* 阈值条件构造器 */
 const threshold = reactive({ param: 'soilH', op: '<', value: 45, duration: 15 })
 const combo = reactive({ p1: 'temp', op1: '>', v1: 30, logic: '且', p2: 'co2', op2: '<', v2: 600, time: '02:00-06:00' })
-const PARAMS = [
-  { v: 'temp', l: '空气温度(℃)' }, { v: 'hum', l: '空气湿度(%)' }, { v: 'co2', l: 'CO₂(ppm)' },
-  { v: 'light', l: '光照(klx)' }, { v: 'soilH', l: '土壤湿度(%)' }, { v: 'soilT', l: '土壤温度(℃)' }, { v: 'oxygen', l: '溶解氧(mg/L)' },
-]
+const PARAMS = cfg.strategyParams
 const PARAM_LABEL = Object.fromEntries(PARAMS.map((p) => [p.v, p.l]))
 
 function buildCondition(trigger) {
@@ -47,6 +43,7 @@ function buildCondition(trigger) {
 const columns = [
   { prop: 'name', label: '策略名称', width: 180 },
   { prop: 'trigger', label: '类型', width: 110, align: 'center' },
+  { prop: 'plotId', label: '适用地块', width: 150 },
   { prop: 'condition', label: '触发条件', minWidth: 230 },
   { prop: 'action', label: '执行动作', minWidth: 210 },
   { prop: 'times', label: '触发次数', width: 90, align: 'center' },
@@ -54,29 +51,57 @@ const columns = [
   { prop: 'updatedAt', label: '更新时间', width: 165 },
 ]
 
-const filters = [
+const filters = computed(() => [
   { key: 'keyword', label: '关键字', placeholder: '策略名称 / 条件 / 动作' },
-]
+  {
+    key: 'trigger', label: '触发类型', type: 'select',
+    options: Object.entries(TRIGGER_META).map(([value, v]) => ({ label: v.label, value })),
+  },
+  {
+    key: 'enabled', label: '启用状态', type: 'select',
+    options: cfg.statusOptionGroups.strategyEnabled,
+  },
+  {
+    key: 'plotId', label: '适用地块', type: 'select',
+    options: plots.value.map((p) => ({ label: p.name, value: p.id })),
+  },
+])
+
+const plotName = (id) => plots.value.find((p) => p.id === id)?.name || '—'
 
 async function fetchPage(params) {
-  if (!plots.value.length) plotApi.all().then((p) => (plots.value = p))
+  if (!plots.value.length) plots.value = await plotApi.all()
   return strategyApi.page(params)
 }
 
+function resetForm(defaults) {
+  // 清空上一次编辑残留的 times / updatedAt 等服务端字段
+  Object.keys(form).forEach((k) => delete form[k])
+  Object.assign(form, defaults)
+}
 function openCreate() {
   isEdit.value = false
-  Object.assign(form, { id: null, name: '', plotId: plots.value[0]?.id, trigger: 'threshold', condition: '', action: '', enabled: true, scene: '' })
+  resetForm({ id: null, name: '', plotId: plots.value[0]?.id, trigger: 'threshold', condition: '', action: '', enabled: true, scene: '' })
   dialogVisible.value = true
 }
 function openEdit(row) {
   isEdit.value = true
-  Object.assign(form, { ...row })
+  resetForm({ ...row })
   dialogVisible.value = true
 }
 async function handleSubmit() {
   submitting.value = true
   try {
-    const payload = { ...form, condition: form.trigger === 'scene' ? form.condition : buildCondition(form.trigger) }
+    // 仅提交业务字段：id / 触发次数 / 更新时间由服务端维护
+    const payload = {
+      name: form.name.trim(),
+      plotId: form.plotId,
+      trigger: form.trigger,
+      condition: form.trigger === 'scene' ? form.condition.trim() : buildCondition(form.trigger),
+      action: form.action.trim(),
+      enabled: !!form.enabled,
+      scene: form.trigger === 'scene' ? form.scene : '',
+    }
     if (isEdit.value) await strategyApi.update(form.id, payload)
     else await strategyApi.create(payload)
     ElMessage.success(isEdit.value ? '策略已更新' : '策略创建成功')
@@ -112,9 +137,20 @@ const taskRules = {
 async function loadTasks() {
   tasks.value = (await taskApi.list()).list
 }
+function openCreateTask() {
+  Object.keys(taskForm).forEach((k) => delete taskForm[k])
+  Object.assign(taskForm, { id: null, name: '', cronText: '', action: '', enabled: true })
+  taskDialog.value = true
+}
+function openEditTask(row) {
+  Object.assign(taskForm, { id: row.id, name: row.name, cronText: row.cronText, action: row.action, enabled: row.enabled })
+  taskDialog.value = true
+}
 async function submitTask() {
-  if (taskForm.id) await taskApi.update(taskForm.id, taskForm)
-  else await taskApi.create(taskForm)
+  // 不提交 id，避免新建时用 null 覆盖服务端自增 id
+  const payload = { name: taskForm.name.trim(), cronText: taskForm.cronText.trim(), action: taskForm.action.trim(), enabled: !!taskForm.enabled }
+  if (taskForm.id) await taskApi.update(taskForm.id, payload)
+  else await taskApi.create(payload)
   ElMessage.success('定时任务已保存')
   taskDialog.value = false
   loadTasks()
@@ -125,10 +161,37 @@ async function deleteTask(t) {
   loadTasks()
 }
 
-/* 场景模板一键应用 */
+/* 场景模板一键应用：真实更新该场景下每条策略的启用态 */
 async function applyScene(row) {
-  await ElMessageBox.confirm(`确定切换到「${row.name}」场景吗？将批量应用该场景下的设备控制策略。`, '场景切换', { type: 'info', confirmButtonText: '一键切换' })
-  ElMessage.success(`已切换至「${row.name}」场景，设备组合已应用`)
+  try {
+    await ElMessageBox.confirm(`确定切换到「${row.name}」场景吗？将批量应用该场景下的设备控制策略。`, '场景切换', { type: 'info', confirmButtonText: '一键切换' })
+  } catch {
+    return // 用户取消
+  }
+  const scene = row.scene || row.name
+  try {
+    const res = await strategyApi.page({ trigger: 'scene', page: 1, size: 1000 })
+    const list = res.list || []
+    const targets = list.filter((s) => s.scene === scene)
+    if (!targets.length) {
+      // 场景为本地配置：持久化当前场景并更新界面
+      activeScene.value = scene
+      localStorage.setItem('agri-active-scene', scene)
+      tableRef.value?.reload(true)
+      ElMessage.success(`已切换至「${row.name}」场景`)
+      return
+    }
+    // 逐条启用场景内策略，并关闭其它场景模板，保证同时只有一个生效场景
+    await Promise.all(targets.map((s) => strategyApi.update(s.id, { enabled: true })))
+    const others = list.filter((s) => s.scene !== scene && s.enabled)
+    await Promise.all(others.map((s) => strategyApi.update(s.id, { enabled: false })))
+    activeScene.value = scene
+    localStorage.setItem('agri-active-scene', scene)
+    tableRef.value?.reload(true)
+    ElMessage.success(`已切换至「${row.name}」场景，${targets.length} 条策略已启用`)
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
 }
 
 onMounted(async () => {
@@ -140,6 +203,7 @@ onMounted(async () => {
   <div class="page">
     <PageHeader title="策略联动配置" desc="阈值触发、多条件组合、定时任务与场景模板，实现无人值守自动化生产">
       <template #actions>
+        <el-tag v-if="activeScene" type="success" effect="plain">当前场景：{{ activeScene }}</el-tag>
         <el-button type="primary" :icon="'Plus'" @click="openCreate">新建策略</el-button>
       </template>
     </PageHeader>
@@ -155,6 +219,7 @@ onMounted(async () => {
         <el-tag size="small" :type="TRIGGER_META[row.trigger]?.tag" effect="plain">{{ TRIGGER_META[row.trigger]?.label }}</el-tag>
         <el-tag v-if="row.scene" size="small" type="danger" effect="light" style="margin-left: 4px">{{ row.scene }}场景</el-tag>
       </template>
+      <template #col-plotId="{ row }">{{ plotName(row.plotId) }}</template>
       <template #col-enabled="{ row }">
         <el-switch :model-value="row.enabled" @change="toggleEnabled(row)" aria-label="策略启用开关" />
       </template>
@@ -169,7 +234,7 @@ onMounted(async () => {
     <div class="ag-card mt-16 anim-up">
       <div class="ag-card__head">
         <div class="ag-card__title"><span class="dot"></span>定时任务（Cron 计划）</div>
-        <el-button size="small" type="primary" :icon="'Plus'" @click="taskForm.id = null; Object.assign(taskForm, { name: '', cronText: '', action: '', enabled: true }); taskDialog = true">
+        <el-button size="small" type="primary" :icon="'Plus'" @click="openCreateTask">
           新建定时任务
         </el-button>
       </div>
@@ -186,7 +251,7 @@ onMounted(async () => {
           </el-table-column>
           <el-table-column label="操作" width="130" align="center">
             <template #default="{ row }">
-              <el-button link type="primary" @click="Object.assign(taskForm, row); taskDialog = true">编辑</el-button>
+              <el-button link type="primary" @click="openEditTask(row)">编辑</el-button>
               <el-button link type="danger" @click="deleteTask(row)">删除</el-button>
             </template>
           </el-table-column>

@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "collection": "paramMeta",
+    "kind": "object",
+    "updatedAt": "2026-11-09T02:36:38.858Z",
+    "count": 11
+  },
+  "data": {
+    "temp": {
+      "name": "空气温度",
+      "unit": "℃",
+      "base": 22,
+      "amp": 8
+    },
+    "hum": {
+      "name": "空气湿度",
+      "unit": "%RH",
+      "base": 62,
+      "amp": 18
+    },
+    "co2": {
+      "name": "CO₂浓度",
+      "unit": "ppm",
+      "base": 480,
+      "amp": 120
+    },
+    "light": {
+      "name": "光照强度",
+      "unit": "klx",
+      "base": 32,
+      "amp": 25
+    },
+    "soilT": {
+      "name": "土壤温度",
+      "unit": "℃",
+      "base": 19,
+      "amp": 4
+    },
+    "soilH": {
+      "name": "土壤湿度",
+      "unit": "%",
+      "base": 52,
+      "amp": 15
+    },
+    "ph": {
+      "name": "PH值",
+      "unit": "",
+      "base": 6.6,
+      "amp": 0.6
+    },
+    "wind": {
+      "name": "风速",
+      "unit": "m/s",
+      "base": 2.4,
+      "amp": 3
+    },
+    "rain": {
+      "name": "降雨量",
+      "unit": "mm",
+      "base": 0.2,
+      "amp": 1.5
+    },
+    "oxygen": {
+      "name": "溶解氧",
+      "unit": "mg/L",
+      "base": 7.5,
+      "amp": 2
+    },
+    "nh3": {
+      "name": "氨气浓度",
+      "unit": "ppm",
+      "base": 6,
+      "amp": 4
+    }
+  }
+}

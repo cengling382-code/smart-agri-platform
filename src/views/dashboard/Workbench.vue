@@ -11,6 +11,10 @@ import { useAuthStore } from '@/stores/auth'
 import { ChartCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { statsApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('workbench')
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -22,7 +26,8 @@ let carouselTimer = null
 
 /* ---------- 问候语：按时段变化 ---------- */
 const hour = new Date().getHours()
-const greeting = hour < 6 ? '夜深了' : hour < 11 ? '早上好' : hour < 13 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
+const G = cfg.greeting
+const greeting = hour < G.nightUntil ? G.night : hour < G.earlyUntil ? G.early : hour < G.noonUntil ? G.noon : hour < G.afternoonUntil ? G.afternoon : G.evening
 const dateText = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
 
 /* ---------- 趋势曲线 ---------- */
@@ -82,31 +87,18 @@ const orderOptions = computed(() => {
   }
 })
 
-const statusText = { pending: '未处理', confirmed: '已确认', resolved: '已处置', archived: '已归档' }
-const levelTag = { 1: 'info', 2: 'warning', 3: 'danger' }
-const levelText = { 1: '一般', 2: '重要', 3: '紧急' }
+const statusText = cfg.statusText
+const levelTag = cfg.levelTag
+const levelText = cfg.levelText
 
 /* ---------- KPI 分栏条：与旧 StatCard 同数据，不同形制 ---------- */
 const kpis = computed(() => {
   if (!data.value) return []
-  return [
-    { label: '园区总数', value: data.value.parks, unit: '个', trend: 8, icon: 'OfficeBuilding' },
-    { label: '设备总数', value: data.value.devices, unit: '台', trend: 5, icon: 'Cpu' },
-    { label: '设备在线率', value: data.value.onlineRate, unit: '%', trend: 2, icon: 'Connection' },
-    { label: '今日未处理告警', value: data.value.todayAlarms, unit: '条', trend: -12, icon: 'Bell', goodWhenDown: true },
-    { label: '本月产量', value: data.value.monthYield, unit: 'kg', trend: 16, icon: 'Cherry' },
-  ]
+  return cfg.kpiMeta.map((m) => ({ ...m, value: data.value[m.key] }))
 })
 
 /* ---------- 快捷入口（Hero 内玻璃胶囊） ---------- */
-const QUICK = [
-  { title: '设备控制', icon: 'SwitchButton', path: '/iot/control' },
-  { title: '数据监测', icon: 'TrendCharts', path: '/iot/sensors' },
-  { title: '视频监控', icon: 'VideoCamera', path: '/iot/video' },
-  { title: '农事工单', icon: 'Tickets', path: '/farm/orders' },
-  { title: '溯源批次', icon: 'Postcard', path: '/trace/batches' },
-  { title: '总览大屏', icon: 'Monitor', path: '/screens/overview' },
-]
+const QUICK = cfg.quickEntries
 
 onMounted(async () => {
   try {
@@ -118,9 +110,18 @@ onMounted(async () => {
   }
   carouselTimer = setInterval(() => {
     if (data.value?.pendingAlarms?.length) alarmIdx.value = (alarmIdx.value + 1) % data.value.pendingAlarms.length
-  }, 4000)
+  }, cfg.alarmCarouselMs)
 })
 onBeforeUnmount(() => clearInterval(carouselTimer))
+// 外部 JSON 变更后自动刷新看板
+onDataChange(loadData, { debounce: 400 })
+async function loadData() {
+  try {
+    data.value = await statsApi.dashboard()
+  } catch (e) {
+    console.warn('[Workbench]', e?.message || e)
+  }
+}
 </script>
 
 <template>
@@ -130,11 +131,11 @@ onBeforeUnmount(() => clearInterval(carouselTimer))
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-main">
         <p class="hero-hello">{{ greeting }}，{{ auth.displayName }}</p>
-        <h1 class="hero-title">园区运营总览</h1>
+        <h1 class="hero-title">{{ cfg.hero.title }}</h1>
         <p class="hero-sub">
           <span>{{ dateText }}</span>
           <i class="hero-sep" aria-hidden="true"></i>
-          <span>武汉 19℃ 多云</span>
+          <span>{{ cfg.hero.weather }}</span>
           <template v-if="data">
             <i class="hero-sep" aria-hidden="true"></i>
             <span class="hero-alarm" role="link" tabindex="0" @click="router.push('/iot/alarms')" @keyup.enter="router.push('/iot/alarms')">

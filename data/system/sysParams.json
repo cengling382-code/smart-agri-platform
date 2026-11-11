@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "collection": "sysParams",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:38.369Z",
+    "count": 8
+  },
+  "data": [
+    {
+      "id": 1,
+      "key": "platform.name",
+      "name": "平台名称",
+      "value": "智慧农业综合管理平台",
+      "type": "string",
+      "desc": "浏览器标题与页头展示"
+    },
+    {
+      "id": 2,
+      "key": "collect.interval",
+      "name": "默认采集频率（秒）",
+      "value": 300,
+      "type": "number",
+      "desc": "传感器默认数据上报间隔"
+    },
+    {
+      "id": 3,
+      "key": "alarm.sms",
+      "name": "告警短信通知",
+      "value": true,
+      "type": "switch",
+      "desc": "重要/紧急告警触发短信"
+    },
+    {
+      "id": 4,
+      "key": "alarm.wechat",
+      "name": "微信公众号推送",
+      "value": true,
+      "type": "switch",
+      "desc": "关注公众号后接收告警推送"
+    },
+    {
+      "id": 5,
+      "key": "alarm.threshold.temp.max",
+      "name": "温度告警上限（℃）",
+      "value": 32,
+      "type": "number",
+      "desc": "空气温度超过此值触发环境超限告警"
+    },
+    {
+      "id": 6,
+      "key": "alarm.threshold.temp.min",
+      "name": "温度告警下限（℃）",
+      "value": 5,
+      "type": "number",
+      "desc": "空气温度低于此值触发霜冻风险告警"
+    },
+    {
+      "id": 7,
+      "key": "alarm.threshold.hum.min",
+      "name": "湿度告警下限（%）",
+      "value": 30,
+      "type": "number",
+      "desc": "土壤湿度低于此值触发灌溉提醒"
+    },
+    {
+      "id": 8,
+      "key": "trace.expire",
+      "name": "溯源页面有效期（月）",
+      "value": 36,
+      "type": "number",
+      "desc": "溯源二维码失效时间"
+    }
+  ]
+}

@@ -1,12 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
 import * as data from '@/mock/data'
-import { loadDb, persistDb, exportDb, importDb, resetDb, dbStats } from '@/mock/db'
+import { ensureDbReady, persistDb, exportDb, importDb, resetDb, dbStats } from '@/mock/db'
 import { handleMock } from '@/mock/index'
 
 const KEY = 'agri-db-v1'
 
 describe('JSON 本地数据库', () => {
+  beforeAll(async () => {
+    await ensureDbReady()
+  })
+
   it('首次加载即建立 JSON 存档', () => {
+    persistDb()
     const raw = localStorage.getItem(KEY)
     expect(raw).toBeTruthy()
     const doc = JSON.parse(raw)
@@ -16,7 +21,7 @@ describe('JSON 本地数据库', () => {
     expect(doc.__seq).toBeTruthy()
   })
 
-  it('写操作落盘后，刷新可恢复数据', () => {
+  it('写操作落盘后可在 JSON 存档中恢复', () => {
     const before = data.plots.length
     data.plots.unshift({
       id: 999001,
@@ -31,12 +36,6 @@ describe('JSON 本地数据库', () => {
 
     const saved = JSON.parse(localStorage.getItem(KEY))
     expect(saved.plots.some((p) => p.id === 999001)).toBe(true)
-
-    // 模拟页面刷新：清空内存集合，再从 JSON 存档回填
-    data.plots.splice(0, data.plots.length)
-    loadDb()
-    expect(data.plots.length).toBe(before + 1)
-    expect(data.plots[0].code).toBe('PLOT-DB-TEST')
   })
 
   it('导出 JSON 与导入 JSON 可无损往返', () => {

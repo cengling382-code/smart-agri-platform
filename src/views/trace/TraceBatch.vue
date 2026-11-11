@@ -1,22 +1,32 @@
 <script setup>
 /** 页面 38 · 溯源批次管理：生产批次维护、生成溯源二维码、批次状态管理（含召回） */
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import QRCode from 'qrcode'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { traceApi, farmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import {
+  getConfiguredBase, setConfiguredBase, buildTraceUrl, isLocalBase,
+  renderQr, downloadQrPng, copyText,
+} from '@/utils/traceQr'
+
+const cfg = getConfig('constants')
 
 const router = useRouter()
 const tableRef = ref(null)
 const qrDialog = ref(false)
 const qrCanvas = ref(null)
 const qrRow = ref(null)
+const qrBase = ref(getConfiguredBase())
+const qrError = ref('')
+const qrUrl = computed(() => (qrRow.value ? buildTraceUrl(qrRow.value.code, qrBase.value) : ''))
+const qrIsLocal = computed(() => isLocalBase(qrBase.value))
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const harvests = ref([])
 
-const STATUS_TAG = { 待完善: 'warning', 已发布: 'success', 已召回: 'danger', 已下架: 'info' }
+const STATUS_TAG = cfg.traceStatusTag
 
 const form = reactive({ id: null, crop: '', plotName: '', qty: '', harvestCode: '' })
 const rules = {
@@ -55,7 +65,11 @@ async function handleSubmit() {
   submitting.value = true
   try {
     const h = harvests.value.find((x) => x.batchCode === form.harvestCode)
-    await traceApi.create({ crop: h?.crop, plotName: h?.plotName, qty: `${h?.qty}kg`, harvestCode: form.harvestCode })
+    if (!h) {
+      ElMessage.warning('请选择有效的已入库采收批次')
+      return
+    }
+    await traceApi.create({ crop: h.crop, plotName: h.plotName, qty: `${h.qty}kg`, harvestCode: form.harvestCode })
     ElMessage.success('溯源批次创建成功，请完善溯源信息后发布')
     dialogVisible.value = false
     tableRef.value?.reload(true)
@@ -66,32 +80,48 @@ async function handleSubmit() {
   }
 }
 
-/** 生成溯源二维码（一物一码） */
+/**
+ * 生成溯源二维码（一物一码）
+ * 地址可配置：本地调试时 localhost 手机打不开，可填写局域网 IP 或部署后的域名，
+ * 修改后立即重绘，二维码内容即为下方展示的真实链接。
+ */
 async function showQr(row) {
   qrRow.value = row
+  qrBase.value = getConfiguredBase()
+  qrError.value = ''
   qrDialog.value = true
   await nextTick()
-  const url = `${window.location.origin}/trace/${row.code}`
+  await redrawQr()
+}
+async function redrawQr() {
+  qrError.value = ''
   try {
-    await QRCode.toCanvas(qrCanvas.value, url, {
-      width: 220, margin: 2,
-      color: { dark: '#3A5743', light: '#ffffff' },
-    })
+    setConfiguredBase(qrBase.value)
+    await renderQr(qrCanvas.value, qrUrl.value, { width: 256 })
   } catch (e) {
-    console.warn('[TraceBatch] QR:', e?.message || e)
+    qrError.value = `二维码生成失败：${e?.message || e}`
+  }
+}
+async function copyQrUrl() {
+  try {
+    await copyText(qrUrl.value)
+    ElMessage.success('扫码链接已复制')
+  } catch (e) {
+    ElMessage.error(e?.message || '复制失败')
   }
 }
 function downloadQr() {
-  const canvas = qrCanvas.value
-  const link = document.createElement('a')
-  link.download = `溯源二维码_${qrRow.value.code}.png`
-  link.href = canvas.toDataURL('image/png')
-  link.click()
-  ElMessage.success('溯源二维码已下载')
+  try {
+    downloadQrPng(qrCanvas.value, `溯源二维码_${qrRow.value.code}.png`)
+    ElMessage.success('二维码已下载（高清 PNG，可直接印刷）')
+  } catch (e) {
+    ElMessage.error(e?.message || '下载失败')
+  }
 }
 
 async function publish(row) {
-  await ElMessageBox.confirm(`发布批次「${row.code}」的溯源页面？发布后消费者扫码即可查询。`, '发布确认', { type: 'info' })
+  const ok = await ElMessageBox.confirm(`发布批次「${row.code}」的溯源页面？发布后消费者扫码即可查询。`, '发布确认', { type: 'info' }).catch(() => false)
+  if (!ok) return
   await traceApi.update(row.id, { status: '已发布' })
   ElMessage.success('溯源批次已发布')
   tableRef.value?.reload(true)
@@ -104,7 +134,8 @@ async function recall(row) {
   tableRef.value?.reload(true)
 }
 async function offline(row) {
-  await ElMessageBox.confirm(`下架批次「${row.code}」的溯源页面？`, '下架确认', { type: 'warning' })
+  const ok = await ElMessageBox.confirm(`下架批次「${row.code}」的溯源页面？`, '下架确认', { type: 'warning' }).catch(() => false)
+  if (!ok) return
   await traceApi.update(row.id, { status: '已下架' })
   ElMessage.success('已下架')
   tableRef.value?.reload(true)
@@ -156,9 +187,23 @@ async function offline(row) {
     </FormDialog>
 
     <!-- 二维码弹窗 -->
-    <el-dialog v-model="qrDialog" :title="`溯源二维码 · ${qrRow?.code || ''}`" width="380px" align-center>
+    <el-dialog v-model="qrDialog" :title="`溯源二维码 · ${qrRow?.code || ''}`" width="420px" align-center>
       <div class="qr-box" v-if="qrRow">
+        <el-input v-model="qrBase" class="qr-base" placeholder="扫码访问地址" @change="redrawQr" @keyup.enter="redrawQr">
+          <template #prepend>扫码地址</template>
+        </el-input>
+        <el-alert
+          v-if="qrIsLocal"
+          type="warning" :closable="false" show-icon
+          title="当前是本机地址，手机扫码无法打开"
+          description="请填写电脑的局域网 IP（如 http://192.168.1.10:5173，手机需连同一 WiFi），或部署后的公网域名。"
+        />
         <canvas ref="qrCanvas" class="qr-canvas"></canvas>
+        <el-alert v-if="qrError" type="error" :closable="false" show-icon :title="qrError" />
+        <div class="qr-url mono-num">
+          <span :title="qrUrl">{{ qrUrl }}</span>
+          <el-button link type="primary" :icon="'DocumentCopy'" @click="copyQrUrl">复制</el-button>
+        </div>
         <div class="qr-meta">
           <b>{{ qrRow.crop }} · {{ qrRow.plotName }}</b>
           <span class="text-dim mono-num">{{ qrRow.code }}</span>
@@ -188,8 +233,30 @@ async function offline(row) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   padding: 8px 0;
+}
+.qr-box :deep(.el-alert),
+.qr-base {
+  width: 100%;
+}
+.qr-url {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--ag-text-3);
+  background: var(--ag-bg-hover);
+  border-radius: 8px;
+  padding: 4px 10px;
+  box-sizing: border-box;
+}
+.qr-url span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .qr-canvas {
   border: 1px solid var(--ag-border-light);

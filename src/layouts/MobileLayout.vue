@@ -1,5 +1,5 @@
 <script setup>
-/** 移动端布局：手机框容器 + 顶部标题栏 + 底部标签导航 */
+/** 移动端布局：手机框容器 + 页面内容 + 底部标签导航 */
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -31,13 +31,6 @@ watch(
   <div class="mobile-outer">
     <!-- 桌面端提示背景 -->
     <div class="phone" :class="{ 'is-login': isLogin }" role="application" aria-label="移动端预览">
-      <!-- 状态栏 -->
-      <div class="statusbar" aria-hidden="true">
-        <span>9:41</span>
-        <span class="notch"></span>
-        <span class="sb-icons">▂▄▆ ⚡ 100%</span>
-      </div>
-
       <!-- 页面 -->
       <div class="m-screen">
         <ErrorBoundary :route-key="route.fullPath" compact>
@@ -78,6 +71,7 @@ watch(
    投影建立前后层次（物体该有的影子留着，氛围光斑去掉）。 */
 .mobile-outer {
   height: 100vh;
+  height: 100dvh;
   display: grid;
   place-items: center;
   background: #141e2b;
@@ -86,7 +80,8 @@ watch(
 .phone {
   width: 390px;
   height: min(844px, calc(100vh - 48px));
-  background: #f5f5f5;
+  height: min(844px, calc(100dvh - 48px));
+  background: var(--ag-bg-ground);
   border-radius: 44px;
   border: 10px solid #1c2a3c;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
@@ -96,47 +91,21 @@ watch(
   position: relative;
   animation: agZoomIn 0.4s var(--ag-ease-spring) both;
 }
-.statusbar {
-  height: 34px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 22px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ag-text-1);
-  position: relative;
-  flex: none;
-  z-index: 5;
-}
-.notch {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  transform: translateX(-50%);
-  width: 110px;
-  height: 22px;
-  background: #1C2A3C;
-  border-radius: 12px;
-}
-.sb-icons {
-  font-size: 10px;
-  letter-spacing: 2px;
-}
 .m-screen {
   flex: 1;
   overflow-y: auto;
   position: relative;
+  background: var(--ag-bg-ground);
   -webkit-overflow-scrolling: touch;
 }
 .tabbar {
   flex: none;
-  height: 62px;
+  /* border-box 下 padding 会吃掉内容高度：把安全区额外加到总高，保证 62px 内容区不被压缩 */
+  height: calc(62px + env(safe-area-inset-bottom, 0px));
   background: #fff;
   border-top: 1px solid var(--ag-border-light);
   display: flex;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .tab {
   flex: 1;
@@ -147,16 +116,16 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: 11px;
+  letter-spacing: var(--ag-ls-micro);
   color: var(--ag-text-4);
   cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
-}
-.tab span {
-  transform: scale(0.94);
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--ag-dur) var(--ag-ease);
 }
 .tab.active {
   color: var(--ag-green-600);
+  font-weight: 600;
 }
 .tab.active :deep(.el-icon) {
   animation: agCountGlow 0.6s var(--ag-ease);
@@ -172,7 +141,7 @@ watch(
   font-size: 12px;
 }
 .outer-tip a {
-  color: #7DC383;
+  color: var(--ag-green-300);
 }
 
 /* 移动端页面切换动效 */
@@ -194,8 +163,29 @@ watch(
   .phone {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     border: none;
     border-radius: 0;
+  }
+  .outer-tip {
+    display: none;
+  }
+}
+
+/* 横屏矮视口：压缩手机框与底部导航，给内容区留出可用高度 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .phone {
+    width: min(760px, 94vw);
+    height: min(440px, calc(100dvh - 16px));
+    border-width: 6px;
+    border-radius: 22px;
+  }
+  .tabbar {
+    height: calc(46px + env(safe-area-inset-bottom, 0px));
+  }
+  .tab {
+    flex-direction: row;
+    gap: 6px;
   }
   .outer-tip {
     display: none;

@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "collection": "weather",
+    "kind": "object",
+    "updatedAt": "2026-11-09T02:36:38.758Z",
+    "count": 9
+  },
+  "data": {
+    "city": "武汉市",
+    "date": "11月6日星期五",
+    "temp": 19,
+    "cond": "多云",
+    "humidity": 58,
+    "wind": "东南风 3级",
+    "aqi": 62,
+    "forecast": [
+      {
+        "day": "今天",
+        "cond": "小雨转阴",
+        "tMax": 21,
+        "tMin": 8,
+        "icon": "rain"
+      },
+      {
+        "day": "周六",
+        "cond": "多云",
+        "tMax": 17,
+        "tMin": 1,
+        "icon": "cloudy"
+      },
+      {
+        "day": "周日",
+        "cond": "晴",
+        "tMax": 20,
+        "tMin": 13,
+        "icon": "sunny"
+      },
+      {
+        "day": "周一",
+        "cond": "多云转小雨",
+        "tMax": 17,
+        "tMin": 8,
+        "icon": "rain"
+      },
+      {
+        "day": "周二",
+        "cond": "阴",
+        "tMax": 24,
+        "tMin": 7,
+        "icon": "cloudy"
+      },
+      {
+        "day": "周三",
+        "cond": "多云",
+        "tMax": 16,
+        "tMin": 6,
+        "icon": "cloudy"
+      },
+      {
+        "day": "周四",
+        "cond": "晴",
+        "tMax": 22,
+        "tMin": 6,
+        "icon": "sunny"
+      }
+    ],
+    "warnings": [
+      {
+        "level": "蓝色",
+        "type": "霜冻",
+        "content": "预计明天夜间最低气温将降至 1℃，请注意防范霜冻对露天作物的影响。",
+        "publish": "武汉市气象台"
+      }
+    ]
+  }
+}

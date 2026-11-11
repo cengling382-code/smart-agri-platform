@@ -1,9 +1,12 @@
 <script setup>
 /** 页面 28 · 农资入库/出库单：入库单、出库单创建与管理、库存流水记录 */
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { farmApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
@@ -12,6 +15,7 @@ const stockType = ref('in')
 const materials = ref([])
 
 const form = reactive({ type: 'in', materialId: null, qty: 1, operator: '', supplier: '', relatedOrder: '', remark: '' })
+const selectedMaterial = computed(() => materials.value.find((m) => m.id === form.materialId))
 const rules = {
   materialId: [{ required: true, message: '请选择农资', trigger: 'change' }],
   qty: [{ required: true, message: '请输入数量', trigger: 'blur' }],
@@ -33,7 +37,7 @@ const columns = [
 
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '单号 / 农资 / 经办人' },
-  { key: 'type', label: '类型', type: 'select', options: [{ label: '入库', value: 'in' }, { label: '出库', value: 'out' }] },
+  { key: 'type', label: '类型', type: 'select', options: cfg.statusOptionGroups.stockType },
 ]
 
 async function loadMats() {
@@ -53,10 +57,23 @@ function openDialog(type) {
 }
 
 async function handleSubmit() {
+  const mat = selectedMaterial.value
+  const qty = Number(form.qty)
+  if (!mat) {
+    ElMessage.warning('请选择农资')
+    return
+  }
+  if (!Number.isFinite(qty) || qty <= 0) {
+    ElMessage.warning('数量必须大于 0')
+    return
+  }
+  if (form.type === 'out' && qty > mat.stock) {
+    ElMessage.warning(`库存不足，当前仅剩 ${mat.stock} 单位`)
+    return
+  }
   submitting.value = true
   try {
-    const mat = materials.value.find((m) => m.id === form.materialId)
-    await farmApi.createStock({ ...form, materialName: mat?.name, unit: mat?.unit || '袋', supplier: form.type === 'in' ? form.supplier : '—' })
+    await farmApi.createStock({ ...form, materialName: mat.name, unit: mat.unit || '袋', supplier: form.type === 'in' ? form.supplier : '—' })
     ElMessage.success(form.type === 'in' ? '入库登记成功，库存已更新' : '出库登记成功，库存已扣减')
     dialogVisible.value = false
     tableRef.value?.reload(true)
@@ -117,7 +134,10 @@ function sumByType(rows) {
         </el-select>
       </el-form-item>
       <el-form-item :label="stockType === 'in' ? '入库数量' : '出库数量'" prop="qty">
-        <el-input-number v-model="form.qty" :min="1" :max="stockType === 'out' ? 999 : 9999" style="width: 200px" />
+        <div class="qty-line">
+          <el-input-number v-model="form.qty" :min="1" :max="stockType === 'out' ? 999 : 9999" style="width: 200px" />
+          <span class="qty-unit">{{ selectedMaterial?.unit || '—' }}</span>
+        </div>
       </el-form-item>
       <el-form-item v-if="stockType === 'in'" label="供应商">
         <el-input v-model="form.supplier" placeholder="供货供应商" />
@@ -138,4 +158,6 @@ function sumByType(rows) {
 <style scoped>
 .in-code { color: var(--ag-success); }
 .out-code { color: var(--ag-warning); }
+.qty-line { display: flex; align-items: center; gap: 8px; }
+.qty-unit { font-size: 13px; color: var(--ag-text-3); min-width: 32px; }
 </style>

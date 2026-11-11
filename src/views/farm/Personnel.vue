@@ -4,14 +4,18 @@ import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag, StatCard } from '@/components/ui'
 import { farmApi } from '@/api'
+import { disabledFutureDate, notFutureValidator } from '@/utils/dateRule'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 
-const SKILLS = ['播种', '施肥', '打药', '采收', '嫁接', '修剪', '滴灌维护', '大棚管理', '农机操作', '水产养殖']
-const ROLES = ['农户', '工人', '技术员']
+const SKILLS = cfg.personnelSkills
+const ROLES = cfg.personnelRoles
 
 const form = reactive({ id: null, name: '', gender: '男', role: '农户', phone: '', skills: [], area: '', status: '在岗', joinDate: '' })
 const rules = {
@@ -21,6 +25,7 @@ const rules = {
     { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' },
   ],
   role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  joinDate: [notFutureValidator('入职日期不能晚于今天')],
 }
 
 const columns = [
@@ -39,19 +44,25 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '姓名 / 手机号 / 区域' },
   { key: 'role', label: '角色', type: 'select', options: ROLES.map((r) => ({ label: r, value: r })) },
-  { key: 'status', label: '状态', type: 'select', options: [{ label: '在岗', value: '在岗' }, { label: '休假', value: '休假' }] },
+  { key: 'status', label: '状态', type: 'select', options: cfg.personnelStatusOptions },
 ]
 
 const summary = ref({ total: 0, hours: 0, avgHours: 0 })
+async function loadSummary() {
+  try {
+    const res = await farmApi.personnel({ page: 1, size: 10000 })
+    const hours = res.list.reduce((s, p) => s + (p.workHours || 0), 0)
+    summary.value = { total: res.total, hours, avgHours: Math.round(hours / Math.max(1, res.total)) }
+  } catch (e) {
+    console.warn('[Personnel]', e?.message || e)
+  }
+}
 async function loadTable(params) {
   const res = await farmApi.personnel(params)
   summary.value.total = res.total
   return res
 }
-farmApi.personnel({ page: 1, size: 100 }).then((res) => {
-  const hours = res.list.reduce((s, p) => s + p.workHours, 0)
-  summary.value = { total: res.total, hours, avgHours: Math.round(hours / Math.max(1, res.total)) }
-}).catch((e) => console.warn('[Personnel]', e?.message || e))
+loadSummary()
 
 function openCreate() {
   isEdit.value = false
@@ -66,11 +77,36 @@ function openEdit(row) {
 async function handleSubmit() {
   submitting.value = true
   try {
+    // 只提交业务字段，工时/任务数由系统统计，id 由服务端生成
+    const payload = {
+      name: form.name, gender: form.gender, role: form.role, phone: form.phone,
+      skills: form.skills, area: form.area, status: form.status, joinDate: form.joinDate,
+    }
+    if (isEdit.value) await farmApi.updatePersonnel(form.id, payload)
+    else await farmApi.createPersonnel(payload)
     ElMessage.success(isEdit.value ? '人员档案已更新' : '人员档案创建成功')
     dialogVisible.value = false
     tableRef.value?.reload(true)
+    loadSummary()
+  } catch (e) {
+    ElMessage.error(e.message || '保存失败')
   } finally {
     submitting.value = false
+  }
+}
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm(`确定删除人员「${row.name}」的档案吗？`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await farmApi.removePersonnel(row.id)
+    ElMessage.success('人员档案已删除')
+    tableRef.value?.reload(true)
+    loadSummary()
+  } catch (e) {
+    ElMessage.error(e.message || '删除失败')
   }
 }
 async function viewHours(row) {
@@ -80,7 +116,7 @@ async function viewHours(row) {
       累计工时：<b style="color:#074ce0">${row.workHours} 小时</b><br/>
       完成任务：<b>${row.tasks} 项</b><br/>
       入职日期：${row.joinDate}<br/>
-      技能：${row.skills.join('、')}
+      技能：${(row.skills || []).join('、') || '—'}
     </div>`,
     '工时与工作量统计',
     { dangerouslyUseHTMLString: true, confirmButtonText: '知道了' }
@@ -102,7 +138,7 @@ async function viewHours(row) {
       <StatCard label="人均工时" :value="summary.avgHours" unit="h" icon="DataLine" tone="cyan" />
     </div>
 
-    <ProTable ref="tableRef" :columns="columns" :fetch="loadTable" :filters="filters" action-width="190">
+    <ProTable ref="tableRef" :columns="columns" :fetch="loadTable" :filters="filters" action-width="230">
       <template #col-name="{ row }">
         <span class="p-name"><span class="p-avatar">{{ row.name.slice(0, 1) }}</span>{{ row.name }}</span>
       </template>
@@ -119,6 +155,7 @@ async function viewHours(row) {
       <template #col-action="{ row }">
         <el-button link type="primary" @click="viewHours(row)">工时</el-button>
         <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+        <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
       </template>
     </ProTable>
 
@@ -148,8 +185,14 @@ async function viewHours(row) {
       <el-form-item label="负责区域">
         <el-input v-model="form.area" placeholder="如：1号棚 / 东大田" style="width: 200px" />
       </el-form-item>
-      <el-form-item label="入职日期">
-        <el-date-picker v-model="form.joinDate" type="date" value-format="YYYY-MM-DD" style="width: 200px" />
+      <el-form-item label="在职状态">
+        <el-radio-group v-model="form.status">
+          <el-radio value="在岗">在岗</el-radio>
+          <el-radio value="休假">休假</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="入职日期" prop="joinDate">
+        <el-date-picker v-model="form.joinDate" type="date" value-format="YYYY-MM-DD" style="width: 200px" :disabled-date="disabledFutureDate" />
       </el-form-item>
     </FormDialog>
   </div>

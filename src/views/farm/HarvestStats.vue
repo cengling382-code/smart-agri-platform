@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import { PageHeader, ChartCard, StatCard } from '@/components/ui'
 import { CHART_COLORS } from '@/utils/chartTheme'
 import { farmApi } from '@/api'
+import { downloadCsv } from '@/utils/exportFile'
 
 const stats = ref(null)
 const loading = ref(true)
@@ -53,8 +54,29 @@ const gradeOptions = computed(() => ({
   }],
 }))
 
-function exportReport() {
-  ElMessage.success('采收产量统计报表 Excel 已生成并开始下载（演示）')
+const exporting = ref(false)
+async function exportReport() {
+  exporting.value = true
+  try {
+    // 汇总数据 + 采收批次明细均来自本地 JSON 库，导出为真实文件
+    const res = await farmApi.harvestPage({ page: 1, size: 10000 })
+    const rows = res.list.map((h) => [h.batchCode, h.plotName, h.crop, h.date, h.qty, h.grade, h.status, h.inspector || '—'])
+    downloadCsv(
+      '采收产量统计报表',
+      ['批次编号', '地块', '作物', '采收日期', '产量(kg)', '等级', '状态', '质检员'],
+      rows,
+      [
+        `采收总量：${stats.value?.total ?? 0} kg；采收批次：${stats.value?.batches ?? rows.length} 批；批均产量：${stats.value?.avg ?? 0} kg`,
+        `地块产量：${(stats.value?.byPlot || []).map((p) => `${p.name} ${p.value}kg`).join('；') || '—'}`,
+        `分级占比：${(stats.value?.byGrade || []).map((g) => `${g.name} ${g.value}kg`).join('；') || '—'}`,
+      ]
+    )
+    ElMessage.success(`已导出 ${rows.length} 条采收批次记录`)
+  } catch (e) {
+    ElMessage.error(e.message || '报表导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(async () => {
@@ -72,7 +94,7 @@ onMounted(async () => {
   <div class="page" v-loading="loading">
     <PageHeader title="采收产量统计" desc="产量统计报表、地块对比与年度趋势分析">
       <template #actions>
-        <el-button type="primary" plain :icon="'Download'" @click="exportReport">导出报表</el-button>
+        <el-button type="primary" plain :icon="'Download'" :loading="exporting" @click="exportReport">导出报表</el-button>
       </template>
     </PageHeader>
 

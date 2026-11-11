@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "collection": "workbench",
+    "kind": "config",
+    "description": "工作台页面配置：快捷入口、KPI 卡片、告警级别与轮播参数",
+    "updatedAt": "2026-11-06T02:10:00.000Z",
+    "count": 7
+  },
+  "data": {
+    "quickEntries": [
+      { "title": "设备控制", "icon": "SwitchButton", "path": "/iot/control" },
+      { "title": "数据监测", "icon": "TrendCharts", "path": "/iot/sensors" },
+      { "title": "视频监控", "icon": "VideoCamera", "path": "/iot/video" },
+      { "title": "农事工单", "icon": "Tickets", "path": "/farm/orders" },
+      { "title": "溯源批次", "icon": "Postcard", "path": "/trace/batches" },
+      { "title": "总览大屏", "icon": "Monitor", "path": "/screens/overview" }
+    ],
+    "kpiMeta": [
+      { "key": "parks", "label": "园区总数", "unit": "个", "trend": 8, "icon": "OfficeBuilding" },
+      { "key": "devices", "label": "设备总数", "unit": "台", "trend": 5, "icon": "Cpu" },
+      { "key": "onlineRate", "label": "设备在线率", "unit": "%", "trend": 2, "icon": "Connection" },
+      { "key": "todayAlarms", "label": "今日未处理告警", "unit": "条", "trend": -12, "icon": "Bell", "goodWhenDown": true },
+      { "key": "monthYield", "label": "本月产量", "unit": "kg", "trend": 16, "icon": "Cherry" }
+    ],
+    "alarmCarouselMs": 4000,
+    "statusText": {
+      "pending": "未处理",
+      "confirmed": "已确认",
+      "resolved": "已处置",
+      "archived": "已归档"
+    },
+    "levelText": { "1": "一般", "2": "重要", "3": "紧急" },
+    "levelTag": { "1": "info", "2": "warning", "3": "danger" },
+    "hero": { "title": "园区运营总览", "weather": "武汉 19℃ 多云" },
+    "greeting": {
+      "night": "夜深了",
+      "early": "早上好",
+      "noon": "中午好",
+      "afternoon": "下午好",
+      "evening": "晚上好",
+      "nightUntil": 6,
+      "earlyUntil": 11,
+      "noonUntil": 13,
+      "afternoonUntil": 18
+    }
+  }
+}

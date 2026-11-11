@@ -1,21 +1,85 @@
 <script setup>
 /** 页面 67 · 移动端个人中心：个人资料、修改密码、消息设置、退出登录 */
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
-import { authApi } from '@/api'
+import { authApi, farmApi, plotApi } from '@/api'
+import { onDataChange } from '@/composables/useDataVersion'
 
 const router = useRouter()
 const auth = useAuthStore()
 const pwdVisible = ref(false)
 const pwd = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
+const editVisible = ref(false)
+const saving = ref(false)
+const profile = reactive({ name: '', phone: '', email: '' })
+const stats = ref({ orders: 0, hours: 0, plots: 0 })
 
+const SETTING_KEY = 'agri_mobile_notify_settings'
 const settings = ref([
   { id: 1, name: '告警推送通知', desc: '紧急/重要告警实时推送', on: true },
   { id: 2, name: '工单派单提醒', desc: '新工单通知提醒', on: true },
   { id: 3, name: '环境异常提醒', desc: '所辖地块环境超限提醒', on: false },
 ])
+
+async function loadStats() {
+  // 统计取当前账号真实工单 / 工时 / 地块
+  try {
+    const [orderRes, plots] = await Promise.all([
+      farmApi.orderPage({ page: 1, size: 200 }),
+      plotApi.all(),
+    ])
+    const mine = Array.isArray(orderRes?.list) ? orderRes.list.filter((o) => o.assignee === auth.displayName) : []
+    stats.value = {
+      orders: mine.length,
+      hours: mine.reduce((s, o) => s + (Number(o.checkin?.hours) || 0), 0),
+      plots: Array.isArray(plots) ? plots.filter((p) => p.manager === auth.displayName).length : 0,
+    }
+  } catch (e) {
+    console.warn('[MobileProfile]', e?.message || e)
+  }
+}
+
+onMounted(() => {
+  // 消息开关持久化到本地（仅初始化一次，不受数据刷新影响）
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTING_KEY) || 'null')
+    if (saved) settings.value.forEach((s) => { if (typeof saved[s.id] === 'boolean') s.on = saved[s.id] })
+  } catch { /* ignore */ }
+  loadStats()
+})
+onDataChange(loadStats, { debounce: 400 })
+// 改名后按新姓名重算统计，避免「资料已改、数字仍按旧姓名匹配」
+watch(() => auth.displayName, loadStats)
+watch(settings, (val) => {
+  const map = {}
+  val.forEach((s) => (map[s.id] = s.on))
+  localStorage.setItem(SETTING_KEY, JSON.stringify(map))
+}, { deep: true })
+
+function openEdit() {
+  Object.assign(profile, {
+    name: auth.user?.name || '',
+    phone: auth.user?.phone || '',
+    email: auth.user?.email || '',
+  })
+  editVisible.value = true
+}
+async function saveProfile() {
+  if (!String(profile.name).trim()) return ElMessage.warning('姓名不能为空')
+  if (profile.phone && !/^1[3-9]\d{9}$/.test(profile.phone)) return ElMessage.warning('手机号格式不正确')
+  saving.value = true
+  try {
+    await auth.updateProfile({ ...profile })
+    ElMessage.success('个人资料已更新')
+    editVisible.value = false
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    saving.value = false
+  }
+}
 
 async function changePwd() {
   if (pwd.newPassword.length < 6) return ElMessage.warning('新密码至少 6 位')
@@ -32,64 +96,80 @@ async function changePwd() {
 }
 
 async function logout() {
-  await ElMessageBox.confirm('确定退出登录吗？', '提示', { type: 'warning' })
+  const ok = await ElMessageBox.confirm('确定退出登录吗？', '提示', { type: 'warning' }).catch(() => false)
+  if (!ok) return
   await auth.logout()
   router.replace('/m/login')
 }
 </script>
 
 <template>
-  <div class="m-profile">
-    <!-- 头像区 -->
-    <div class="mp-hero">
-      <span class="avatar">{{ auth.avatarText }}</span>
-      <div class="meta">
-        <b>{{ auth.displayName }}</b>
-        <span>{{ auth.roleName }} · {{ auth.user?.dept || '—' }}</span>
+  <div class="m-page m-profile">
+    <!-- 资料卡：与 PC ProfileView .avatar-card 同形（白卡 + 文字头像 + 虚线统计） -->
+    <section class="m-card profile-card">
+      <div class="pc-top">
+        <span class="avatar">{{ auth.avatarText }}</span>
+        <div class="meta">
+          <b>{{ auth.displayName }}</b>
+          <span>{{ auth.roleName }} · {{ auth.user?.dept || '—' }}</span>
+        </div>
+        <button class="m-icon-btn" @click="openEdit" aria-label="编辑资料"><el-icon><EditPen /></el-icon></button>
       </div>
-      <button class="edit-btn" @click="router.push('/profile')" aria-label="编辑资料"><el-icon><EditPen /></el-icon></button>
-    </div>
-
-    <!-- 统计 -->
-    <div class="stats-row">
-      <div><b class="mono-num">12</b><span>累计工单</span></div>
-      <div><b class="mono-num">386</b><span>累计工时(h)</span></div>
-      <div><b class="mono-num">5</b><span>负责地块</span></div>
-    </div>
+      <div class="stats-row">
+        <div><b class="mono-num">{{ stats.orders }}</b><span>累计工单</span></div>
+        <div><b class="mono-num">{{ stats.hours }}</b><span>累计工时(h)</span></div>
+        <div><b class="mono-num">{{ stats.plots }}</b><span>负责地块</span></div>
+      </div>
+    </section>
 
     <!-- 菜单 -->
-    <div class="menu-card">
-      <button class="menu-item" @click="router.push('/profile')">
-        <el-icon color="#699C78"><User /></el-icon><span>个人资料</span><el-icon class="arr"><ArrowRight /></el-icon>
+    <section class="m-card menu-card">
+      <button class="menu-item" @click="openEdit">
+        <el-icon class="mi-ico mi-ico--accent"><User /></el-icon><span>个人资料</span><el-icon class="arr"><ArrowRight /></el-icon>
       </button>
       <button class="menu-item" @click="pwdVisible = true">
-        <el-icon color="#E89552"><Lock /></el-icon><span>修改密码</span><el-icon class="arr"><ArrowRight /></el-icon>
+        <el-icon class="mi-ico mi-ico--warn"><Lock /></el-icon><span>修改密码</span><el-icon class="arr"><ArrowRight /></el-icon>
       </button>
       <button class="menu-item" @click="router.push('/m/plots')">
-        <el-icon color="#4C6983"><Place /></el-icon><span>我的地块</span><el-icon class="arr"><ArrowRight /></el-icon>
+        <el-icon class="mi-ico mi-ico--blue"><Place /></el-icon><span>我的地块</span><el-icon class="arr"><ArrowRight /></el-icon>
       </button>
-    </div>
+    </section>
 
     <!-- 消息设置 -->
-    <div class="menu-card">
-      <div class="card-title">消息设置</div>
-      <div v-for="s in settings" :key="s.id" class="setting-row">
-        <div class="s-meta">
-          <b>{{ s.name }}</b>
-          <span class="text-dim">{{ s.desc }}</span>
-        </div>
-        <el-switch v-model="s.on" size="small" :aria-label="s.name" />
+    <section class="m-card menu-card">
+      <div class="m-card-head">
+        <div class="m-card-title"><span class="dot"></span>消息设置</div>
       </div>
-    </div>
+      <div class="m-card-body settings">
+        <div v-for="s in settings" :key="s.id" class="setting-row">
+          <div class="s-meta">
+            <b>{{ s.name }}</b>
+            <span class="text-dim">{{ s.desc }}</span>
+          </div>
+          <el-switch v-model="s.on" size="small" :aria-label="s.name" />
+        </div>
+      </div>
+    </section>
 
-    <button class="logout-btn" @click="logout">退出登录</button>
+    <button class="m-btn m-btn-block logout-btn" @click="logout">退出登录</button>
     <p class="ver">智慧农业移动端 v1.0.0</p>
+
+    <!-- 编辑资料 -->
+    <el-dialog v-model="editVisible" title="编辑个人资料" width="90%">
+      <input v-model="profile.name" placeholder="姓名" class="m-input dlg-input" aria-label="姓名" />
+      <input v-model="profile.phone" placeholder="手机号" maxlength="11" class="m-input dlg-input" aria-label="手机号" />
+      <input v-model="profile.email" placeholder="邮箱（选填）" class="m-input dlg-input" aria-label="邮箱" />
+      <template #footer>
+        <el-button @click="editVisible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="saveProfile">保存</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 修改密码 -->
     <el-dialog v-model="pwdVisible" title="修改密码" width="90%">
-      <input v-model="pwd.oldPassword" type="password" placeholder="当前密码" class="m-input" aria-label="当前密码" />
-      <input v-model="pwd.newPassword" type="password" placeholder="新密码（至少 6 位）" class="m-input" aria-label="新密码" />
-      <input v-model="pwd.confirmPassword" type="password" placeholder="确认新密码" class="m-input" aria-label="确认新密码" />
+      <input v-model="pwd.oldPassword" type="password" placeholder="当前密码" class="m-input dlg-input" aria-label="当前密码" />
+      <input v-model="pwd.newPassword" type="password" placeholder="新密码（至少 6 位）" class="m-input dlg-input" aria-label="新密码" />
+      <input v-model="pwd.confirmPassword" type="password" placeholder="确认新密码" class="m-input dlg-input" aria-label="确认新密码" />
       <template #footer>
         <el-button @click="pwdVisible = false">取消</el-button>
         <el-button type="primary" @click="changePwd">确认修改</el-button>
@@ -99,61 +179,50 @@ async function logout() {
 </template>
 
 <style scoped>
-.m-profile {
-  padding: 0 16px 24px;
-  min-height: 100%;
-  /* 决策依据：页头绿→藏青→页面色三段渐变的藏青段不承载文字、属混色装饰，改为绿到页面色的同高硬切 */
-  background: linear-gradient(180deg, #699c78 0, #699c78 200px, #f5f5f5 200px);
+.profile-card {
+  padding: var(--ag-space-5) var(--ag-space-4) 0;
 }
-.mp-hero {
+.pc-top {
   display: flex;
   align-items: center;
-  gap: 14px;
-  color: #fff;
-  padding: 30px 4px 46px;
+  gap: var(--ag-space-3);
 }
+/* 头像：PC 用文字头像 + 淡色块，不使用白色半透明蒙层 */
 .avatar {
-  width: 58px;
-  height: 58px;
-  border-radius: var(--ag-radius-lg); /* 决策依据：58px 头像块属 ≥16px 大圆角块面，归浮层档 14px */
-  background: rgba(255, 255, 255, 0.2);
+  width: 56px;
+  height: 56px;
+  flex: none;
   display: grid;
   place-items: center;
-  font-size: 24px;
+  border-radius: var(--ag-radius-lg);
+  background: var(--ag-green-50);
+  color: var(--ag-green-700);
+  font-family: var(--ag-font-display);
+  font-size: 22px;
   font-weight: 800;
-  backdrop-filter: blur(4px);
 }
 .meta {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .meta b {
-  font-size: 18px;
+  font-size: var(--ag-fs-h3);
+  font-weight: 700;
+  color: var(--ag-text-1);
 }
 .meta span {
-  font-size: 12px;
-  opacity: 0.8;
+  font-size: var(--ag-fs-micro);
+  color: var(--ag-text-3);
 }
-.edit-btn {
-  border: none;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--ag-radius-sm); /* 决策依据：34px 编辑图标按钮属小控件，对齐控件档 6px */
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
+/* 统计条：与 PC .u-stats 同形（虚线分隔、竖向堆叠数值与标签） */
 .stats-row {
   display: flex;
-  background: #fff;
-  border-radius: var(--ag-radius-lg); /* 决策依据：统计数据条属大块面板，对齐浮层档 14px */
-  padding: 16px 0;
-  margin-top: -22px;
-  box-shadow: var(--ag-shadow);
-  position: relative;
+  margin-top: var(--ag-space-4);
+  padding: var(--ag-space-3) 0;
+  border-top: 1px dashed var(--ag-border);
 }
 .stats-row > div {
   flex: 1;
@@ -162,38 +231,39 @@ async function logout() {
   align-items: center;
   gap: 2px;
 }
+.stats-row > div + div {
+  border-left: 1px dashed var(--ag-border-light);
+}
 .stats-row b {
-  font-size: 19px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
   color: var(--ag-text-1);
 }
 .stats-row span {
   font-size: 11px;
   color: var(--ag-text-3);
 }
+
 .menu-card {
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：菜单卡片属卡片类，对齐卡片档 10px */
-  margin-top: 14px;
+  margin-top: var(--ag-space-3);
   overflow: hidden;
-  box-shadow: var(--ag-shadow-sm);
-}
-.card-title {
-  font-size: 12px;
-  color: var(--ag-text-3);
-  padding: 12px 15px 0;
 }
 .menu-item {
   width: 100%;
+  min-height: 48px;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-3) var(--ag-space-4);
   border: none;
-  background: none;
-  padding: 14px 15px;
-  font-size: 14px;
-  color: var(--ag-text-1);
-  cursor: pointer;
   border-bottom: 1px solid var(--ag-border-light);
+  background: none;
+  font: inherit;
+  font-size: var(--ag-fs-caption);
+  color: var(--ag-text-1);
+  text-align: left;
+  cursor: pointer;
 }
 .menu-item:last-child {
   border-bottom: none;
@@ -201,56 +271,64 @@ async function logout() {
 .menu-item:active {
   background: var(--ag-bg-hover);
 }
-.menu-item .arr {
+.mi-ico--accent {
+  color: var(--ag-green-600);
+}
+.mi-ico--warn {
+  color: var(--ag-warning);
+}
+.mi-ico--blue {
+  color: var(--ag-blue-600);
+}
+.arr {
   margin-left: auto;
   color: var(--ag-text-4);
+}
+
+.settings {
+  padding-top: 0;
 }
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--ag-border-light);
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-3) 0;
+  border-bottom: 1px dashed var(--ag-border-light);
+}
+.setting-row:first-child {
+  padding-top: 0;
 }
 .setting-row:last-child {
+  padding-bottom: 0;
   border-bottom: none;
 }
 .s-meta {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .s-meta b {
-  font-size: 13.5px;
-}
-.logout-btn {
-  width: 100%;
-  margin-top: 16px;
-  border: none;
-  background: #fff;
-  color: var(--ag-danger);
-  font-size: 14px;
+  font-size: var(--ag-fs-caption);
   font-weight: 600;
-  border-radius: var(--ag-radius-sm); /* 决策依据：全宽退出按钮属控件，对齐控件档 6px */
-  padding: 13px;
-  cursor: pointer;
-  box-shadow: var(--ag-shadow-sm);
+  color: var(--ag-text-1);
+}
+
+.logout-btn {
+  margin-top: var(--ag-space-3);
+  color: var(--ag-danger);
+  font-weight: 600;
 }
 .ver {
+  margin: var(--ag-space-3) 0 0;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ag-text-4);
-  margin-top: 14px;
 }
-.m-input {
-  width: 100%;
-  border: 1px solid var(--ag-border);
-  border-radius: var(--ag-radius-sm); /* 决策依据：输入框属控件，对齐控件档 6px */
-  padding: 11px 13px;
-  font-size: 14px;
-  margin-bottom: 11px;
-  outline: none;
-}
-.m-input:focus {
-  border-color: var(--ag-green-500);
+
+/* 弹窗内输入框间距（与 PC 表单同节奏） */
+.dlg-input + .dlg-input {
+  margin-top: var(--ag-space-2);
 }
 </style>

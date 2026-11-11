@@ -1,15 +1,19 @@
 <script setup>
 /** 页面 26 · 农事台账查询：历史农事记录、多条件筛选、时间线展示、导出 Excel */
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader, ProTable } from '@/components/ui'
 import { farmApi } from '@/api'
+import { downloadCsv } from '@/utils/exportFile'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const viewMode = ref('table') // table | timeline
 const timelineRecords = ref([])
 
-const TYPE_TAG = { 播种: 'success', 移栽: 'primary', 施肥: 'warning', 打药: 'danger', 除草: 'info', 灌溉: 'primary', 采收: 'success' }
+const TYPE_TAG = cfg.farmTypeTag
 
 const columns = [
   { prop: 'code', label: '记录编号', width: 115 },
@@ -20,7 +24,7 @@ const columns = [
   { prop: 'operator', label: '作业人员', width: 95 },
   { prop: 'hours', label: '工时(h)', width: 85, align: 'right' },
   { prop: 'material', label: '物料消耗', minWidth: 150 },
-  { prop: 'photos', label: '照片', width: 70, align: 'center' },
+  { prop: 'photos', label: '照片', width: 70, align: 'center', className: 'col-photos' },
   { prop: 'result', label: '作业结果', minWidth: 130 },
 ]
 
@@ -29,27 +33,43 @@ const filters = [
   { key: 'type', label: '农事类型', type: 'select', options: Object.keys(TYPE_TAG).map((t) => ({ label: t, value: t })) },
 ]
 
+const lastParams = ref({})
 async function loadTable(params) {
-  const res = await farmApi.ledger(params)
-  if (viewMode.value === 'timeline' && !timelineRecords.value.length) {
-    timelineRecords.value = res.list.slice(0, 10)
-  }
-  return res
+  lastParams.value = params
+  return farmApi.ledger(params)
 }
 async function loadTimeline() {
   try {
-    const res = await farmApi.ledger({ page: 1, size: 10 })
+    // 时间线沿用表格最后一次的筛选条件，切换视图后结果保持一致
+    const res = await farmApi.ledger({ ...lastParams.value, page: 1, size: 10 })
     timelineRecords.value = res.list
   } catch (e) {
     console.warn('[FarmLedger]', e?.message || e)
   }
 }
+watch(viewMode, (v) => { if (v === 'timeline') loadTimeline() })
 
-function exportExcel() {
-  ElMessage.success('农事台账 Excel 已生成并开始下载（演示环境导出模拟数据）')
+const exporting = ref(false)
+async function exportExcel() {
+  exporting.value = true
+  try {
+    // 导出当前筛选条件下的全量记录，数据直接取自本地 JSON 库
+    const res = await farmApi.ledger({ ...lastParams.value, page: 1, size: 10000 })
+    const rows = res.list.map((r) => [r.code, r.time, r.type, r.plotName, r.crop, r.operator, r.hours, r.material, r.photos, r.result])
+    downloadCsv(
+      '农事台账',
+      ['记录编号', '作业时间', '农事类型', '地块', '作物', '作业人员', '工时(h)', '物料消耗', '照片数', '作业结果'],
+      rows,
+      [`农事台账导出 · 共 ${res.total ?? rows.length} 条`, `筛选关键字：${lastParams.value.keyword || '全部'}；农事类型：${lastParams.value.type || '全部'}`]
+    )
+    ElMessage.success(`已导出 ${rows.length} 条农事记录`)
+  } catch (e) {
+    ElMessage.error(e.message || '导出失败，请稍后重试')
+  } finally {
+    exporting.value = false
+  }
 }
 
-loadTimeline()
 </script>
 
 <template>
@@ -60,7 +80,7 @@ loadTimeline()
           <el-radio-button value="table">表格视图</el-radio-button>
           <el-radio-button value="timeline">时间线视图</el-radio-button>
         </el-radio-group>
-        <el-button type="primary" plain :icon="'Download'" @click="exportExcel">导出 Excel</el-button>
+        <el-button type="primary" plain :icon="'Download'" :loading="exporting" @click="exportExcel">导出 Excel</el-button>
       </template>
     </PageHeader>
 
@@ -117,6 +137,12 @@ loadTimeline()
 </template>
 
 <style scoped>
+/* 照片列用 el-badge 展示照片数：角标需上浮到图标右上角，
+   而 Element Plus 的 .cell 默认 overflow:hidden 会把圆的上半部分裁掉。
+   仅对本列放开溢出（其它列仍保留长文本省略与 tooltip），并限制在 td 范围。 */
+:deep(.el-table td.col-photos .cell) {
+  overflow: visible !important;
+}
 .tl-card :deep(.el-timeline) {
   padding-left: 8px;
   max-height: 640px;

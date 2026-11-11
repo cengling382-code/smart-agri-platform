@@ -8,6 +8,11 @@ export const dbApi = {
   reset: () => request({ url: '/db/reset', method: 'post' }),
 }
 
+/* ================= 页面配置（data/config/*.json） ================= */
+export const configApi = {
+  get: (name) => request({ url: `/config/${name}`, method: 'get' }),
+}
+
 /* ================= 认证 ================= */
 export const authApi = {
   login: (data) => request({ url: '/auth/login', method: 'post', data }),
@@ -15,6 +20,7 @@ export const authApi = {
   getProfile: () => request({ url: '/auth/userinfo', method: 'get' }),
   updateProfile: (data) => request({ url: '/auth/profile', method: 'put', data }),
   changePassword: (data) => request({ url: '/auth/password', method: 'put', data }),
+  resetPassword: (data) => request({ url: '/auth/reset-password', method: 'post', data }),
 }
 
 /* ================= 数据面板 ================= */
@@ -48,7 +54,9 @@ export const deviceApi = {
 export const alarmApi = {
   page: (params) => request({ url: '/alarms', method: 'get', params }),
   stats: () => request({ url: '/alarms/stats', method: 'get' }),
+  create: (data) => request({ url: '/alarms', method: 'post', data }),
   update: (id, data) => request({ url: `/alarms/${id}`, method: 'put', data }),
+  remove: (id) => request({ url: `/alarms/${id}`, method: 'delete' }),
   batch: (ids, status) => request({ url: '/alarms/batch/status', method: 'put', data: { ids, status } }),
 }
 
@@ -89,10 +97,15 @@ export const farmApi = {
   stockPage: (params) => request({ url: '/stock-records', method: 'get', params }),
   createStock: (data) => request({ url: '/stock-records', method: 'post', data }),
   inventory: (params) => request({ url: '/inventory', method: 'get', params }),
+  pesticideLedger: (params) => request({ url: '/pesticide-ledger', method: 'get', params }),
   personnel: (params) => request({ url: '/personnel', method: 'get', params }),
+  createPersonnel: (data) => request({ url: '/personnel', method: 'post', data }),
+  updatePersonnel: (id, data) => request({ url: `/personnel/${id}`, method: 'put', data }),
+  removePersonnel: (id) => request({ url: `/personnel/${id}`, method: 'delete' }),
   harvestPage: (params) => request({ url: '/harvests', method: 'get', params }),
   createHarvest: (data) => request({ url: '/harvests', method: 'post', data }),
   updateHarvest: (id, data) => request({ url: `/harvests/${id}`, method: 'put', data }),
+  removeHarvest: (id) => request({ url: `/harvests/${id}`, method: 'delete' }),
   harvestStats: () => request({ url: '/harvest-stats', method: 'get' }),
 }
 
@@ -126,7 +139,9 @@ export const aiApi = {
   growth: () => request({ url: '/growth', method: 'get' }),
   pests: (params) => request({ url: '/pests', method: 'get', params }),
   updatePest: (id, data) => request({ url: `/pests/${id}`, method: 'put', data }),
-  reports: () => request({ url: '/reports', method: 'get' }),
+  reports: (params) => request({ url: '/reports', method: 'get', params }),
+  createReport: (data) => request({ url: '/reports', method: 'post', data }),
+  removeReport: (id) => request({ url: `/reports/${id}`, method: 'delete' }),
 }
 
 /* ================= 系统 ================= */
@@ -139,11 +154,14 @@ export const sysApi = {
   updateParam: (id, data) => request({ url: `/params/${id}`, method: 'put', data }),
   logs: (params) => request({ url: '/logs', method: 'get', params }),
   files: (params) => request({ url: '/files', method: 'get', params }),
+  uploadFile: (data) => request({ url: '/files', method: 'post', data }),
   removeFile: (id) => request({ url: `/files/${id}`, method: 'delete' }),
   tenants: (params) => request({ url: '/tenants', method: 'get', params }),
+  createTenant: (data) => request({ url: '/tenants', method: 'post', data }),
   updateTenant: (id, data) => request({ url: `/tenants/${id}`, method: 'put', data }),
   apiConfigs: () => request({ url: '/api-configs', method: 'get' }),
   updateApiConfig: (id, data) => request({ url: `/api-configs/${id}`, method: 'put', data }),
+  testApiConfig: (id) => request({ url: `/api-configs/${id}/test`, method: 'post' }),
   userPage: (params) => request({ url: '/users', method: 'get', params }),
   createUser: (data) => request({ url: '/users', method: 'post', data }),
   updateUser: (id, data) => request({ url: `/users/${id}`, method: 'put', data }),
@@ -153,6 +171,8 @@ export const sysApi = {
   createRole: (data) => request({ url: '/roles', method: 'post', data }),
   updateRole: (id, data) => request({ url: `/roles/${id}`, method: 'put', data }),
   removeRole: (id) => request({ url: `/roles/${id}`, method: 'delete' }),
+  roleMenus: (id) => request({ url: `/roles/${id}/menus`, method: 'get' }),
+  saveRoleMenus: (id, ids) => request({ url: `/roles/${id}/menus`, method: 'put', data: { ids } }),
   menuTree: () => request({ url: '/menus', method: 'get' }),
   createMenu: (data) => request({ url: '/menus', method: 'post', data }),
   updateMenu: (id, data) => request({ url: `/menus/${id}`, method: 'put', data }),

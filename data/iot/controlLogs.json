@@ -1,0 +1,390 @@
+{
+  "_meta": {
+    "collection": "controlLogs",
+    "kind": "array",
+    "updatedAt": "2026-11-10T02:09:13.132Z",
+    "count": 38
+  },
+  "data": [
+    {
+      "id": 10006,
+      "operator": "系统管理员",
+      "source": "manual",
+      "device": "南湖1号塘-水泵",
+      "deviceCode": "ACT-2041",
+      "action": "关闭",
+      "time": "2026-11-10 10:09:12",
+      "result": "成功"
+    },
+    {
+      "id": 10005,
+      "operator": "系统管理员",
+      "source": "manual",
+      "device": "南湖1号塘-水泵",
+      "deviceCode": "ACT-2041",
+      "action": "开启",
+      "time": "2026-11-10 10:09:11",
+      "result": "成功"
+    },
+    {
+      "id": 10004,
+      "operator": "移动端用户",
+      "source": "manual",
+      "device": "2号智能大棚-风机",
+      "deviceCode": "ACT-2040",
+      "action": "关闭",
+      "time": "2026-11-10 09:06:13",
+      "result": "成功"
+    },
+    {
+      "id": 10003,
+      "operator": "移动端用户",
+      "source": "manual",
+      "device": "2号智能大棚-风机",
+      "deviceCode": "ACT-2040",
+      "action": "开启",
+      "time": "2026-11-10 09:06:10",
+      "result": "成功"
+    },
+    {
+      "id": 10002,
+      "operator": "移动端用户",
+      "source": "manual",
+      "device": "2号智能大棚-补光灯",
+      "deviceCode": "ACT-2039",
+      "action": "开启",
+      "time": "2026-11-10 08:42:59",
+      "result": "成功"
+    },
+    {
+      "id": 10001,
+      "operator": "移动端用户",
+      "source": "manual",
+      "device": "1号智能大棚-加温设备",
+      "deviceCode": "ACT-2038",
+      "action": "开启",
+      "time": "2026-11-9 10:42:13",
+      "result": "成功"
+    },
+    {
+      "id": 10002,
+      "operator": "系统管理员",
+      "source": "manual",
+      "device": "1号智能大棚-加温设备",
+      "deviceCode": "ACT-2038",
+      "action": "关闭",
+      "time": "2026-11-9 08:49:36",
+      "result": "成功"
+    },
+    {
+      "id": 10001,
+      "operator": "系统管理员",
+      "source": "manual",
+      "device": "1号智能大棚-加温设备",
+      "deviceCode": "ACT-2038",
+      "action": "开启",
+      "time": "2026-11-9 08:49:35",
+      "result": "成功"
+    },
+    {
+      "id": 1,
+      "operator": "系统策略",
+      "source": "auto",
+      "device": "1号智能大棚-水泵",
+      "deviceCode": "ACT-2043",
+      "action": "开启",
+      "time": "2026-11-06 09:41",
+      "result": "成功"
+    },
+    {
+      "id": 2,
+      "operator": "系统策略",
+      "source": "auto",
+      "device": "3号育苗棚-风机",
+      "deviceCode": "ACT-2044",
+      "action": "关闭",
+      "time": "2026-11-06 08:27",
+      "result": "成功"
+    },
+    {
+      "id": 3,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "2号智能大棚-补光灯",
+      "deviceCode": "ACT-2039",
+      "action": "调节至 60%",
+      "time": "2026-11-06 03:37",
+      "result": "成功"
+    },
+    {
+      "id": 4,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "2号智能大棚-补光灯",
+      "deviceCode": "ACT-2039",
+      "action": "关闭",
+      "time": "2026-11-06 04:44",
+      "result": "成功"
+    },
+    {
+      "id": 5,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "南湖1号塘-电磁阀",
+      "deviceCode": "ACT-2042",
+      "action": "关闭",
+      "time": "2026-11-06 02:01",
+      "result": "成功"
+    },
+    {
+      "id": 6,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "2号智能大棚-水泵",
+      "deviceCode": "ACT-2050",
+      "action": "调节至 60%",
+      "time": "2026-11-06 02:16",
+      "result": "成功"
+    },
+    {
+      "id": 7,
+      "operator": "张建国",
+      "source": "auto",
+      "device": "南湖1号塘-电磁阀",
+      "deviceCode": "ACT-2042",
+      "action": "开启 20 分钟",
+      "time": "2026-11-06 03:41",
+      "result": "成功"
+    },
+    {
+      "id": 8,
+      "operator": "系统策略",
+      "source": "auto",
+      "device": "南湖1号塘-水泵",
+      "deviceCode": "ACT-2041",
+      "action": "开启",
+      "time": "2026-11-05 17:35",
+      "result": "成功"
+    },
+    {
+      "id": 9,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "3号育苗棚-遮阳帘",
+      "deviceCode": "ACT-2046",
+      "action": "调节至 60%",
+      "time": "2026-11-05 19:01",
+      "result": "成功"
+    },
+    {
+      "id": 10,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "1号智能大棚-卷帘机",
+      "deviceCode": "ACT-2048",
+      "action": "调节至 60%",
+      "time": "2026-11-05 17:02",
+      "result": "成功"
+    },
+    {
+      "id": 11,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "3号育苗棚-遮阳帘-2",
+      "deviceCode": "ACT-2051",
+      "action": "关闭",
+      "time": "2026-11-05 21:51",
+      "result": "成功"
+    },
+    {
+      "id": 12,
+      "operator": "系统策略",
+      "source": "auto",
+      "device": "南湖1号塘-水泵-2",
+      "deviceCode": "ACT-2049",
+      "action": "关闭",
+      "time": "2026-11-05 00:30",
+      "result": "成功"
+    },
+    {
+      "id": 13,
+      "operator": "系统策略",
+      "source": "auto",
+      "device": "1号智能大棚-加温设备",
+      "deviceCode": "ACT-2038",
+      "action": "开启 20 分钟",
+      "time": "2026-11-05 19:05",
+      "result": "成功"
+    },
+    {
+      "id": 14,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "3号育苗棚-补光灯",
+      "deviceCode": "ACT-2047",
+      "action": "关闭",
+      "time": "2026-11-04 23:01",
+      "result": "成功"
+    },
+    {
+      "id": 15,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "南湖1号塘-电磁阀-2",
+      "deviceCode": "ACT-2045",
+      "action": "关闭",
+      "time": "2026-11-05 13:37",
+      "result": "成功"
+    },
+    {
+      "id": 16,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "3号育苗棚-补光灯",
+      "deviceCode": "ACT-2047",
+      "action": "关闭",
+      "time": "2026-11-04 15:11",
+      "result": "成功"
+    },
+    {
+      "id": 17,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "1号智能大棚-水泵",
+      "deviceCode": "ACT-2043",
+      "action": "关闭",
+      "time": "2026-11-05 02:45",
+      "result": "成功"
+    },
+    {
+      "id": 18,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "1号智能大棚-卷帘机",
+      "deviceCode": "ACT-2048",
+      "action": "开启",
+      "time": "2026-11-04 23:58",
+      "result": "成功"
+    },
+    {
+      "id": 19,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "3号育苗棚-补光灯",
+      "deviceCode": "ACT-2047",
+      "action": "调节至 60%",
+      "time": "2026-11-04 15:41",
+      "result": "成功"
+    },
+    {
+      "id": 20,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "2号智能大棚-风机",
+      "deviceCode": "ACT-2040",
+      "action": "调节至 60%",
+      "time": "2026-11-04 00:03",
+      "result": "成功"
+    },
+    {
+      "id": 21,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "1号智能大棚-卷帘机",
+      "deviceCode": "ACT-2048",
+      "action": "关闭",
+      "time": "2026-11-04 00:01",
+      "result": "失败(设备离线)"
+    },
+    {
+      "id": 22,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "3号育苗棚-风机",
+      "deviceCode": "ACT-2044",
+      "action": "关闭",
+      "time": "2026-11-05 21:26",
+      "result": "成功"
+    },
+    {
+      "id": 23,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "2号智能大棚-补光灯",
+      "deviceCode": "ACT-2039",
+      "action": "开启 20 分钟",
+      "time": "2026-11-05 15:21",
+      "result": "成功"
+    },
+    {
+      "id": 24,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "1号智能大棚-卷帘机",
+      "deviceCode": "ACT-2048",
+      "action": "开启 20 分钟",
+      "time": "2026-11-04 03:15",
+      "result": "成功"
+    },
+    {
+      "id": 25,
+      "operator": "张建国",
+      "source": "auto",
+      "device": "1号智能大棚-加温设备",
+      "deviceCode": "ACT-2038",
+      "action": "开启 20 分钟",
+      "time": "2026-11-04 01:41",
+      "result": "成功"
+    },
+    {
+      "id": 26,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "3号育苗棚-遮阳帘-2",
+      "deviceCode": "ACT-2051",
+      "action": "关闭",
+      "time": "2026-11-03 20:01",
+      "result": "成功"
+    },
+    {
+      "id": 27,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "3号育苗棚-补光灯",
+      "deviceCode": "ACT-2047",
+      "action": "关闭",
+      "time": "2026-11-05 10:17",
+      "result": "成功"
+    },
+    {
+      "id": 28,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "3号育苗棚-补光灯",
+      "deviceCode": "ACT-2047",
+      "action": "调节至 60%",
+      "time": "2026-11-05 21:59",
+      "result": "失败(设备离线)"
+    },
+    {
+      "id": 29,
+      "operator": "系统策略",
+      "source": "manual",
+      "device": "2号智能大棚-风机",
+      "deviceCode": "ACT-2040",
+      "action": "调节至 60%",
+      "time": "2026-11-03 11:13",
+      "result": "成功"
+    },
+    {
+      "id": 30,
+      "operator": "张建国",
+      "source": "manual",
+      "device": "1号智能大棚-水泵",
+      "deviceCode": "ACT-2043",
+      "action": "开启",
+      "time": "2026-11-05 19:40",
+      "result": "成功"
+    }
+  ]
+}

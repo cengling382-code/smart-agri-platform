@@ -3,25 +3,18 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import CountUp from '@/components/ui/CountUp.vue'
 import { darkBase, darkAxis, SCREEN_COLORS } from '@/utils/screenCharts'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('screens')
 
 const stats = ref(null)
 const alarms = ref([])
 const alarmIdx = ref(0)
 let timers = []
 
-const mapPlots = [
-  { name: '1号智能大棚', shape: [[18, 12], [34, 12], [34, 26], [18, 26]], color: '#7DC383' },
-  { name: '2号智能大棚', shape: [[36, 12], [52, 12], [52, 26], [36, 26]], color: '#7DC383' },
-  { name: '3号育苗棚', shape: [[18, 28], [34, 28], [34, 40], [18, 40]], color: '#9FC3DD' },
-  { name: '东大田A区', shape: [[56, 10], [88, 10], [88, 34], [56, 34]], color: '#FFB37B' },
-  { name: '东大田B区', shape: [[56, 36], [88, 36], [88, 58], [56, 58]], color: '#FFB37B' },
-  { name: '西山坡果园', shape: [[10, 44], [50, 44], [50, 72], [10, 72]], color: '#E89552' },
-  { name: '南湖1号塘', shape: [[56, 62], [88, 62], [88, 84], [56, 84]], color: '#8FB3CC' },
-  { name: '牧场1号舍', shape: [[12, 76], [48, 76], [48, 92], [12, 92]], color: '#B17179' },
-]
-const mapDevices = Array.from({ length: 26 }, (_, i) => ({
-  x: 12 + ((i * 37) % 78), y: 10 + ((i * 53) % 84), fault: i % 9 === 4,
-}))
+const mapPlots = cfg.overview.mapPlots
+const mapDevices = cfg.overview.mapDevices
 
 const deviceOptions = computed(() => {
   const rows = stats.value?.deviceTypes || []
@@ -38,8 +31,8 @@ const deviceOptions = computed(() => {
 })
 
 const yieldOptions = computed(() => {
-  const months = ['6月', '7月', '8月', '9月', '10月', '11月']
-  const data = [12400, 15800, 18600, 15200, 26800, 29600]
+  const months = cfg.overview.yieldMonths
+  const data = cfg.overview.yieldValues
   return {
     ...darkBase,
     tooltip: { ...darkBase.tooltip, trigger: 'axis' },
@@ -56,27 +49,37 @@ const yieldOptions = computed(() => {
   }
 })
 
-const totalArea = 353.4
-const HEAD_METRICS = computed(() => [
-  { label: '园区总数', value: stats.value?.parks ?? 4, unit: '个', color: '#9FC3DD' },
-  { label: '种植面积', value: totalArea, unit: '亩', color: '#7DC383', decimals: 1 },
-  { label: '在线设备', value: stats.value?.online ?? 0, unit: `台 / 共${stats.value?.devices ?? 0}台`, color: '#FFB37B' },
-  { label: '今日告警', value: stats.value?.todayAlarms ?? 0, unit: '条', color: '#E84A5F' },
-  { label: '年度产量', value: 118400, unit: 'kg', color: '#B17179' },
-])
+const HEAD_METRICS = computed(() => {
+  const ov = cfg.overview
+  return ov.headMetrics.map((m) => {
+    const value = {
+      parks: stats.value?.parks ?? ov.parksFallback,
+      area: ov.totalArea,
+      online: stats.value?.online ?? 0,
+      todayAlarms: stats.value?.todayAlarms ?? 0,
+      yearYield: ov.yearYield,
+    }[m.key] ?? 0
+    const unit = m.key === 'online' ? `台 / 共${stats.value?.devices ?? 0}台` : m.unit
+    return { ...m, value, unit }
+  })
+})
 
-onMounted(async () => {
+onMounted(load)
+onDataChange(load, { debounce: 400 })
+async function load() {
   try {
-  const { statsApi, alarmApi } = await import('@/api')
-  const [d, al] = await Promise.all([statsApi.dashboard(), alarmApi.page({ status: 'pending', page: 1, size: 6 })])
-  stats.value = d
-  alarms.value = al.list
+    const { statsApi, alarmApi } = await import('@/api')
+    const [d, al] = await Promise.all([statsApi.dashboard(), alarmApi.page({ status: 'pending', page: 1, size: 6 })])
+    stats.value = d
+    alarms.value = al.list
   } catch (e) {
     console.warn('[ScreenOverview]', e?.message || e)
   }
+}
+onMounted(() => {
   timers.push(setInterval(() => {
     if (alarms.value.length) alarmIdx.value = (alarmIdx.value + 1) % alarms.value.length
-  }, 3500))
+  }, cfg.overview.alarmCarouselMs))
 })
 onBeforeUnmount(() => timers.forEach(clearInterval))
 </script>

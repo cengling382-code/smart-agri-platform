@@ -4,6 +4,9 @@ import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const route = useRoute()
 const router = useRouter()
@@ -17,19 +20,8 @@ const lockSeconds = ref(0)
 let lockTimer = null
 let canvasTimer = null
 
-const FEATURES = [
-  { icon: 'Cpu', title: '物联网感知', desc: '环境数据实时采集监测' },
-  { icon: 'SwitchButton', title: '远程智控', desc: '设备策略自动化联动' },
-  { icon: 'DataAnalysis', title: 'AI 分析', desc: '长势预测与产量预估' },
-  { icon: 'Postcard', title: '一物一码', desc: '全链路农产品溯源' },
-]
-const DEMO = [
-  { role: '系统管理员', u: 'admin' },
-  { role: '园区管理员', u: 'manager' },
-  { role: '农技人员', u: 'tech' },
-  { role: '农户/工人', u: 'farmer' },
-  { role: '监管人员', u: 'regulator' },
-]
+const FEATURES = cfg.loginFeatures
+const DEMO = cfg.loginDemoAccounts
 
 /* ---------- Canvas 图形验证码 ---------- */
 const canvasRef = ref(null)
@@ -190,7 +182,7 @@ onBeforeUnmount(() => {
 
         <el-form size="large" @submit.prevent="handleLogin">
           <el-form-item>
-            <el-input v-model="form.username" placeholder="账号 / 用户名" :prefix-icon="'User'" autocomplete="username" aria-label="账号" />
+            <el-input v-model="form.username" placeholder="账号 / 用户名" :prefix-icon="'User'" autocomplete="username" maxlength="64" aria-label="账号" />
           </el-form-item>
           <el-form-item>
             <el-input v-model="form.password" type="password" placeholder="密码" show-password :prefix-icon="'Lock'" autocomplete="current-password" aria-label="密码" @keyup.enter="handleLogin" />

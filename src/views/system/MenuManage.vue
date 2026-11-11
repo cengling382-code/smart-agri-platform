@@ -4,6 +4,9 @@ import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { sysApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tree = ref([])
 const loading = ref(false)
@@ -18,7 +21,7 @@ const rules = {
   path: [{ pattern: /^\/[a-zA-Z0-9/\-:]*$/, message: '路由路径以 / 开头', trigger: 'blur' }],
 }
 
-const ICONS = ['Odometer', 'Cpu', 'LocationInformation', 'Cherry', 'DataAnalysis', 'Postcard', 'ShoppingCart', 'Setting', 'Monitor', 'Bell', 'User']
+const ICONS = cfg.menuIcons
 
 async function load() {
   loading.value = true
@@ -62,13 +65,19 @@ async function handleSubmit() {
   }
 }
 async function handleDelete(node) {
-  await ElMessageBox.confirm(`确定删除菜单「${node.name}」吗？删除后相关角色将立即失去该菜单访问权。`, '删除确认', { type: 'error' })
+  // 取消 / 关闭确认框是正常用户操作：ElMessageBox.confirm 会 reject('cancel')，
+  // 原先 await 写在 try 外，未捕获的 rejection 会冒泡到 ErrorBoundary 导致整页降级。
+  const ok = await ElMessageBox.confirm(
+    `确定删除菜单「${node.name}」吗？删除后相关角色将立即失去该菜单访问权。`,
+    '删除确认', { type: 'error' }
+  ).catch(() => false)
+  if (!ok) return
   try {
     await sysApi.removeMenu(node.id)
     ElMessage.success('删除成功')
     load()
   } catch (e) {
-    ElMessage.error(e.message)
+    ElMessage.error(e?.message || '删除失败')
   }
 }
 </script>
@@ -101,7 +110,7 @@ async function handleDelete(node) {
         </el-table-column>
         <el-table-column label="操作" width="300" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" :icon="'Plus'" @click="openCreate(row)">添加子项</el-button>
+            <el-button v-if="Array.isArray(row.children)" link type="primary" :icon="'Plus'" @click="openCreate(row)">添加子项</el-button>
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
             <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
@@ -109,7 +118,7 @@ async function handleDelete(node) {
       </el-table>
 
       <el-divider />
-      <el-table :data="tree.flatMap((g) => g.children.map((c) => ({ ...c, group: g.name, parentId: g.id })))" row-key="id" border>
+      <el-table :data="tree.flatMap((g) => (g.children || []).map((c) => ({ ...c, group: g.name, parentId: g.id })))" row-key="id" border>
         <el-table-column prop="group" label="所属目录" width="140" />
         <el-table-column label="菜单项" min-width="160">
           <template #default="{ row }">

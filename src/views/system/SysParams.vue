@@ -1,9 +1,12 @@
 <script setup>
 /** 页面 47 · 系统参数配置：平台基础参数、告警短信/推送配置、采集频率设置 */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { sysApi, dbApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const params = ref([])
 const loading = ref(true)
@@ -118,14 +121,7 @@ function renderValue(p) {
   if (p.key.includes('threshold')) return `${p.value} ℃/%`
   return p.value
 }
-const GROUPS = computedGroups()
-function computedGroups() {
-  return [
-    { name: '平台基础', keys: ['platform.name', 'trace.expire'] },
-    { name: '数据采集', keys: ['collect.interval'] },
-    { name: '告警通知（短信 / 微信公众号）', keys: ['alarm.sms', 'alarm.wechat', 'alarm.threshold.temp.max', 'alarm.threshold.temp.min', 'alarm.threshold.hum.min'] },
-  ]
-}
+const GROUPS = computed(() => cfg.sysParamGroups)
 </script>
 
 <template>
@@ -176,13 +172,14 @@ function computedGroups() {
       <div class="ag-card__body db-body">
         <div class="db-meta">
           <div class="db-item"><span>存储介质</span><b>{{ dbStatsInfo.available ? dbStatsInfo.storage : '内存（配额不足）' }}</b></div>
+          <div class="db-item"><span>运行模式</span><b>{{ dbStatsInfo.mode === 'file' ? '本地 JSON 文件直写' : '静态模式（内置 JSON + 浏览器存档）' }}</b></div>
           <div class="db-item"><span>集合 / 记录</span><b>{{ dbStatsInfo.collections }} / {{ dbStatsInfo.records }}</b></div>
           <div class="db-item"><span>占用空间</span><b>{{ dbStatsInfo.sizeKB }} KB</b></div>
           <div class="db-item"><span>最后写入</span><b>{{ formatSavedAt(dbStatsInfo.savedAt) }}</b></div>
         </div>
         <p class="db-desc">
-          所有业务写操作（新增 / 编辑 / 删除 / 状态变更）完成后都会序列化为 JSON 文档并落盘，刷新页面数据依然保留。
-          浏览器沙箱无法直接写本地 .json 文件，可通过导出 / 导入完成备份与迁移。
+          开发模式下所有业务写操作（新增 / 编辑 / 删除 / 状态变更）都会自动回写到 data/ 目录下对应的 JSON 文件；
+          静态部署时浏览器无法直接写文件，会退化为内置 JSON + 浏览器存档，可通过导出 / 导入完成备份与迁移。
         </p>
         <input ref="fileInput" type="file" accept=".json,application/json" class="db-file" @change="onDbFile" />
       </div>

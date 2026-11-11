@@ -4,6 +4,11 @@ import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog } from '@/components/ui'
 import { traceApi } from '@/api'
+import { disabledFutureDate, notFutureValidator } from '@/utils/dateRule'
+import { downloadPdf } from '@/utils/exportFile'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
@@ -17,7 +22,10 @@ const rules = {
   batchCode: [{ required: true, message: '请选择溯源批次', trigger: 'change' }],
   item: [{ required: true, message: '请输入检测项目', trigger: 'blur' }],
   org: [{ required: true, message: '请输入检测机构', trigger: 'blur' }],
-  date: [{ required: true, message: '请选择检测日期', trigger: 'change' }],
+  date: [
+    { required: true, message: '请选择检测日期', trigger: 'change' },
+    notFutureValidator('检测日期不能晚于今天'),
+  ],
 }
 
 const columns = [
@@ -33,7 +41,7 @@ const columns = [
 
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '报告号 / 批次号 / 机构' },
-  { key: 'result', label: '结论', type: 'select', options: [{ label: '合格', value: '合格' }, { label: '不合格', value: '不合格' }] },
+  { key: 'result', label: '结论', type: 'select', options: cfg.statusOptionGroups.residue },
 ]
 
 async function loadTable(params) {
@@ -77,7 +85,13 @@ async function changeResult(row) {
   tableRef.value?.reload(true)
 }
 function download(row) {
-  ElMessage.success(`《${row.code} 检测报告》PDF 已开始下载（演示）`)
+  downloadPdf(`${row.code}_农残检测报告`, {
+    title: '农产品农药残留检测报告',
+    meta: `报告编号：${row.code}　检测机构：${row.org}　检测日期：${row.date}`,
+    headers: ['检测项目', '检测批次', '作物', '检测结果', '备注'],
+    rows: [[row.item, row.batchCode, row.crop, row.result, row.note || '—']],
+  })
+  ElMessage.success(`《${row.code} 检测报告》PDF 已开始下载`)
 }
 </script>
 
@@ -128,14 +142,14 @@ function download(row) {
         <el-input v-model="form.org" placeholder="如 市农产品质量安全检测中心" />
       </el-form-item>
       <el-form-item label="检测日期" prop="date">
-        <el-date-picker v-model="form.date" type="date" value-format="YYYY-MM-DD" style="width: 200px" />
+        <el-date-picker v-model="form.date" type="date" value-format="YYYY-MM-DD" style="width: 200px" :disabled-date="disabledFutureDate" />
       </el-form-item>
       <el-form-item label="报告文件">
         <el-upload drag action="#" :auto-upload="false" :limit="1" accept=".pdf,.jpg,.png" :on-change="() => (form.file = '检测报告.pdf')">
           <el-icon :size="34" color="var(--ag-text-4)"><UploadFilled /></el-icon>
           <div class="el-upload__text">拖拽文件到此处或 <em>点击上传</em></div>
           <template #tip>
-            <div class="el-upload__tip">支持 PDF / JPG / PNG，单文件 ≤ 20MB（演示环境不实际上传）</div>
+            <div class="el-upload__tip">支持 PDF / JPG / PNG，单文件 ≤ 20MB（登记后可在列表中下载报告）</div>
           </template>
         </el-upload>
       </el-form-item>

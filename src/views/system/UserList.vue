@@ -4,6 +4,9 @@ import { reactive, ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag } from '@/components/ui'
 import { sysApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const dialogVisible = ref(false)
@@ -39,20 +42,15 @@ const columns = [
   { prop: 'lastLogin', label: '最近登录', width: 165 },
 ]
 
-const filters = [
+// 角色选项依赖异步加载的 rolesList，必须用 computed 保证选项就绪后下拉可渲染
+const filters = computed(() => [
   { key: 'keyword', label: '关键字', placeholder: '账号 / 姓名 / 手机号' },
-  { key: 'role', label: '角色', type: 'select' },
-  { key: 'status', label: '状态', type: 'select', options: [{ label: '启用', value: '启用' }, { label: '禁用', value: '禁用' }] },
-]
+  { key: 'role', label: '角色', type: 'select', options: rolesList.value.map((r) => ({ label: r.name, value: r.code })) },
+  { key: 'status', label: '状态', type: 'select', options: cfg.statusOptionGroups.user },
+])
 
 async function fetchPage(params) {
-  if (!rolesList.value.length) {
-    sysApi.allRoles().then((roles) => {
-      rolesList.value = roles
-      const f = filters.find((x) => x.key === 'role')
-      if (f) f.options = roles.map((r) => ({ label: r.name, value: r.code }))
-    })
-  }
+  if (!rolesList.value.length) rolesList.value = await sysApi.allRoles()
   return sysApi.userPage(params)
 }
 
@@ -110,7 +108,8 @@ async function batchDisable() {
     ElMessage.warning('请先勾选用户')
     return
   }
-  await ElMessageBox.confirm(`确定禁用选中的 ${selected.value.length} 个账号吗？`, '批量操作', { type: 'warning' })
+  const ok = await ElMessageBox.confirm(`确定禁用选中的 ${selected.value.length} 个账号吗？`, '批量操作', { type: 'warning' }).catch(() => false)
+  if (!ok) return
   for (const u of selected.value) {
     await sysApi.updateUser(u.id, { status: '禁用' })
   }

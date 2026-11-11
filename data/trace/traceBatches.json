@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "collection": "traceBatches",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:38.558Z",
+    "count": 8
+  },
+  "data": [
+    {
+      "id": 1,
+      "code": "TR-2026-700",
+      "crop": "水稻",
+      "plotName": "东大田A区",
+      "qty": "1918kg",
+      "harvestCode": "HC-2026-700",
+      "status": "待完善",
+      "created": "2026-11-06 09:41",
+      "scans": 95,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 13,
+        "env": 545,
+        "tests": 0
+      }
+    },
+    {
+      "id": 2,
+      "code": "TR-2026-701",
+      "crop": "番茄",
+      "plotName": "1号智能大棚",
+      "qty": "2730kg",
+      "harvestCode": "HC-2026-701",
+      "status": "待完善",
+      "created": "2026-11-03 13:41",
+      "scans": 613,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 12,
+        "env": 344,
+        "tests": 0
+      }
+    },
+    {
+      "id": 3,
+      "code": "TR-2026-702",
+      "crop": "番茄",
+      "plotName": "1号智能大棚",
+      "qty": "1089kg",
+      "harvestCode": "HC-2026-702",
+      "status": "已发布",
+      "created": "2026-10-30 17:41",
+      "scans": 304,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 13,
+        "env": 396,
+        "tests": 2
+      }
+    },
+    {
+      "id": 4,
+      "code": "TR-2026-703",
+      "crop": "黄瓜",
+      "plotName": "2号智能大棚",
+      "qty": "3119kg",
+      "harvestCode": "HC-2026-703",
+      "status": "已发布",
+      "created": "2026-10-27 03:41",
+      "scans": 602,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 7,
+        "env": 531,
+        "tests": 1
+      }
+    },
+    {
+      "id": 5,
+      "code": "TR-2026-704",
+      "crop": "淡水鱼",
+      "plotName": "南湖1号塘",
+      "qty": "3345kg",
+      "harvestCode": "HC-2026-704",
+      "status": "已发布",
+      "created": "2026-10-22 18:41",
+      "scans": 644,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 17,
+        "env": 682,
+        "tests": 2
+      }
+    },
+    {
+      "id": 6,
+      "code": "TR-2026-705",
+      "crop": "水稻",
+      "plotName": "东大田A区",
+      "qty": "604kg",
+      "harvestCode": "HC-2026-705",
+      "status": "已发布",
+      "created": "2026-10-18 14:41",
+      "scans": 58,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 14,
+        "env": 775,
+        "tests": 1
+      }
+    },
+    {
+      "id": 7,
+      "code": "TR-2026-706",
+      "crop": "水稻",
+      "plotName": "东大田A区",
+      "qty": "646kg",
+      "harvestCode": "HC-2026-706",
+      "status": "已召回",
+      "created": "2026-10-14 18:41",
+      "scans": 779,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 7,
+        "env": 718,
+        "tests": 2
+      }
+    },
+    {
+      "id": 8,
+      "code": "TR-2026-707",
+      "crop": "水稻",
+      "plotName": "东大田A区",
+      "qty": "2265kg",
+      "harvestCode": "HC-2026-707",
+      "status": "已下架",
+      "created": "2026-10-10 18:41",
+      "scans": 784,
+      "org": "示范园总部（智慧农业示范园）",
+      "records": {
+        "farm": 15,
+        "env": 319,
+        "tests": 2
+      }
+    }
+  ]
+}

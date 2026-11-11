@@ -1,0 +1,452 @@
+{
+  "_meta": {
+    "collection": "alarms",
+    "kind": "array",
+    "updatedAt": "2026-11-10T01:06:20.525Z",
+    "count": 26
+  },
+  "data": [
+    {
+      "id": 1000,
+      "code": "AL-20261000",
+      "type": "环境超限",
+      "level": 3,
+      "content": "1号智能大棚空气温度超过阈值上限 32℃",
+      "plotCode": "P-A01",
+      "source": "SN-1006",
+      "time": "2026-11-06 09:41",
+      "status": "confirmed",
+      "handler": "当前用户",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1001,
+      "code": "AL-20261001",
+      "type": "设备故障",
+      "level": 1,
+      "content": "牧场1号舍氨气传感器通信异常，连续3次上报失败",
+      "plotCode": "P-E01",
+      "source": "SN-1034",
+      "time": "2026-11-06 05:11",
+      "status": "pending",
+      "handler": null,
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1002,
+      "code": "AL-20261002",
+      "type": "环境超限",
+      "level": 1,
+      "content": "南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机",
+      "plotCode": "P-D01",
+      "source": "SN-1030",
+      "time": "2026-11-06 00:01",
+      "status": "pending",
+      "handler": null,
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1003,
+      "code": "AL-20261003",
+      "type": "离线掉线",
+      "level": 2,
+      "content": "畜禽养殖网关离线超过 30 分钟",
+      "plotCode": "P-E01",
+      "source": "GW-2026-04",
+      "time": "2026-11-06 06:59",
+      "status": "pending",
+      "handler": null,
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1004,
+      "code": "AL-20261004",
+      "type": "库存不足",
+      "level": 1,
+      "content": "有机肥（腐熟羊粪）库存低于安全线",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-06 00:37",
+      "status": "confirmed",
+      "handler": "当前用户",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1005,
+      "code": "AL-20261005",
+      "type": "传感器异常",
+      "level": 1,
+      "content": "2号智能大棚土壤湿度数据漂移，疑似传感器故障",
+      "plotCode": "P-A02",
+      "source": "SN-1013",
+      "time": "2026-11-05 09:31",
+      "status": "confirmed",
+      "handler": "梁山伯",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1006,
+      "code": "AL-20261006",
+      "type": "灾害预警",
+      "level": 2,
+      "content": "气象部门发布霜冻蓝色预警，预计夜间最低温 1℃",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-05 21:59",
+      "status": "confirmed",
+      "handler": "陈美凤",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1007,
+      "code": "AL-20261007",
+      "type": "环境超限",
+      "level": 3,
+      "content": "1号智能大棚空气温度超过阈值上限 32℃",
+      "plotCode": "P-A01",
+      "source": "SN-1006",
+      "time": "2026-11-05 07:12",
+      "status": "confirmed",
+      "handler": "郑天佑",
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1008,
+      "code": "AL-20261008",
+      "type": "设备故障",
+      "level": 1,
+      "content": "牧场1号舍氨气传感器通信异常，连续3次上报失败",
+      "plotCode": "P-E01",
+      "source": "SN-1034",
+      "time": "2026-11-05 03:57",
+      "status": "confirmed",
+      "handler": "杨春生",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1009,
+      "code": "AL-20261009",
+      "type": "环境超限",
+      "level": 2,
+      "content": "南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机",
+      "plotCode": "P-D01",
+      "source": "SN-1030",
+      "time": "2026-11-05 02:02",
+      "status": "confirmed",
+      "handler": "罗永刚",
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": ""
+    },
+    {
+      "id": 1010,
+      "code": "AL-20261010",
+      "type": "离线掉线",
+      "level": 1,
+      "content": "畜禽养殖网关离线超过 30 分钟",
+      "plotCode": "P-E01",
+      "source": "GW-2026-04",
+      "time": "2026-11-05 13:11",
+      "status": "resolved",
+      "handler": "刘志强",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已更换备用传感器"
+    },
+    {
+      "id": 1011,
+      "code": "AL-20261011",
+      "type": "库存不足",
+      "level": 1,
+      "content": "有机肥（腐熟羊粪）库存低于安全线",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-04 05:59",
+      "status": "resolved",
+      "handler": "孙丽娟",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1012,
+      "code": "AL-20261012",
+      "type": "传感器异常",
+      "level": 2,
+      "content": "2号智能大棚土壤湿度数据漂移，疑似传感器故障",
+      "plotCode": "P-A02",
+      "source": "SN-1013",
+      "time": "2026-11-05 00:17",
+      "status": "resolved",
+      "handler": "孙丽娟",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1013,
+      "code": "AL-20261013",
+      "type": "灾害预警",
+      "level": 1,
+      "content": "气象部门发布霜冻蓝色预警，预计夜间最低温 1℃",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-05 02:42",
+      "status": "resolved",
+      "handler": "谢雨欣",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1014,
+      "code": "AL-20261014",
+      "type": "环境超限",
+      "level": 3,
+      "content": "1号智能大棚空气温度超过阈值上限 32℃",
+      "plotCode": "P-A01",
+      "source": "SN-1006",
+      "time": "2026-11-05 01:29",
+      "status": "resolved",
+      "handler": "唐国强",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已远程开启设备"
+    },
+    {
+      "id": 1015,
+      "code": "AL-20261015",
+      "type": "设备故障",
+      "level": 2,
+      "content": "牧场1号舍氨气传感器通信异常，连续3次上报失败",
+      "plotCode": "P-E01",
+      "source": "SN-1034",
+      "time": "2026-11-05 03:56",
+      "status": "resolved",
+      "handler": "韩梅梅",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已安排人员巡检"
+    },
+    {
+      "id": 1016,
+      "code": "AL-20261016",
+      "type": "环境超限",
+      "level": 1,
+      "content": "南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机",
+      "plotCode": "P-D01",
+      "source": "SN-1030",
+      "time": "2026-11-04 17:25",
+      "status": "resolved",
+      "handler": "刘志强",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已更换备用传感器"
+    },
+    {
+      "id": 1017,
+      "code": "AL-20261017",
+      "type": "离线掉线",
+      "level": 1,
+      "content": "畜禽养殖网关离线超过 30 分钟",
+      "plotCode": "P-E01",
+      "source": "GW-2026-04",
+      "time": "2026-11-04 21:42",
+      "status": "resolved",
+      "handler": "陈美凤",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1018,
+      "code": "AL-20261018",
+      "type": "库存不足",
+      "level": 2,
+      "content": "有机肥（腐熟羊粪）库存低于安全线",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-02 18:05",
+      "status": "resolved",
+      "handler": "冯春华",
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": "已更换备用传感器"
+    },
+    {
+      "id": 1019,
+      "code": "AL-20261019",
+      "type": "传感器异常",
+      "level": 1,
+      "content": "2号智能大棚土壤湿度数据漂移，疑似传感器故障",
+      "plotCode": "P-A02",
+      "source": "SN-1013",
+      "time": "2026-11-04 22:51",
+      "status": "resolved",
+      "handler": "杨春生",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1020,
+      "code": "AL-20261020",
+      "type": "灾害预警",
+      "level": 1,
+      "content": "气象部门发布霜冻蓝色预警，预计夜间最低温 1℃",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-04 18:01",
+      "status": "resolved",
+      "handler": "吴桂香",
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": "已更换备用传感器"
+    },
+    {
+      "id": 1021,
+      "code": "AL-20261021",
+      "type": "环境超限",
+      "level": 3,
+      "content": "1号智能大棚空气温度超过阈值上限 32℃",
+      "plotCode": "P-A01",
+      "source": "SN-1006",
+      "time": "2026-11-04 06:14",
+      "status": "resolved",
+      "handler": "冯春华",
+      "channels": [
+        "微信公众号",
+        "站内消息"
+      ],
+      "handleNote": "已安排人员巡检"
+    },
+    {
+      "id": 1022,
+      "code": "AL-20261022",
+      "type": "设备故障",
+      "level": 1,
+      "content": "牧场1号舍氨气传感器通信异常，连续3次上报失败",
+      "plotCode": "P-E01",
+      "source": "SN-1034",
+      "time": "2026-11-02 20:37",
+      "status": "archived",
+      "handler": "韩梅梅",
+      "channels": [
+        "短信",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1023,
+      "code": "AL-20261023",
+      "type": "环境超限",
+      "level": 1,
+      "content": "南湖1号塘溶解氧低于 5mg/L，请及时开启增氧机",
+      "plotCode": "P-D01",
+      "source": "SN-1030",
+      "time": "2026-11-02 11:00",
+      "status": "archived",
+      "handler": "郑天佑",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已远程开启设备"
+    },
+    {
+      "id": 1024,
+      "code": "AL-20261024",
+      "type": "离线掉线",
+      "level": 2,
+      "content": "畜禽养殖网关离线超过 30 分钟",
+      "plotCode": "P-E01",
+      "source": "GW-2026-04",
+      "time": "2026-11-04 07:41",
+      "status": "archived",
+      "handler": "冯春华",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已现场处置并恢复正常"
+    },
+    {
+      "id": 1025,
+      "code": "AL-20261025",
+      "type": "库存不足",
+      "level": 1,
+      "content": "有机肥（腐熟羊粪）库存低于安全线",
+      "plotCode": null,
+      "source": "数据中台",
+      "time": "2026-11-03 03:46",
+      "status": "archived",
+      "handler": "谢雨欣",
+      "channels": [
+        "站内消息",
+        "站内消息"
+      ],
+      "handleNote": "已远程开启设备"
+    }
+  ]
+}

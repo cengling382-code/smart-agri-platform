@@ -4,14 +4,15 @@ import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable } from '@/components/ui'
 import { aiApi } from '@/api'
+import { downloadCsv, downloadPdf } from '@/utils/exportFile'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 
-const FMT_META = {
-  PDF: { tag: 'danger', icon: 'Document' },
-  Excel: { tag: 'success', icon: 'Grid' },
-}
-const TYPE_ICON = { 环境报表: 'Cloudy', 水肥报表: 'Pouring', 设备报表: 'Cpu', 农事报表: 'Tickets', 采收报表: 'Apple', 告警报表: 'Bell' }
+const FMT_META = cfg.reportFmtMeta
+const TYPE_ICON = cfg.reportTypeIcon
 
 const columns = [
   { prop: 'name', label: '报表名称', minWidth: 250 },
@@ -23,40 +24,62 @@ const columns = [
 ]
 
 /* 生成报表配置 */
-const GEN_TYPES = ['环境报表', '水肥报表', '设备报表', '农事报表', '采收报表', '告警报表']
+const GEN_TYPES = cfg.reportGenTypes
 const genForm = ref({ type: '环境报表', cycle: '月报', range: ['2026-10-01', '2026-10-31'], fmt: 'PDF' })
 const genDialog = ref(false)
 const generating = ref(false)
 
 async function preview(row) {
+  const c = row.content || { headers: [], rows: [] }
+  const head = c.headers.map((h) => `<th style="padding:6px 10px;background:#EEF2EC;font-weight:600;white-space:nowrap">${h}</th>`).join('')
+  const body = c.rows.slice(0, 8).map((r) => `<tr>${r.map((v) => `<td style="padding:6px 10px;border-bottom:1px solid #E6E9E6;white-space:nowrap">${v ?? ''}</td>`).join('')}</tr>`).join('')
   await ElMessageBox.alert(
-    `<div style="font-size:13px;line-height:2;color:#4A545E">
+    `<div style="font-size:13px;line-height:1.9;color:#4A545E">
       <b>${row.name}</b><br/>
-      <span style="color:#6b7380">类型：${row.type}（${row.cycle}）<br/>
-      生成时间：${row.time} · 大小：${row.size}</span><br/>
-      <div style="margin-top:8px;padding:12px;background:#F5F5F5;border-radius:8px">
-        报表预览：<br/>
-        ① 环境指标均值与峰值统计表<br/>
-        ② 超阈值时段分析<br/>
-        ③ 地块对比明细<br/>
-        <span style="color:#9AA4AE;font-size:11px">（演示环境为预览示意，生产环境渲染完整报表）</span>
+      <span style="color:#6b7380">类型：${row.type}（${row.cycle}） · 生成时间：${row.time} · 共 ${c.rows.length} 条数据</span>
+      <div style="margin-top:10px;max-height:320px;overflow:auto;border:1px solid #E6E9E6;border-radius:8px">
+        <table style="border-collapse:collapse;font-size:12px;width:100%">
+          <thead><tr>${head}</tr></thead>
+          <tbody>${body}</tbody>
+        </table>
       </div>
+      ${c.rows.length > 8 ? '<span style="color:#9AA4AE;font-size:11px">仅预览前 8 条，完整数据请下载报表</span>' : ''}
     </div>`,
     '报表预览',
-    { dangerouslyUseHTMLString: true, confirmButtonText: '关闭预览' }
+    { dangerouslyUseHTMLString: true, confirmButtonText: '关闭预览', customClass: 'report-preview' }
   ).catch(() => {})
 }
 function download(row) {
-  ElMessage.success(`《${row.name}》${row.fmt} 文件已开始下载（演示）`)
+  const c = row.content
+  if (!c || !c.rows?.length) {
+    ElMessage.warning('该报表暂无可导出的数据')
+    return
+  }
+  try {
+    if (row.fmt === 'Excel') {
+      downloadCsv(row.name, c.headers, c.rows, [`${row.type} · ${row.cycle}`, `生成时间：${row.time} · 共 ${c.rows.length} 条`])
+    } else {
+      downloadPdf(row.name, { title: row.name, meta: `${row.type} · ${row.cycle} · 生成于 ${row.time} · 共 ${c.rows.length} 条`, headers: c.headers, rows: c.rows })
+    }
+    ElMessage.success(`《${row.name}》${row.fmt} 已开始下载`)
+  } catch (e) {
+    ElMessage.error(e.message || '报表下载失败')
+  }
 }
 async function generate() {
   generating.value = true
-  setTimeout(() => {
-    generating.value = false
+  try {
+    const [start, end] = genForm.value.range || []
+    const name = `${genForm.value.type}（${genForm.value.cycle}${start ? ` · ${start} 至 ${end}` : ''}）`
+    await aiApi.createReport({ name, type: genForm.value.type, cycle: genForm.value.cycle, range: genForm.value.range, fmt: genForm.value.fmt })
     genDialog.value = false
     ElMessage.success(`${genForm.value.type}（${genForm.value.cycle}）已生成，可在列表下载`)
     tableRef.value?.reload(true)
-  }, 900)
+  } catch (e) {
+    ElMessage.error(e.message || '报表生成失败')
+  } finally {
+    generating.value = false
+  }
 }
 </script>
 

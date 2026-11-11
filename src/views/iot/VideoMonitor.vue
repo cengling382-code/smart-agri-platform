@@ -1,6 +1,6 @@
 <script setup>
 /** 页面 14 · 视频监控：1/4/9/16 画面分割、录像回放（时间轴）、截图抓拍 */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { deviceApi } from '@/api'
@@ -31,13 +31,19 @@ async function snapshot(cam, i) {
   ElMessage.success(`已抓拍：${shot.name}`)
 }
 
+function stopPlay() {
+  if (playTimer) {
+    clearInterval(playTimer)
+    playTimer = null
+  }
+}
 function togglePlay() {
   playing.value = !playing.value
   if (playing.value) startPlay()
-  else clearInterval(playTimer)
+  else stopPlay()
 }
 function startPlay() {
-  clearInterval(playTimer)
+  stopPlay()
   playTimer = setInterval(() => {
     progress.value = (progress.value + 0.5) % 100
   }, 300)
@@ -56,6 +62,13 @@ onMounted(async () => {
   }
   startPlay()
   idxTimer = setInterval(() => (animIdx.value = (animIdx.value + 1) % 1000), 3000)
+})
+onBeforeUnmount(() => {
+  stopPlay()
+  if (idxTimer) {
+    clearInterval(idxTimer)
+    idxTimer = null
+  }
 })
 </script>
 

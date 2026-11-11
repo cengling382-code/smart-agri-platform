@@ -1,0 +1,394 @@
+/* ============================================================
+   移动端统一设计层（/m/* 页面）
+   原则：不新增任何颜色 / 圆角 / 阴影 / 字号常量，全部复用 PC 端
+   design tokens（variables.css）。PC 的 .page / .page-header /
+   .ag-card / .el-button 形制在 390px 宽度下等比收敛为
+   .m-page / .m-page-head / .m-card / .m-btn，保证两端 1:1 同源。
+   ============================================================ */
+
+/* ---------- 页面容器：对应 PC .page（留白 32 → 16，4pt 网格） ---------- */
+.m-page {
+  min-height: 100%;
+  padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-6);
+  background: var(--ag-bg-ground);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- 页头：对应 PC .page-header / .page-title / .page-desc ---------- */
+.m-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+  margin-bottom: var(--ag-space-4);
+}
+.m-page-title {
+  margin: 0;
+  font-family: var(--ag-font-display);
+  font-size: 22px;              /* 与 PC ≤768px 断点的 .page-title 同值 */
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+  color: var(--ag-text-1);
+}
+.m-page-desc {
+  margin: var(--ag-space-1) 0 0;
+  font-size: var(--ag-fs-micro);
+  letter-spacing: var(--ag-ls-micro);
+  color: var(--ag-text-3);
+}
+.m-head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  flex: none;
+}
+
+/* ---------- 卡片：与 PC .ag-card 完全同形（白底 + 1px 边 + 12px 圆角 + 柔影） ---------- */
+.m-card {
+  background: var(--ag-bg-surface);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius);
+  box-shadow: var(--ag-shadow);
+}
+.m-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-2);
+  padding: var(--ag-space-4) var(--ag-space-4) 0;
+}
+.m-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  font-size: var(--ag-fs-h3);
+  font-weight: 600;
+  letter-spacing: var(--ag-ls-h3);
+  color: var(--ag-text-1);
+}
+.m-card-title .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ag-green-600);   /* 与 PC .ag-card__title .dot 同源 */
+  flex: none;
+}
+.m-card-body {
+  padding: var(--ag-space-4);
+}
+.m-card-head + .m-card-body {
+  padding-top: var(--ag-space-3);
+}
+
+/* ---------- 列表行：与 PC 表格行同节奏（13px + 发丝虚线分隔） ---------- */
+.m-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-3) 0;
+  border-bottom: 1px dashed var(--ag-border-light);
+  font-size: var(--ag-fs-caption);
+  color: var(--ag-text-2);
+}
+.m-row:last-child {
+  border-bottom: none;
+}
+.m-row:first-child {
+  padding-top: 0;
+}
+.m-row:last-child {
+  padding-bottom: 0;
+}
+.m-row-label {
+  color: var(--ag-text-3);
+}
+.m-row-value {
+  margin-left: auto;
+  color: var(--ag-text-1);
+  font-weight: 500;
+}
+
+/* ---------- 按钮：对应 PC el-button（8px 圆角 / 40px 高 / 14px 正文） ---------- */
+.m-btn {
+  min-height: 40px;
+  padding: 0 var(--ag-space-4);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-bg-surface);
+  color: var(--ag-text-2);
+  font: inherit;
+  font-size: var(--ag-fs-body);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ag-space-2);
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--ag-dur) var(--ag-ease), border-color var(--ag-dur) var(--ag-ease);
+}
+.m-btn:active {
+  background: var(--ag-bg-hover);
+}
+.m-btn-primary {
+  background: var(--ag-green-600);
+  border-color: var(--ag-green-600);
+  color: #fff;
+  font-weight: 600;
+}
+.m-btn-primary:active {
+  background: var(--ag-green-700);
+  border-color: var(--ag-green-700);
+}
+.m-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.m-btn-mini {
+  min-height: 32px;
+  padding: 0 var(--ag-space-3);
+  font-size: var(--ag-fs-micro);
+}
+.m-btn-block {
+  width: 100%;
+}
+/* 文字按钮：对应 PC .el-button.is-link */
+.m-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--ag-fs-micro);
+  color: var(--ag-green-600);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ---------- 分段筛选：对应 PC el-radio-button 选中态（accent 实底） ---------- */
+.m-seg {
+  display: flex;
+  gap: var(--ag-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.m-seg::-webkit-scrollbar {
+  display: none;
+}
+.m-seg button {
+  flex: none;
+  min-height: 32px;
+  padding: 0 var(--ag-space-3);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-pill);
+  background: var(--ag-bg-surface);
+  color: var(--ag-text-2);
+  font: inherit;
+  font-size: var(--ag-fs-micro);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--ag-dur) var(--ag-ease), color var(--ag-dur) var(--ag-ease),
+    border-color var(--ag-dur) var(--ag-ease);
+}
+.m-seg button.on {
+  background: var(--ag-green-600);
+  border-color: var(--ag-green-600);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------- 标签：对应 PC el-tag（8px 圆角 / 12px） ---------- */
+.m-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--ag-space-2);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-green-50);
+  color: var(--ag-green-700);
+  font-size: var(--ag-fs-micro);
+  font-weight: 600;
+  flex: none;
+  line-height: 1.4;
+}
+.m-tag--warn {
+  background: rgba(201, 128, 62, 0.12);
+  color: var(--ag-warning);
+}
+.m-tag--danger {
+  background: rgba(232, 74, 95, 0.12);
+  color: var(--ag-danger);
+}
+.m-tag--muted {
+  background: var(--ag-bg-page);
+  color: var(--ag-text-3);
+}
+
+/* ---------- 表单控件：对应 PC el-input（8px 圆角 / 44px 触控高） ---------- */
+.m-field {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  min-height: 44px;
+  padding: 0 var(--ag-space-3);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-bg-surface);
+  transition: border-color var(--ag-dur) var(--ag-ease);
+}
+.m-field:focus-within {
+  border-color: var(--ag-green-600);
+}
+.m-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--ag-fs-body);
+  color: var(--ag-text-1);
+}
+.m-input,
+.m-select,
+.m-textarea {
+  width: 100%;
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-bg-surface);
+  font: inherit;
+  font-size: var(--ag-fs-body);
+  color: var(--ag-text-1);
+  outline: none;
+  transition: border-color var(--ag-dur) var(--ag-ease);
+}
+.m-input,
+.m-select {
+  min-height: 44px;
+  padding: 0 var(--ag-space-3);
+}
+.m-textarea {
+  padding: var(--ag-space-3);
+  resize: none;
+  line-height: 1.6;
+}
+.m-input:focus,
+.m-select:focus,
+.m-textarea:focus {
+  border-color: var(--ag-green-600);
+}
+.m-label {
+  display: block;
+  margin: 0 0 var(--ag-space-2);
+  font-size: var(--ag-fs-micro);
+  color: var(--ag-text-3);
+}
+
+/* ---------- 空态：纯文字表述，不使用 emoji / 装饰插画（对齐 PC el-empty 文案层级） ---------- */
+.m-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: var(--ag-space-6) var(--ag-space-4);
+  text-align: center;
+  color: var(--ag-text-4);
+  font-size: var(--ag-fs-micro);
+}
+
+/* ---------- 底部抽屉：对应 PC el-dialog / el-drawer 的遮罩与浮层形制 ---------- */
+.m-sheet-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(16, 19, 26, 0.48);
+  display: flex;
+  align-items: flex-end;
+}
+.m-sheet {
+  width: 100%;
+  max-height: 86%;
+  overflow-y: auto;
+  background: var(--ag-bg-surface);
+  border-radius: var(--ag-radius) var(--ag-radius) 0 0;
+  padding: var(--ag-space-5) var(--ag-space-4)
+    calc(var(--ag-space-6) + env(safe-area-inset-bottom));
+  box-shadow: var(--ag-shadow-lg);
+}
+.m-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  margin-bottom: var(--ag-space-4);
+}
+.m-sheet-title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--ag-fs-h3);
+  font-weight: 600;
+  letter-spacing: var(--ag-ls-h3);
+  color: var(--ag-text-1);
+}
+.m-icon-btn {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--ag-radius-pill);
+  background: var(--ag-bg-page);
+  color: var(--ag-text-3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.m-icon-btn:active {
+  background: var(--ag-bg-hover);
+}
+
+/* ---------- 布局工具 ---------- */
+.m-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-3);
+}
+.m-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ag-space-3);
+}
+
+/* 触控兜底：所有移动端可点元素统一 44px 热区、去掉点击高亮 */
+.m-page button,
+.m-page a,
+.m-sheet button {
+  -webkit-tap-highlight-color: transparent;
+}
+.m-page button {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-page *,
+  .m-sheet * {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 触屏设备统一 44px 最小可点区域（检测报告 P2-7）。
+   仅在粗指针设备生效，桌面端手机模拟框的既有布局不受影响。 */
+@media (pointer: coarse) {
+  .m-btn-mini,
+  .m-seg button {
+    min-height: 44px;
+  }
+  .m-icon-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

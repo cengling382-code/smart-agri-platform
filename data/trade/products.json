@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "collection": "products",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:37.862Z",
+    "count": 5
+  },
+  "data": [
+    {
+      "id": 1,
+      "name": "智慧番茄礼盒（3kg）",
+      "crop": "番茄",
+      "spec": "3kg/盒 精选果",
+      "price": 68,
+      "stock": 240,
+      "status": "上架",
+      "traceCode": "TR-2026-700",
+      "sales": 356,
+      "img": "tomato"
+    },
+    {
+      "id": 2,
+      "name": "水果黄瓜（2.5kg）",
+      "crop": "黄瓜",
+      "spec": "2.5kg/箱",
+      "price": 39.9,
+      "stock": 180,
+      "status": "上架",
+      "traceCode": "TR-2026-701",
+      "sales": 218,
+      "img": "cucumber"
+    },
+    {
+      "id": 3,
+      "name": "有机生菜（1kg）",
+      "crop": "生菜",
+      "spec": "1kg/袋 净菜",
+      "price": 12.8,
+      "stock": 90,
+      "status": "上架",
+      "traceCode": "TR-2026-702",
+      "sales": 143,
+      "img": "lettuce"
+    },
+    {
+      "id": 4,
+      "name": "生态大米（5kg）",
+      "crop": "水稻",
+      "spec": "5kg/袋 当季新米",
+      "price": 59,
+      "stock": 320,
+      "status": "上架",
+      "traceCode": "TR-2026-703",
+      "sales": 502,
+      "img": "rice"
+    },
+    {
+      "id": 5,
+      "name": "高山柑橘（5kg）",
+      "crop": "柑橘",
+      "spec": "5kg/箱",
+      "price": 45,
+      "stock": 0,
+      "status": "下架",
+      "traceCode": "TR-2026-704",
+      "sales": 87,
+      "img": "orange"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 import { ref, reactive, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { authApi } from '@/api'
 
 const router = useRouter()
 const formRef = ref(null)
@@ -41,17 +42,22 @@ function sendSms() {
 }
 
 async function handleReset() {
-  await formRef.value.validate()
-  if (form.smsCode !== '123456') {
-    ElMessage.error('验证码不正确（演示验证码：123456）')
-    return
-  }
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
   loading.value = true
-  setTimeout(() => {
-    loading.value = false
+  try {
+    await authApi.resetPassword({
+      phone: form.phone,
+      smsCode: form.smsCode,
+      password: form.password,
+    })
     ElMessage.success('密码重置成功，请使用新密码登录')
     router.push('/login')
-  }, 600)
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    loading.value = false
+  }
 }
 onBeforeUnmount(() => clearInterval(timer))
 </script>

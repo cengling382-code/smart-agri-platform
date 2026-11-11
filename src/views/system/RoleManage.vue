@@ -90,7 +90,7 @@ async function handleDelete(row) {
         <StatusTag :value="row.status" />
       </template>
       <template #col-action="{ row }">
-        <el-button link type="primary" @click="router.push({ name: 'RolePerm' })">配置权限</el-button>
+        <el-button link type="primary" @click="router.push({ name: 'RolePerm', query: { roleId: row.id } })">配置权限</el-button>
         <el-button link type="primary" @click="Object.assign(form, row); dialogVisible = true">编辑</el-button>
         <el-button link :type="row.status === '启用' ? 'warning' : 'success'" @click="toggleStatus(row)">
           {{ row.status === '启用' ? '禁用' : '启用' }}

@@ -1,10 +1,12 @@
 <script setup>
 /** 页面 23 · 图层管理：底图切换、遥感图层、设备图层、气象图层开关管理 */
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { plotApi, deviceApi } from '@/api'
-import { onMounted } from 'vue'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const basemap = ref('satellite')
 const opacity = ref(70)
@@ -13,24 +15,23 @@ const devices = ref([])
 
 const layerGroups = reactive([
   {
-    key: 'plots', name: '地块图层', icon: 'Place', desc: '地块边界、作物类型着色、种植状态', enabled: true, locked: false,
-    items: [{ name: '地块边界', on: true }, { name: '作物着色', on: true }, { name: '种植状态标注', on: false }],
+    key: 'plots', name: '地块图层', icon: 'Place', desc: '地块边界、作物类型着色', enabled: true,
+    items: [{ name: '地块边界', on: true }, { name: '作物着色', on: true }],
   },
   {
-    key: 'devices', name: '设备图层', icon: 'Cpu', desc: '传感器、执行器、摄像头点位', enabled: true, locked: false,
+    key: 'devices', name: '设备图层', icon: 'Cpu', desc: '传感器、执行器、摄像头点位', enabled: true,
     items: [{ name: '传感器点位', on: true }, { name: '执行器点位', on: true }, { name: '摄像头点位', on: true }, { name: '在线状态标识', on: true }],
   },
   {
-    key: 'weather', name: '气象图层', icon: 'Cloudy', desc: '气象站数据、降雨云图、风向箭头', enabled: true, locked: false,
-    items: [{ name: '气象站点', on: true }, { name: '降雨云图', on: false }, { name: '风向箭头', on: true }],
-  },
-  {
-    key: 'remote', name: '遥感影像图层', icon: 'Picture', desc: '卫星遥感影像、NDVI 植被指数', enabled: false, locked: false,
-    items: [{ name: '最新遥感影像', on: true }, { name: 'NDVI 植被指数', on: false }],
+    key: 'weather', name: '气象图层', icon: 'Cloudy', desc: '降雨云图、风向箭头', enabled: true,
+    items: [{ name: '降雨云图', on: false }, { name: '风向箭头', on: true }],
   },
 ])
 
-const TYPE_COLOR = { 设施大棚: '#074ce0', 大田: '#D4B95E', 果园: '#c9803e', 水产: '#4C6983', 畜禽: '#B17179' }
+const STORAGE_KEY = 'agri-gis-layers'
+const DEFAULT_GROUPS = JSON.parse(JSON.stringify(layerGroups))
+
+const TYPE_COLOR = cfg.plotTypeColors
 
 async function load() {
   try {
@@ -43,13 +44,71 @@ async function load() {
 }
 onMounted(load)
 
+/** 预览中实际绘制的设备点位：按子图层开关过滤类型，在线标识控制状态着色 */
+const previewDevices = computed(() => {
+  const items = layerGroups[1].items
+  return devices.value
+    .filter((d) => {
+      if (d.type === 'sensor' && !items[0].on) return false
+      if (d.type === 'actuator' && !items[1].on) return false
+      if (d.type === 'camera' && !items[2].on) return false
+      return true
+    })
+    .slice(0, 40)
+})
+
+/** 读取本地图层配置：刷新后保持开关与预览状态 */
+function loadLayerState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    if (!saved) return
+    if (saved.basemap) basemap.value = saved.basemap
+    if (typeof saved.opacity === 'number') opacity.value = saved.opacity
+    saved.groups?.forEach((sg) => {
+      const g = layerGroups.find((x) => x.key === sg.key)
+      if (!g) return
+      if (typeof sg.enabled === 'boolean') g.enabled = sg.enabled
+      sg.items?.forEach((si) => {
+        const it = g.items.find((x) => x.name === si.name)
+        if (it && typeof si.on === 'boolean') it.on = si.on
+      })
+    })
+  } catch (e) {
+    console.warn('[LayerManage] 图层配置读取失败', e)
+  }
+}
+
+function saveLayerState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      basemap: basemap.value,
+      opacity: opacity.value,
+      groups: layerGroups.map((g) => ({
+        key: g.key,
+        enabled: g.enabled,
+        items: g.items.map((it) => ({ name: it.name, on: it.on })),
+      })),
+    }))
+  } catch (e) {
+    console.warn('[LayerManage] 图层配置保存失败', e)
+  }
+}
+
+loadLayerState()
+watch(layerGroups, saveLayerState, { deep: true })
+watch([opacity, basemap], saveLayerState)
+
 function toggleGroup(g) {
   ElMessage.success(`「${g.name}」已${g.enabled ? '开启' : '关闭'}`)
 }
 function resetLayers() {
   layerGroups.forEach((g) => {
-    g.enabled = ['plots', 'devices', 'weather'].includes(g.key)
-    g.items.forEach((it) => (it.on = ['plots', 'devices', 'weather'].includes(g.key)))
+    const def = DEFAULT_GROUPS.find((x) => x.key === g.key)
+    g.enabled = def.enabled
+    g.items.forEach((it) => {
+      const dit = def.items.find((x) => x.name === it.name)
+      it.on = dit ? dit.on : false
+    })
   })
   opacity.value = 70
   basemap.value = 'satellite'
@@ -120,19 +179,26 @@ function polygon(shape) {
           <svg class="pv-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="图层叠加预览">
             <rect width="100" height="100" :fill="basemap === 'satellite' ? '#22321f' : '#eef0f3'" :opacity="opacity / 100" />
             <!-- 地块图层 -->
-            <g v-if="layerGroups[0].enabled">
+            <g v-if="layerGroups[0].enabled && layerGroups[0].items[0].on">
               <polygon v-for="p in plots" :key="p.id" :points="polygon(p.shape)" :fill="layerGroups[0].items[1].on ? (TYPE_COLOR[p.type] + '44') : 'rgba(148,163,184,.25)'" :stroke="TYPE_COLOR[p.type]" stroke-width="0.3" />
             </g>
             <!-- 设备图层 -->
             <g v-if="layerGroups[1].enabled">
-              <circle v-for="d in devices.slice(0, 40)" :key="d.id" :cx="40 + (d.id % 9) * 2.4" :cy="20 + ((d.id * 7) % 60)" r="0.8" :fill="d.type === 'camera' ? '#4C6983' : d.type === 'actuator' ? '#4C6983' : '#074ce0'" />
+              <circle
+                v-for="d in previewDevices"
+                :key="d.id"
+                :cx="40 + (d.id % 9) * 2.4"
+                :cy="20 + ((d.id * 7) % 60)"
+                r="0.8"
+                :fill="layerGroups[1].items[3].on ? (d.status === 'online' ? '#558162' : '#9AA4AE') : '#074ce0'"
+              />
             </g>
             <!-- 气象图层 -->
-            <g v-if="layerGroups[2].enabled && layerGroups[2].items[2].on">
+            <g v-if="layerGroups[2].enabled && layerGroups[2].items[1].on">
               <path d="M 6 10 Q 30 4 52 9 T 94 8" stroke="#8FB3CC" stroke-width="0.5" fill="none" marker-end="url(#arrow)" />
               <text x="6" y="7.5" font-size="2.2" fill="#8FB3CC">东南风 3.2 m/s</text>
             </g>
-            <g v-if="layerGroups[2].enabled && layerGroups[2].items[1].on">
+            <g v-if="layerGroups[2].enabled && layerGroups[2].items[0].on">
               <ellipse cx="70" cy="70" rx="18" ry="10" fill="rgba(56,189,248,.25)" />
               <ellipse cx="55" cy="80" rx="12" ry="7" fill="rgba(56,189,248,.18)" />
             </g>

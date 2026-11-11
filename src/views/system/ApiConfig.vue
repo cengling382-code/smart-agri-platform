@@ -4,25 +4,24 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { sysApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const list = ref([])
 const loading = ref(true)
 const editVisible = ref(false)
 const testingId = ref(null)
+const formRef = ref(null)
+const saving = ref(false)
 const form = reactive({ id: null, name: '', provider: '', url: '', key: '', qps: 0 })
 const rules = {
   provider: [{ required: true, message: '请输入服务提供方', trigger: 'blur' }],
   url: [{ required: true, message: '请输入接口地址', trigger: 'blur' }],
 }
 
-const TYPE_META = {
-  weather: { label: '气象平台', icon: 'Cloudy', color: '#4C6983' },
-  gov: { label: '监管平台', icon: 'Stamp', color: '#E84A5F' },
-  iot: { label: '物联网平台', icon: 'Cpu', color: '#074ce0' },
-  video: { label: '视频平台', icon: 'VideoCamera', color: '#B17179' },
-  erp: { label: 'ERP/电商', icon: 'ShoppingCart', color: '#c9803e' },
-}
-const STATUS_TAG = { 已连接: 'success', 异常: 'danger', 未启用: 'info' }
+const TYPE_META = cfg.apiTypeMeta
+const STATUS_TAG = cfg.apiStatusTag
 
 onMounted(async () => {
   try {
@@ -39,25 +38,35 @@ function openEdit(row) {
   editVisible.value = true
 }
 async function handleSave() {
-  await sysApi.updateApiConfig(form.id, form)
-  ElMessage.success('接口配置已保存')
-  editVisible.value = false
-  list.value = (await sysApi.apiConfigs()).list
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
+  saving.value = true
+  try {
+    await sysApi.updateApiConfig(form.id, form)
+    ElMessage.success('接口配置已保存')
+    editVisible.value = false
+    list.value = (await sysApi.apiConfigs()).list
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    saving.value = false
+  }
 }
 async function testConnect(row) {
   if (testingId.value) return
   testingId.value = row.id
-  const started = performance.now()
   try {
     if (!/^https?:\/\//.test(String(row.url || ''))) throw new Error('接口地址需以 http:// 或 https:// 开头')
-    // 模拟一次握手：真实耗时 + 结果写回配置，刷新后仍保留检测状态
-    await new Promise((r) => setTimeout(r, 450 + Math.random() * 450))
-    const latency = Math.round(performance.now() - started)
+    const res = await sysApi.testApiConfig(row.id)
+    const latency = res?.latency ?? 0
     await sysApi.updateApiConfig(row.id, { status: '已连接', lastSync: `刚刚（${latency}ms）` })
     list.value = (await sysApi.apiConfigs()).list
     ElMessage.success(`「${row.name}」连接正常，延迟 ${latency}ms`)
   } catch (e) {
-    await sysApi.updateApiConfig(row.id, { status: '异常', lastSync: '连接失败' }).catch(() => {})
+    await sysApi.updateApiConfig(row.id, { status: '异常', lastSync: `连接失败：${e.message}` }).catch(() => {})
     list.value = (await sysApi.apiConfigs()).list
     ElMessage.error(`「${row.name}」连接失败：${e.message}`)
   } finally {
@@ -66,9 +75,16 @@ async function testConnect(row) {
 }
 async function toggle(row) {
   const target = row.status === '未启用' ? '已连接' : '未启用'
-  await sysApi.updateApiConfig(row.id, { status: target })
-  ElMessage.success(target === '已连接' ? '接口已启用' : '接口已停用')
-  list.value = (await sysApi.apiConfigs()).list
+  saving.value = true
+  try {
+    await sysApi.updateApiConfig(row.id, { status: target })
+    ElMessage.success(target === '已连接' ? '接口已启用' : '接口已停用')
+    list.value = (await sysApi.apiConfigs()).list
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -126,7 +142,7 @@ async function toggle(row) {
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleSave">保存配置</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">保存配置</el-button>
       </template>
     </el-dialog>
   </div>

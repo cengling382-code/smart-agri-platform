@@ -1,9 +1,13 @@
 <script setup>
 /** 页面 24 · 农事计划管理：计划列表、新增播种/施肥/打药/采收计划、日历视图、审批 */
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable, FormDialog, StatusTag } from '@/components/ui'
 import { farmApi, plotApi } from '@/api'
+import { todayStr, disabledPastDate, rangeValidator, toDateStr } from '@/utils/dateRule'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 const view = ref('list') // list | calendar
@@ -14,8 +18,8 @@ const plots = ref([])
 const approveDialog = ref(false)
 const approveRow = ref(null)
 
-const TYPE_TAG = { 播种: 'success', 移栽: 'primary', 施肥: 'warning', 打药: 'danger', 除草: 'info', 灌溉: 'primary', 采收: 'success' }
-const FARM_TYPES = ['播种', '移栽', '施肥', '打药', '除草', '灌溉', '采收']
+const TYPE_TAG = cfg.farmTypeTag
+const FARM_TYPES = cfg.farmTypes
 
 const form = reactive({
   id: null, code: '', type: '播种', plotId: null, crop: '', content: '',
@@ -25,8 +29,24 @@ const rules = {
   type: [{ required: true, message: '请选择农事类型', trigger: 'change' }],
   plotId: [{ required: true, message: '请选择地块', trigger: 'change' }],
   content: [{ required: true, message: '请填写作业内容', trigger: 'blur' }],
-  planDate: [{ required: true, message: '请选择计划日期', trigger: 'change' }],
+  planDate: [
+    { required: true, message: '请选择计划日期', trigger: 'change' },
+    {
+      // 新建计划不允许倒签到过去；编辑历史计划时保留原日期，不受此限制
+      validator: (rule, value, callback) => {
+        if (!isEdit.value && value && value < todayStr()) callback(new Error('计划日期不能早于今天'))
+        else callback()
+      },
+      trigger: 'change',
+    },
+  ],
+  endDate: [rangeValidator(() => form.planDate, '完成期限不能早于计划日期')],
 }
+
+// 开始日期后移时清掉已失效的完成期限，避免表单里留下倒置区间
+watch(() => form.planDate, (v) => {
+  if (v && form.endDate && form.endDate < v) form.endDate = ''
+})
 
 const columns = [
   { prop: 'code', label: '计划编号', width: 115 },
@@ -43,7 +63,7 @@ const columns = [
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '编号 / 地块 / 作物' },
   { key: 'type', label: '类型', type: 'select', options: FARM_TYPES.map((t) => ({ label: t, value: t })) },
-  { key: 'status', label: '状态', type: 'select', options: ['待审批', '已审批', '进行中', '已完成'].map((s) => ({ label: s, value: s })) },
+  { key: 'status', label: '状态', type: 'select', options: cfg.farmPlanStatuses.map((s) => ({ label: s, value: s })) },
 ]
 
 /* ---------- 日历视图 ---------- */
@@ -64,8 +84,14 @@ const calendarDays = computed(() => {
   return days
 })
 const plansCache = ref([])
+const lastParams = ref({})
+async function fetchPlans(params) {
+  lastParams.value = params
+  return farmApi.planPage(params)
+}
 async function loadCalendarPlans() {
-  const res = await farmApi.planPage({ page: 1, size: 100 })
+  // 日历沿用列表当前的筛选条件，避免切换视图后筛选失效
+  const res = await farmApi.planPage({ ...lastParams.value, page: 1, size: 100 })
   plansCache.value = res.list
   calendarDays.value?.forEach?.(() => {})
   // 挂载
@@ -100,7 +126,17 @@ async function handleSubmit() {
   submitting.value = true
   try {
     const plot = plots.value.find((x) => x.id === form.plotId)
-    const payload = { ...form, plotName: plot?.name, crop: form.crop || plot?.crop }
+    // 只提交业务字段：id / 编号 / 创建人 / 审批人由服务端维护
+    const payload = {
+      type: form.type,
+      plotId: form.plotId,
+      plotName: plot?.name,
+      crop: form.crop || plot?.crop,
+      content: form.content.trim(),
+      planDate: form.planDate,
+      endDate: form.endDate,
+      status: form.status,
+    }
     if (isEdit.value) await farmApi.updatePlan(form.id, payload)
     else await farmApi.createPlan(payload)
     ElMessage.success(isEdit.value ? '计划已更新' : '农事计划已提交，等待园区管理员审批')
@@ -118,18 +154,32 @@ function openApprove(row) {
   approveDialog.value = true
 }
 async function doApprove(pass) {
-  await farmApi.updatePlan(approveRow.value.id, { status: pass ? '已审批' : '待审批', approver: pass ? '园区管理员' : '' })
-  ElMessage.success(pass ? '已审批通过' : '已驳回，请修改后重新提交')
-  approveDialog.value = false
-  tableRef.value?.reload(true)
-  loadCalendarPlans()
+  try {
+    await farmApi.updatePlan(approveRow.value.id, { status: pass ? '已审批' : '已驳回', approver: pass ? '园区管理员' : '' })
+    ElMessage.success(pass ? '已审批通过' : '已驳回，请修改后重新提交')
+    approveDialog.value = false
+    tableRef.value?.reload(true)
+    loadCalendarPlans()
+  } catch (e) {
+    ElMessage.error(e.message || '审批失败')
+  }
 }
 async function handleDelete(row) {
-  await ElMessageBox.confirm(`确定删除计划「${row.code}」吗？`, '删除确认', { type: 'error' })
-  await farmApi.removePlan(row.id)
-  ElMessage.success('删除成功')
-  tableRef.value?.reload(true)
+  try {
+    await ElMessageBox.confirm(`确定删除计划「${row.code}」吗？`, '删除确认', { type: 'error' })
+  } catch {
+    return
+  }
+  try {
+    await farmApi.removePlan(row.id)
+    ElMessage.success('删除成功')
+    tableRef.value?.reload(true)
+  } catch (e) {
+    ElMessage.error(e.message || '删除失败')
+  }
 }
+
+watch(view, (v) => { if (v === 'calendar') loadCalendarPlans() })
 
 onMounted(async () => {
   plots.value = await plotApi.all()
@@ -150,7 +200,7 @@ onMounted(async () => {
     </PageHeader>
 
     <!-- 列表视图 -->
-    <ProTable v-if="view === 'list'" ref="tableRef" :columns="columns" :fetch="farmApi.planPage" :filters="filters" action-width="240">
+    <ProTable v-if="view === 'list'" ref="tableRef" :columns="columns" :fetch="fetchPlans" :filters="filters" action-width="240">
       <template #col-type="{ row }">
         <el-tag size="small" :type="TYPE_TAG[row.type] || 'info'" effect="plain">{{ row.type }}</el-tag>
       </template>
@@ -174,9 +224,14 @@ onMounted(async () => {
         <div v-for="w in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="w" class="cal-week">{{ w }}</div>
         <div v-for="(d, i) in calendarDays" :key="i" class="cal-cell" :class="{ empty: !d }">
           <template v-if="d">
-            <span class="cal-day mono-num" :class="{ today: d.date === new Date().toISOString().slice(0, 10) }">{{ d.day }}</span>
+            <span class="cal-day mono-num" :class="{ today: d.date === todayStr() }">{{ d.day }}</span>
             <div class="cal-plans">
-              <div v-for="p in d.plans" :key="p.id" class="cal-plan" :data-type="p.type" :title="`${p.type} · ${p.plotName}`">
+              <div
+                v-for="p in d.plans" :key="p.id" class="cal-plan"
+                :data-type="p.type" :title="`${p.type} · ${p.plotName} · ${p.status}`"
+                role="button" tabindex="0"
+                @click="openApprove(p)" @keyup.enter="openApprove(p)"
+              >
                 <span class="cp-type">{{ p.type }}</span> {{ p.plotName }}
               </div>
             </div>
@@ -201,9 +256,9 @@ onMounted(async () => {
         <el-input v-model="form.content" type="textarea" :rows="3" placeholder="如：全棚统一滴灌追肥，使用复合化肥 20kg，预计 2 人 1 天" />
       </el-form-item>
       <el-form-item label="计划日期" prop="planDate">
-        <el-date-picker v-model="form.planDate" type="date" value-format="YYYY-MM-DD" placeholder="开始日期" style="width: 200px" />
+        <el-date-picker v-model="form.planDate" type="date" value-format="YYYY-MM-DD" placeholder="开始日期" style="width: 200px" :disabled-date="(d) => !isEdit && disabledPastDate(d)" />
         <span style="margin: 0 8px">至</span>
-        <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" placeholder="完成期限" style="width: 200px" />
+        <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" placeholder="完成期限" style="width: 200px" :disabled-date="(d) => !!form.planDate && toDateStr(d) < form.planDate" />
       </el-form-item>
     </FormDialog>
 
@@ -215,10 +270,14 @@ onMounted(async () => {
         <el-descriptions-item label="作业内容">{{ approveRow.content }}</el-descriptions-item>
         <el-descriptions-item label="计划时间">{{ approveRow.planDate }} 至 {{ approveRow.endDate }}</el-descriptions-item>
         <el-descriptions-item label="创建人">{{ approveRow.creator }}</el-descriptions-item>
+        <el-descriptions-item label="状态"><StatusTag :value="approveRow.status" /></el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button type="danger" plain @click="doApprove(false)">驳 回</el-button>
-        <el-button type="primary" @click="doApprove(true)">审批通过</el-button>
+        <template v-if="approveRow?.status === '待审批'">
+          <el-button type="danger" plain @click="doApprove(false)">驳 回</el-button>
+          <el-button type="primary" @click="doApprove(true)">审批通过</el-button>
+        </template>
+        <el-button v-else @click="approveDialog = false">关 闭</el-button>
       </template>
     </el-dialog>
   </div>

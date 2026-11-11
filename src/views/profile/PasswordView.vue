@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const auth = useAuthStore()
 const loading = ref(false)
+const formRef = ref(null)
 
 const form = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
 const rules = {
@@ -36,6 +37,8 @@ const strength = computed(() => {
 })
 
 async function handleSubmit() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
   loading.value = true
   try {
     await authApi.changePassword({ ...form })
@@ -62,7 +65,7 @@ async function handleSubmit() {
         <el-form-item label="新密码" prop="newPassword">
           <el-input v-model="form.newPassword" type="password" show-password placeholder="6-20 位，建议字母+数字+符号" />
           <div v-if="form.newPassword" class="bars">
-            <i v-for="i in 4" :key="i" :class="{ on: i <= strength, lv: strength }"></i>
+            <i v-for="i in 4" :key="i" :class="[i <= strength ? 'on' : '', strength ? `lv-${strength}` : '']"></i>
           </div>
         </el-form-item>
         <el-form-item label="确认新密码" prop="confirmPassword">

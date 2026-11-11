@@ -2,193 +2,204 @@
 /** 页面 60 · 移动端实时环境数据页：空气/土壤/水体实时数据查看、趋势简表 */
 import { ref, computed, onMounted } from 'vue'
 import { plotApi, deviceApi } from '@/api'
+import { onDataChange } from '@/composables/useDataVersion'
 
 const plots = ref([])
+const devices = ref([])
 const activeId = ref(null)
-const series = ref([])
 const loading = ref(true)
 
 const activePlot = computed(() => plots.value.find((p) => p.id === activeId.value))
 
+/* 指标卡按地块类型取对应环境项：水产业看水体指标，畜禽舍看氨气/硫化氢，其余看设施环境 */
 const CARDS = computed(() => {
   const e = activePlot.value?.env || {}
+  const type = activePlot.value?.type
+  if (type === '水产') {
+    return [
+      { label: '水体温度', value: e.waterT ?? '—', unit: '℃', color: 'var(--ag-warning)', icon: 'Sunny' },
+      { label: '溶解氧', value: e.oxygen ?? '—', unit: 'mg/L', color: 'var(--ag-blue-600)', icon: 'Drizzling' },
+      { label: 'PH 值', value: e.ph ?? '—', unit: '', color: 'var(--ag-rose)', icon: 'Odometer' },
+      { label: '氨氮', value: e.ammonia ?? '—', unit: 'mg/L', color: 'var(--ag-green-600)', icon: 'Sunrise' },
+    ]
+  }
+  if (type === '畜禽') {
+    return [
+      { label: '舍内温度', value: e.temp ?? '—', unit: '℃', color: 'var(--ag-warning)', icon: 'Sunny' },
+      { label: '空气湿度', value: e.hum ?? '—', unit: '%', color: 'var(--ag-blue-600)', icon: 'Drizzling' },
+      { label: '氨气浓度', value: e.nh3 ?? '—', unit: 'ppm', color: 'var(--ag-rose)', icon: 'Cloudy' },
+      { label: '硫化氢', value: e.h2s ?? '—', unit: 'ppm', color: 'var(--ag-green-600)', icon: 'Sunrise' },
+    ]
+  }
   return [
-    { label: '空气温度', value: e.temp ?? e.waterT ?? '—', unit: '℃', color: '#E89552', icon: 'Sunny' },
-    { label: '空气湿度', value: e.hum ?? e.oxygen ?? '—', unit: e.hum ? '%' : 'mg/L', color: '#4C6983', icon: 'Drizzling' },
-    { label: 'CO₂ / PH', value: e.co2 ?? e.ph ?? '—', unit: e.co2 ? 'ppm' : '', color: '#B17179', icon: 'Cloudy' },
-    { label: '光照强度', value: e.light ?? e.nh3 ?? '—', unit: e.light ? 'klx' : 'ppm', color: '#699C78', icon: 'Sunrise' },
+    { label: '空气温度', value: e.temp ?? '—', unit: '℃', color: 'var(--ag-warning)', icon: 'Sunny' },
+    { label: '空气湿度', value: e.hum ?? '—', unit: '%', color: 'var(--ag-blue-600)', icon: 'Drizzling' },
+    { label: 'CO₂ 浓度', value: e.co2 ?? '—', unit: 'ppm', color: 'var(--ag-rose)', icon: 'Cloudy' },
+    { label: '光照强度', value: e.light ?? '—', unit: 'klx', color: 'var(--ag-green-600)', icon: 'Sunrise' },
   ]
 })
 
 const simpleTrend = ref([])
 
-onMounted(async () => {
+/** 按当前地块查找温度传感器并重新拉取趋势，保证地块切换后数据实时变化 */
+async function loadTrend() {
   try {
-    plots.value = await plotApi.all()
-    activeId.value = plots.value[0]?.id
-    const res = await Promise.all([deviceApi.series(51, 'temp', 24), deviceApi.series(52, 'hum', 24)])
-    // 接口返回 { meta, series }，映射为页面使用的 { meta, arr }
-    const norm = res.map((r, i) => ({ meta: r?.meta || {}, arr: r?.series || [] }))
-    series.value = norm
-    simpleTrend.value = norm[0].arr.slice(-12)
+    const list = devices.value.filter((d) => d.plotId === activeId.value && d.type === 'sensor')
+    const dev = list.find((d) => d.params?.includes('temp')) || list[0]
+    if (!dev) {
+      simpleTrend.value = []
+      return
+    }
+    const r = await deviceApi.series(dev.id, 'temp', 24)
+    simpleTrend.value = (r?.series || []).slice(-8)
+  } catch (e) {
+    console.warn('[MobileEnv] 趋势加载失败', e?.message || e)
+  }
+}
+function selectPlot(id) {
+  activeId.value = id
+  loadTrend()
+}
+
+/** 数据版本变更时重新取数；保留用户当前选中的地块，避免刷新打断操作 */
+async function load() {
+  try {
+    const [p, d] = await Promise.all([plotApi.all(), deviceApi.all()])
+    plots.value = p
+    devices.value = d
+    if (!plots.value.some((x) => x.id === activeId.value)) activeId.value = plots.value[0]?.id ?? null
+    await loadTrend()
   } catch (e) {
     console.warn('[MobileEnv]', e?.message || e)
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(load)
+onDataChange(load, { debounce: 400 })
 </script>
 
 <template>
-  <div class="m-env" v-loading="loading">
-    <div class="me-head">
-      <h2>实时环境数据</h2>
-      <div class="plot-chips">
-        <button v-for="p in plots.slice(0, 5)" :key="p.id" :class="{ on: p.id === activeId }" @click="activeId = p.id">
-          {{ p.name.replace('号', '#').slice(0, 6) }}
-        </button>
+  <div class="m-page m-env" v-loading="loading">
+    <div class="m-page-head">
+      <div>
+        <h1 class="m-page-title">实时环境数据</h1>
+        <p class="m-page-desc">空气 / 土壤 / 水体实时监测 · 温度趋势</p>
       </div>
     </div>
 
-    <!-- 实时卡 -->
-    <div class="env-cards">
-      <div v-for="c in CARDS" :key="c.label" class="e-card" :style="{ '--c': c.color }">
+    <!-- 地块筛选：对应 PC el-radio-button 选中态 -->
+    <div class="m-seg plot-chips">
+      <button v-for="p in plots" :key="p.id" :class="{ on: p.id === activeId }" @click="selectPlot(p.id)">
+        {{ p.name.replace('号', '#').slice(0, 6) }}
+      </button>
+    </div>
+
+    <!-- 实时卡：白卡 + 语义色图标，数值统一墨色（与 PC StatCard 同形制） -->
+    <div class="env-grid">
+      <div v-for="c in CARDS" :key="c.label" class="m-card e-card">
         <div class="e-top">
-          <el-icon :size="16"><component :is="c.icon" /></el-icon>
+          <el-icon :size="14" :style="{ color: c.color }"><component :is="c.icon" /></el-icon>
           {{ c.label }}
         </div>
         <div class="e-val mono-num">{{ c.value }}<i>{{ c.unit }}</i></div>
       </div>
     </div>
 
-    <!-- 24h 简表 -->
-    <div class="m-card">
-      <div class="sec-title">近 24 小时温度走势（每 2 小时）</div>
-      <div class="mini-chart">
-        <div v-for="(pt, i) in simpleTrend" :key="i" class="mc-col">
-          <div class="mc-bar" :style="{ height: (pt[1] / 35) * 70 + 'px' }"></div>
-          <span class="mc-v mono-num">{{ pt[1] }}°</span>
-          <span class="mc-t">{{ new Date(pt[0]).getHours() }}时</span>
+    <!-- 温度走势简表 -->
+    <section class="m-card">
+      <div class="m-card-head">
+        <div class="m-card-title"><span class="dot"></span>近 16 小时温度走势（每 2 小时）</div>
+      </div>
+      <div class="m-card-body">
+        <div v-if="simpleTrend.length" class="mini-chart">
+          <div v-for="(pt, i) in simpleTrend" :key="i" class="mc-col">
+            <div class="mc-bar" :style="{ height: (pt[1] / 35) * 70 + 'px' }"></div>
+            <span class="mc-v mono-num">{{ pt[1] }}°</span>
+            <span class="mc-t">{{ new Date(pt[0]).getHours() }}时</span>
+          </div>
         </div>
+        <div v-else class="m-empty">该地块暂无温度传感器数据</div>
       </div>
-    </div>
+    </section>
 
-    <div class="m-card">
-      <div class="sec-title">{{ activePlot?.name }} · 地块概览</div>
-      <div class="info-rows">
-        <div class="ir"><span>作物类型</span><b>{{ activePlot?.crop }}</b></div>
-        <div class="ir"><span>地块面积</span><b class="mono-num">{{ activePlot?.areaMu }} 亩</b></div>
-        <div class="ir"><span>传感器数量</span><b class="mono-num">{{ activePlot?.sensors }} 台</b></div>
-        <div class="ir"><span>种植状态</span><b>{{ activePlot?.status }}</b></div>
+    <!-- 地块概览 -->
+    <section class="m-card">
+      <div class="m-card-head">
+        <div class="m-card-title"><span class="dot"></span>{{ activePlot?.name }} · 地块概览</div>
       </div>
-    </div>
+      <div class="m-card-body">
+        <div class="m-row"><span class="m-row-label">作物类型</span><b class="m-row-value">{{ activePlot?.crop }}</b></div>
+        <div class="m-row"><span class="m-row-label">地块面积</span><b class="m-row-value mono-num">{{ activePlot?.areaMu }} 亩</b></div>
+        <div class="m-row"><span class="m-row-label">传感器数量</span><b class="m-row-value mono-num">{{ activePlot?.sensors }} 台</b></div>
+        <div class="m-row"><span class="m-row-label">种植状态</span><b class="m-row-value">{{ activePlot?.status }}</b></div>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.m-env {
-  padding: 0 16px 24px;
-  min-height: 100%;
-}
-.me-head {
-  position: sticky;
-  top: 0;
-  /* 决策依据：页头藏青段承载白色筛选文字，改绿-600 后 12px 白字对比度不足，按规范升级为绿-700 */
-  background: var(--ag-green-700);
-  margin: 0 -16px;
-  padding: 20px 16px 16px;
-  z-index: 3;
-}
-.me-head h2 {
-  margin: 0 0 12px;
-  color: #fff;
-  font-size: 18px;
-}
 .plot-chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  margin-bottom: var(--ag-space-3);
 }
-.plot-chips button {
-  flex: none;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: var(--ag-radius-sm); /* 决策依据：地块筛选 chip 属小控件，对齐控件档 6px */
-  cursor: pointer;
-}
-.plot-chips button.on {
-  background: #fff;
-  color: var(--ag-green-700);
-  font-weight: 700;
-}
-.env-cards {
+
+/* 实时卡：2×2 网格 */
+.env-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 14px;
+  gap: var(--ag-space-3);
 }
 .e-card {
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：环境数据小卡属卡片类，对齐卡片档 10px */
-  padding: 13px 15px;
-  box-shadow: var(--ag-shadow-sm);
-  border-top: 3px solid var(--c);
+  padding: var(--ag-space-3) var(--ag-space-4);
 }
 .e-top {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--ag-fs-micro);
   color: var(--ag-text-3);
 }
+/* 数值：墨色 + 显示数字字体，与 PC .stat-card .value 同层级 */
 .e-val {
-  font-size: 25px;
-  font-weight: 800;
-  color: var(--c);
   margin-top: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+  color: var(--ag-text-1);
 }
 .e-val i {
-  font-style: normal;
-  font-size: 11px;
-  color: var(--ag-text-4);
   margin-left: 3px;
+  font-style: normal;
+  font-size: var(--ag-fs-micro);
+  font-weight: 400;
+  color: var(--ag-text-4);
 }
-.m-card {
-  background: #fff;
-  border-radius: var(--ag-radius); /* 决策依据：区块卡片属卡片类，对齐卡片档 10px */
-  padding: 15px;
-  margin-top: 14px;
-  box-shadow: var(--ag-shadow-sm);
+
+.m-env > .m-card {
+  margin-top: var(--ag-space-3);
 }
-.sec-title {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
+
+/* 柱状图：单色 accent，去除旧橙黄渐变 */
 .mini-chart {
   display: flex;
   align-items: flex-end;
   gap: 4px;
-  height: 110px;
+  min-height: 110px;
 }
 .mc-col {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  height: 100%;
   justify-content: flex-end;
+  gap: 3px;
 }
 .mc-bar {
   width: 70%;
-  border-radius: 4px 4px 0 0;
-  background: linear-gradient(180deg, #FFB37B, #E8955233);
-  transition: height 0.6s var(--ag-ease);
+  border-radius: 2px 2px 0 0;
+  background: var(--ag-green-500);
+  transition: height var(--ag-dur-slow) var(--ag-ease);
 }
 .mc-v {
   font-size: 9px;
@@ -197,22 +208,5 @@ onMounted(async () => {
 .mc-t {
   font-size: 8px;
   color: var(--ag-text-4);
-}
-.info-rows {
-  display: flex;
-  flex-direction: column;
-}
-.ir {
-  display: flex;
-  justify-content: space-between;
-  padding: 9px 2px;
-  font-size: 13px;
-  border-bottom: 1px dashed var(--ag-border-light);
-}
-.ir:last-child {
-  border-bottom: none;
-}
-.ir span {
-  color: var(--ag-text-3);
 }
 </style>

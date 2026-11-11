@@ -5,10 +5,19 @@ const TOKEN_KEY = 'agri_token'
 const USER_KEY = 'agri_user'
 const REMEMBER_KEY = 'agri_remember'
 
+/** 本地缓存被写坏时返回 null，避免 Pinia 初始化抛错导致整站白屏 */
+function readCachedUser() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY) || 'null')
+  } catch {
+    return null
+  }
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem(TOKEN_KEY) || '',
-    user: JSON.parse(localStorage.getItem(USER_KEY) || 'null'),
+    user: readCachedUser(),
   }),
   getters: {
     isLoggedIn: (s) => !!s.token,

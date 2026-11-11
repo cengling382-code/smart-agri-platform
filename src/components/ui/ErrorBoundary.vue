@@ -29,7 +29,25 @@ const errorInfo = ref('')
 const showDetail = ref(false)
 const nonce = ref(0) // 重试计数：驱动插槽内容重建
 
+/**
+ * Element Plus 确认框在「取消 / 关闭」时 reject('cancel' | 'close')。
+ * Vue 会把事件处理器里未捕获的 Promise rejection 交给 onErrorCaptured，
+ * 过去因此把一次正常的取消操作误判成页面渲染崩溃，整页被降级 UI 替换。
+ * 这里只识别这两种明确的取消信号，仍返回 false 阻止其继续向上传播，
+ * 但不进入降级 UI、不写错误日志；其它真实异常照常隔离与上报。
+ */
+function isUserCancel(err) {
+  if (err == null) return false
+  if (typeof err === 'string') return /^(cancel|close)$/i.test(err.trim())
+  if (typeof err === 'object') {
+    if (err.action === 'cancel' || err.action === 'close') return true
+    return /^(cancel|close)$/i.test(String(err.message ?? err.name ?? '').trim())
+  }
+  return false
+}
+
 onErrorCaptured((err, _instance, info) => {
+  if (isUserCancel(err)) return false
   error.value = err
   errorInfo.value = info
   reportError(err, `boundary:${info}`)
@@ -50,8 +68,9 @@ function retry() {
   nonce.value++
 }
 function goHome() {
-  if (router) router.push('/dashboard').catch(() => router.push('/'))
-  else window.location.hash = '#/dashboard'
+  const home = route?.path?.startsWith('/m') ? '/m/home' : '/dashboard'
+  if (router) router.push(home).catch(() => router.push('/'))
+  else window.location.hash = `#${home}`
 }
 function goBack() {
   if (router) router.back()

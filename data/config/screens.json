@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "collection": "screens",
+    "kind": "config",
+    "description": "数据大屏页面配置：标题、配色、轮播指标、KPI 文案、地图点位；字段含义见 docs/JSON数据规范.md",
+    "updatedAt": "2026-11-06T02:10:00.000Z",
+    "count": 12
+  },
+  "data": {
+    "titles": {
+      "overview": "智慧农业总览大屏",
+      "env": "环境监测大屏",
+      "farm": "农事与采收统计大屏",
+      "device": "设备运维大屏"
+    },
+    "plotColors": ["#7DC383", "#9FC3DD", "#FFB37B", "#B17179", "#E84A5F", "#8FB3CC"],
+    "envKeyMeta": {
+      "temp": { "name": "温度", "unit": "℃" },
+      "hum": { "name": "湿度", "unit": "%" },
+      "co2": { "name": "CO₂", "unit": "ppm" }
+    },
+    "envKeyParams": ["temp", "hum", "co2"],
+    "envWeatherCards": [
+      { "label": "温度", "value": "19.2℃", "icon": "☀" },
+      { "label": "湿度", "value": "58%", "icon": "💧" },
+      { "label": "风速", "value": "3.2m/s", "icon": "🌬" },
+      { "label": "降雨", "value": "0mm", "icon": "🌧" },
+      { "label": "气压", "value": "1013hPa", "icon": "📊" },
+      { "label": "紫外线", "value": "中等", "icon": "🕶" }
+    ],
+    "envCarouselMs": 5000,
+    "envRefreshMs": 30000,
+    "farmProgress": [
+      { "name": "东大田A区 · 水稻", "stage": "接近采收", "pct": 92, "color": "#FFB37B" },
+      { "name": "1号智能大棚 · 番茄", "stage": "结果期", "pct": 68, "color": "#7DC383" },
+      { "name": "西山坡果园 · 柑橘", "stage": "挂果期", "pct": 55, "color": "#E89552" },
+      { "name": "2号智能大棚 · 黄瓜", "stage": "开花期", "pct": 42, "color": "#9FC3DD" },
+      { "name": "3号育苗棚 · 生菜", "stage": "育苗期", "pct": 18, "color": "#B17179" }
+    ],
+    "farmKpiMeta": {
+      "total": { "label": "年度采收总量", "unit": "kg", "color": "#7DC383" },
+      "batches": { "label": "采收批次", "unit": "批", "color": "#9FC3DD" },
+      "avg": { "label": "批均产量", "unit": "kg", "color": "#FFB37B" },
+      "orders": { "label": "进行中工单", "unit": "个", "color": "#E84A5F" }
+    },
+    "deviceWorkOrders": [
+      { "code": "WO-2026-0211", "device": "牧场氨气传感器", "issue": "通信异常，疑似网关掉线", "status": "处理中", "pct": 60 },
+      { "code": "WO-2026-0208", "device": "大棚2号球机", "issue": "画面模糊，需调整焦距", "status": "待派单", "pct": 10 },
+      { "code": "WO-2026-0205", "device": "鱼塘增氧机", "issue": "例行保养，更换滤芯", "status": "已完成", "pct": 100 },
+      { "code": "WO-2026-0203", "device": "土壤PH传感器#A03", "issue": "数据漂移，重新标定", "status": "已完成", "pct": 100 }
+    ],
+    "deviceTypeLabels": { "gateway": "网关", "sensor": "传感器", "actuator": "执行器", "camera": "摄像头" },
+    "overview": {
+      "totalArea": 353.4,
+      "yearYield": 118400,
+      "parksFallback": 4,
+      "alarmCarouselMs": 3500,
+      "headMetrics": [
+        { "key": "parks", "label": "园区总数", "unit": "个", "color": "#9FC3DD" },
+        { "key": "area", "label": "种植面积", "unit": "亩", "color": "#7DC383", "decimals": 1 },
+        { "key": "online", "label": "在线设备", "unit": "台", "color": "#FFB37B" },
+        { "key": "todayAlarms", "label": "今日告警", "unit": "条", "color": "#E84A5F" },
+        { "key": "yearYield", "label": "年度产量", "unit": "kg", "color": "#B17179" }
+      ],
+      "yieldMonths": ["6月", "7月", "8月", "9月", "10月", "11月"],
+      "yieldValues": [12400, 15800, 18600, 15200, 26800, 29600],
+      "mapPlots": [
+        { "name": "1号智能大棚", "shape": [[18, 12], [34, 12], [34, 26], [18, 26]], "color": "#7DC383" },
+        { "name": "2号智能大棚", "shape": [[36, 12], [52, 12], [52, 26], [36, 26]], "color": "#7DC383" },
+        { "name": "3号育苗棚", "shape": [[18, 28], [34, 28], [34, 40], [18, 40]], "color": "#9FC3DD" },
+        { "name": "东大田A区", "shape": [[56, 10], [88, 10], [88, 34], [56, 34]], "color": "#FFB37B" },
+        { "name": "东大田B区", "shape": [[56, 36], [88, 36], [88, 58], [56, 58]], "color": "#FFB37B" },
+        { "name": "西山坡果园", "shape": [[10, 44], [50, 44], [50, 72], [10, 72]], "color": "#E89552" },
+        { "name": "南湖1号塘", "shape": [[56, 62], [88, 62], [88, 84], [56, 84]], "color": "#8FB3CC" },
+        { "name": "牧场1号舍", "shape": [[12, 76], [48, 76], [48, 92], [12, 92]], "color": "#B17179" }
+      ],
+      "mapDevices": [
+        { "x": 12, "y": 10, "fault": false }, { "x": 49, "y": 63, "fault": false }, { "x": 86, "y": 32, "fault": false },
+        { "x": 45, "y": 85, "fault": false }, { "x": 82, "y": 54, "fault": true }, { "x": 41, "y": 23, "fault": false },
+        { "x": 78, "y": 76, "fault": false }, { "x": 37, "y": 45, "fault": false }, { "x": 74, "y": 14, "fault": false },
+        { "x": 33, "y": 67, "fault": false }, { "x": 70, "y": 36, "fault": false }, { "x": 29, "y": 89, "fault": false },
+        { "x": 66, "y": 58, "fault": false }, { "x": 25, "y": 27, "fault": true }, { "x": 62, "y": 80, "fault": false },
+        { "x": 21, "y": 49, "fault": false }, { "x": 58, "y": 18, "fault": false }, { "x": 17, "y": 71, "fault": false },
+        { "x": 54, "y": 40, "fault": false }, { "x": 13, "y": 93, "fault": false }, { "x": 50, "y": 62, "fault": false },
+        { "x": 87, "y": 31, "fault": false }, { "x": 46, "y": 84, "fault": true }, { "x": 83, "y": 53, "fault": false },
+        { "x": 42, "y": 22, "fault": false }, { "x": 79, "y": 75, "fault": false }
+      ]
+    }
+  }
+}

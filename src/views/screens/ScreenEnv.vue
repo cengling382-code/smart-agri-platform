@@ -1,24 +1,23 @@
 <script setup>
 /** 页面 55 · 环境监测大屏：各大棚环境实时曲线、气象数据展示、自动轮播 */
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import ScreenChart from '@/components/ui/ScreenChart.vue'
 import { darkBase, darkAxis, SCREEN_COLORS } from '@/utils/screenCharts'
-import { deviceApi } from '@/api'
+import { deviceApi, plotApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+import { onDataChange } from '@/composables/useDataVersion'
+
+const cfg = getConfig('screens')
 
 const plots = ref([])
+const allDevices = ref([])
 const activeIdx = ref(0)
 const series = ref([])
 let carousel = null
 let dataTimer = null
 
-const PLOT_META = [
-  { name: '1号智能大棚', crop: '番茄', color: '#7DC383' },
-  { name: '2号智能大棚', crop: '黄瓜', color: '#9FC3DD' },
-  { name: '3号育苗棚', crop: '生菜', color: '#FFB37B' },
-  { name: '西山坡果园', crop: '柑橘', color: '#B17179' },
-  { name: '东大田A区', crop: '水稻', color: '#E84A5F' },
-  { name: '南湖1号塘', crop: '水产', color: '#8FB3CC' },
-]
+const PLOT_COLORS = cfg.plotColors
+const KEY_META = cfg.envKeyMeta
 
 const trendOptions = computed(() => {
   if (!series.value.length) return {}
@@ -46,32 +45,60 @@ const realtimeCards = computed(() => {
   })
 })
 
-const weather = [
-  { label: '温度', value: '19.2℃', icon: '☀' },
-  { label: '湿度', value: '58%', icon: '💧' },
-  { label: '风速', value: '3.2m/s', icon: '🌬' },
-  { label: '降雨', value: '0mm', icon: '🌧' },
-  { label: '气压', value: '1013hPa', icon: '📊' },
-  { label: '紫外线', value: '中等', icon: '🕶' },
-]
+const activePlot = computed(() => plots.value[activeIdx.value])
+
+const weather = cfg.envWeatherCards
 
 async function loadSeries() {
+  const p = activePlot.value
+  if (!p) {
+    series.value = []
+    return
+  }
+  const keys = ['temp', 'hum', 'co2']
+  const sensors = allDevices.value.filter((d) => d.type === 'sensor' && d.plotId === p.id)
+  // 地块无对应传感器时展示空态，避免用其他地块数据冒充当前地块
+  if (!sensors.length) {
+    series.value = keys.map((k) => ({ meta: KEY_META[k], arr: [] }))
+    return
+  }
+  const findSensor = (key) => sensors.find((s) => Array.isArray(s.params) && s.params.includes(key))
   try {
-    const keys = ['temp', 'hum', 'co2']
-    const res = await Promise.all(keys.map((k, i) => deviceApi.series(31 + i * 13, k, 72)))
-    // 接口返回 { meta, series }，映射为大屏使用的 { meta, arr }
-    series.value = res.map((r, i) => ({ meta: r?.meta || { name: keys[i] }, arr: r?.series || [] }))
+    const res = await Promise.all(
+      keys.map((k) =>
+        findSensor(k)
+          ? deviceApi.series(findSensor(k).id, k, 72)
+          : Promise.resolve({ meta: KEY_META[k], series: [] })
+      )
+    )
+    series.value = res.map((r, i) => ({ meta: r?.meta || KEY_META[keys[i]], arr: r?.series || [] }))
+  } catch (e) {
+    console.warn('[ScreenEnv]', e?.message || e)
+    series.value = keys.map((k) => ({ meta: KEY_META[k], arr: [] }))
+  }
+}
+
+async function initPlots() {
+  try {
+    const [ps, ds] = await Promise.all([plotApi.all(), deviceApi.all()])
+    allDevices.value = ds
+    plots.value = ps.map((p, i) => ({ ...p, color: PLOT_COLORS[i % PLOT_COLORS.length] }))
+    if (!plots.value.length) return
+    await loadSeries()
   } catch (e) {
     console.warn('[ScreenEnv]', e?.message || e)
   }
 }
 
+watch(activeIdx, loadSeries)
+onDataChange(initPlots, { debounce: 400 })
+
 onMounted(async () => {
-  await loadSeries()
+  await initPlots()
   carousel = setInterval(() => {
-    activeIdx.value = (activeIdx.value + 1) % PLOT_META.length
-  }, 5000)
-  dataTimer = setInterval(loadSeries, 30000)
+    if (plots.value.length) activeIdx.value = (activeIdx.value + 1) % plots.value.length
+  }, cfg.envCarouselMs)
+  dataTimer = setInterval(loadSeries, cfg.envRefreshMs)
 })
 onBeforeUnmount(() => {
   clearInterval(carousel)
@@ -88,8 +115,8 @@ onBeforeUnmount(() => {
           <div class="p-title">监测地块（自动轮播）</div>
           <div class="plot-list">
             <button
-              v-for="(p, i) in PLOT_META"
-              :key="p.name"
+              v-for="(p, i) in plots"
+              :key="p.id"
               class="plot-btn"
               :class="{ active: i === activeIdx }"
               :style="{ '--c': p.color }"
@@ -126,7 +153,7 @@ onBeforeUnmount(() => {
       <!-- 右：主曲线 -->
       <div class="screen-panel panel chart-panel">
         <div class="p-title">
-          {{ PLOT_META[activeIdx]?.name }} · 72 小时环境曲线
+          {{ activePlot?.name || '暂无监测地块' }} · 72 小时环境曲线
           <span class="p-sub">温度 / 湿度 / CO₂（每 30s 自动刷新）</span>
         </div>
         <div class="chart-wrap">
@@ -147,11 +174,17 @@ onBeforeUnmount(() => {
   grid-template-columns: 320px 1fr;
   gap: 14px;
 }
-.col {
+.left-col {
   display: flex;
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+}
+.left-col > .screen-panel {
+  flex: none;
+}
+.left-col > .screen-panel:nth-child(2) {
+  flex: 1;
 }
 .panel {
   padding: 14px 16px;

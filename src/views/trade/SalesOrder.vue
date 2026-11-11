@@ -4,6 +4,9 @@ import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { PageHeader, ProTable } from '@/components/ui'
 import { tradeApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
 
 const tableRef = ref(null)
 
@@ -21,7 +24,7 @@ const columns = [
 
 const filters = [
   { key: 'keyword', label: '关键字', placeholder: '订单号 / 客户 / 产品' },
-  { key: 'status', label: '状态', type: 'select', options: ['待付款', '待发货', '已发货', '已完成', '已退款'].map((s) => ({ label: s, value: s })) },
+  { key: 'status', label: '状态', type: 'select', options: cfg.statusOptionGroups.salesOrder },
 ]
 
 async function markShip(row) {

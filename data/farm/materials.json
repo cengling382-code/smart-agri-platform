@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "collection": "materials",
+    "kind": "array",
+    "updatedAt": "2026-11-09T02:36:37.498Z",
+    "count": 8
+  },
+  "data": [
+    {
+      "id": 1,
+      "code": "MZ-001",
+      "name": "番茄种子（浙粉702）",
+      "category": "种子",
+      "spec": "1000粒/袋",
+      "unit": "袋",
+      "supplier": "绿丰种业",
+      "price": 128,
+      "stock": 34,
+      "safeStock": 10
+    },
+    {
+      "id": 2,
+      "code": "MZ-002",
+      "name": "黄瓜种子（津优35）",
+      "category": "种子",
+      "spec": "500粒/袋",
+      "unit": "袋",
+      "supplier": "绿丰种业",
+      "price": 86,
+      "stock": 8,
+      "safeStock": 10
+    },
+    {
+      "id": 3,
+      "code": "MZ-003",
+      "name": "复合化肥（15-15-15）",
+      "category": "化肥",
+      "spec": "50kg/袋",
+      "unit": "袋",
+      "supplier": "丰收化肥厂",
+      "price": 165,
+      "stock": 46,
+      "safeStock": 20
+    },
+    {
+      "id": 4,
+      "code": "MZ-004",
+      "name": "有机肥（腐熟羊粪）",
+      "category": "化肥",
+      "spec": "40kg/袋",
+      "unit": "袋",
+      "supplier": "丰收化肥厂",
+      "price": 78,
+      "stock": 15,
+      "safeStock": 20
+    },
+    {
+      "id": 5,
+      "code": "MZ-005",
+      "name": "吡虫啉悬浮剂",
+      "category": "农药",
+      "spec": "500ml/瓶",
+      "unit": "瓶",
+      "supplier": "生物农药科技",
+      "price": 42,
+      "stock": 22,
+      "safeStock": 8,
+      "safeInterval": 7
+    },
+    {
+      "id": 6,
+      "code": "MZ-006",
+      "name": "多菌灵可湿性粉剂",
+      "category": "农药",
+      "spec": "1kg/袋",
+      "unit": "袋",
+      "supplier": "生物农药科技",
+      "price": 35,
+      "stock": 32,
+      "safeStock": 8,
+      "safeInterval": 15
+    },
+    {
+      "id": 7,
+      "code": "MZ-007",
+      "name": "黑色地膜（1.2m）",
+      "category": "地膜",
+      "spec": "100m/卷",
+      "unit": "卷",
+      "supplier": "兴农地膜制品",
+      "price": 96,
+      "stock": 18,
+      "safeStock": 5
+    },
+    {
+      "id": 8,
+      "code": "MZ-008",
+      "name": "育苗基质",
+      "category": "种子",
+      "spec": "50L/袋",
+      "unit": "袋",
+      "supplier": "金穗农资有限公司",
+      "price": 58,
+      "stock": 27,
+      "safeStock": 10
+    }
+  ]
+}

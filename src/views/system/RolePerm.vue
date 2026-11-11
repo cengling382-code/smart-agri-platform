@@ -1,9 +1,15 @@
 <script setup>
 /** 页面 9 · 角色权限配置页：权限树勾选（菜单权限 / 按钮权限 / 数据权限） */
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { PageHeader } from '@/components/ui'
 import { sysApi } from '@/api'
+import { getConfig } from '@/data/configStore'
+
+const cfg = getConfig('constants')
+
+const route = useRoute()
 
 const roles = ref([])
 const activeRole = ref(null)
@@ -14,60 +20,91 @@ const treeRef = ref(null)
 const saving = ref(false)
 const dirty = ref(false)
 
-const BUTTON_PERMS = [
-  { id: 'btn-add', label: '新增' },
-  { id: 'btn-edit', label: '编辑' },
-  { id: 'btn-delete', label: '删除' },
-  { id: 'btn-export', label: '导出' },
-  { id: 'btn-approve', label: '审批' },
-  { id: 'btn-control', label: '设备控制' },
-]
+const BUTTON_PERMS = cfg.roleButtonPerms
 const checkedBtn = ref(['btn-add', 'btn-edit'])
 const dataScope = ref('本园区数据')
-const DATA_SCOPES = ['全部数据', '本园区数据', '本人数据', '溯源相关数据']
+const DATA_SCOPES = cfg.roleDataScopes
 
 const activeRoleName = computed(() => roles.value.find((r) => r.id === activeRole.value)?.name || '')
+const suppressDirty = ref(false)
 
-/** 默认角色 → 菜单映射（演示预置） */
-const ROLE_DEFAULT_MENUS = {
-  admin: () => 'all',
-  manager: () => 'all',
-  tech: [100, 200, 300, 400, 501, 502, 503, 601, 602, 603],
-  farmer: [100, 204, 206, 207, 402, 408],
-  regulator: [100, 505, 601, 603, 604, 605],
+/** 默认角色 → 菜单映射（演示预置，接口无历史权限时兜底） */
+const ROLE_DEFAULT_MENUS = cfg.roleDefaultMenus
+
+/** 只取叶子节点，父级由 el-tree 根据子节点自动推导半选/全选，避免父级 id 误选全部子项 */
+function leafIds(ids) {
+  const parentIds = new Set(menuTree.value.map((g) => g.id))
+  return ids.filter((id) => !parentIds.has(id))
 }
-
-function loadRolePerms(id) {
-  const conf = ROLE_DEFAULT_MENUS[id]
-  let ids = []
-  if (conf === 'all' || typeof conf === 'function') ids = collectAll()
-  else ids = conf
-  nextTickSet(ids)
+function defaultMenus(roleId) {
+  const role = roles.value.find((r) => r.id === roleId)
+  const conf = ROLE_DEFAULT_MENUS[role?.code]
+  if (!conf) return []
+  return conf === 'all' ? leafIds(collectAll()) : conf
 }
 function collectAll() {
   const out = []
   menuTree.value.forEach((g) => {
     out.push(g.id)
-    g.children.forEach((c) => out.push(c.id))
+    ;(g.children || []).forEach((c) => out.push(c.id))
   })
   return out
 }
-function nextTickSet(ids) {
-  checkedMenu.value = ids
-  dirty.value = false
+
+async function loadRolePerms(id) {
+  if (!id) return
+  suppressDirty.value = true
+  const role = roles.value.find((r) => r.id === id)
+  dataScope.value = role?.dataScope || '本园区数据'
+  checkedBtn.value = Array.isArray(role?.buttonPerms) ? role.buttonPerms : ['btn-add', 'btn-edit']
+  try {
+    const res = await sysApi.roleMenus(id)
+    const saved = res?.ids || []
+    checkedMenu.value = saved.length ? saved : defaultMenus(id)
+    await nextTick()
+    treeRef.value?.setCheckedKeys([])
+    treeRef.value?.setCheckedKeys(leafIds(checkedMenu.value), false)
+    dirty.value = false
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    suppressDirty.value = false
+  }
 }
 watch(activeRole, loadRolePerms)
-watch(checkedMenu, () => (dirty.value = true), { deep: true })
+watch(checkedMenu, () => {
+  if (!suppressDirty.value) dirty.value = true
+}, { deep: true })
+watch([dataScope, checkedBtn], () => {
+  if (!suppressDirty.value) dirty.value = true
+}, { deep: true })
+function onTreeCheck() {
+  if (!suppressDirty.value) dirty.value = true
+}
 
 const treeProps = { label: 'name', children: 'children' }
 
 async function savePerms() {
+  if (!activeRole.value) return
   saving.value = true
   try {
-    // 演示环境仅前端保存；生产调用 PUT /roles/:id/menus
-    await new Promise((r) => setTimeout(r, 400))
+    const ids = [
+      ...(treeRef.value?.getCheckedKeys(false) || []),
+      ...(treeRef.value?.getHalfCheckedKeys() || []),
+    ].sort((a, b) => a - b)
+    await Promise.all([
+      sysApi.saveRoleMenus(activeRole.value, ids),
+      sysApi.updateRole(activeRole.value, { dataScope: dataScope.value, buttonPerms: [...checkedBtn.value] }),
+    ])
+    const role = roles.value.find((r) => r.id === activeRole.value)
+    if (role) {
+      role.dataScope = dataScope.value
+      role.buttonPerms = [...checkedBtn.value]
+    }
     dirty.value = false
     ElMessage.success(`角色「${activeRoleName.value}」权限已更新`)
+  } catch (e) {
+    ElMessage.error(e.message)
   } finally {
     saving.value = false
   }
@@ -82,7 +119,8 @@ onMounted(async () => {
     const [rs, tree] = await Promise.all([sysApi.allRoles(), sysApi.menuTree()])
     roles.value = rs
     menuTree.value = tree
-    activeRole.value = rs[0]?.id
+    const qid = Number(route.query.roleId)
+    activeRole.value = rs.find((r) => r.id === qid)?.id ?? rs[0]?.id
   } catch (e) {
     console.warn('[RolePerm]', e?.message || e)
   }
@@ -138,8 +176,8 @@ onMounted(async () => {
               show-checkbox
               node-key="id"
               default-expand-all
-              :default-checked-keys="checkedMenu"
               class="perm-tree"
+              @check="onTreeCheck"
             />
           </el-tab-pane>
 
